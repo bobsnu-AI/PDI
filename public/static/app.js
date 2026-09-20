@@ -736,13 +736,16 @@ function renderMappingView(allIng) {
     + '</div>'
 
     // 매핑 래퍼 (상대 위치 — SVG 오버레이용)
-    + '<div id="mapping-wrap" class="relative">'
+    + '<div id="mapping-wrap" class="relative" style="min-height:60px">'
 
-    // ── 3-column 레이아웃 ──
-    + '<div class="grid grid-cols-[1fr_60px_1fr] gap-0 items-start">'
+    // SVG 오버레이: mapping-wrap 전체를 덮음
+    + '<svg id="mapping-svg" class="absolute pointer-events-none overflow-visible" style="top:0;left:0;width:100%;height:100%;z-index:1"></svg>'
+
+    // ── 2-column 레이아웃 (가운데 빈 컬럼 제거) ──
+    + '<div class="grid gap-0 items-start" style="grid-template-columns:1fr 1fr">'
 
     // 왼쪽: 식재료
-    + '<div class="flex flex-col gap-2 items-end pr-2">'
+    + '<div class="flex flex-col gap-2 items-end pr-8">'
     + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 self-end">식재료</div>'
     + prfIngs.map(ingNode).join('')
     + (otherIngs.length
@@ -750,11 +753,8 @@ function renderMappingView(allIng) {
         : '')
     + '</div>'
 
-    // 가운데: SVG 캔버스
-    + '<div class="relative"><svg id="mapping-svg" class="absolute inset-0 pointer-events-none overflow-visible" style="left:-120px;width:calc(100%+240px);top:0"></svg></div>'
-
     // 오른쪽: 파이토케미컬 계열
-    + '<div class="flex flex-col gap-2 items-start pl-2">'
+    + '<div class="flex flex-col gap-2 items-start pl-8">'
     + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">파이토케미컬 계열 <span class="font-normal">(추정)</span></div>'
     + presentPhytoKeys.map(phytoNode).join('')
     + (absentPhytoKeys.length
