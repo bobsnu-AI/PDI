@@ -536,19 +536,12 @@ function displayResults() {
   ).join('');
 }
 
-// ─ 식재료 분해 테이블 ─
-function renderIngredientBreakdown(r) {
-  const container = document.getElementById('ingredient-breakdown');
-  if (!container) return;
+// ══════════════════════════════════════════════
+// 식재료 분해 & 파이토케미컬 매핑 뷰
+// ══════════════════════════════════════════════
 
-  // 카테고리별로 묶기
-  const byCategory = {};
-  for (const ing of r.allIngredients) {
-    if (!byCategory[ing.cat]) byCategory[ing.cat] = [];
-    byCategory[ing.cat].push(ing);
-  }
-
-  // 같은 재료 중복 합산
+// ─ 중복 합산된 식재료 목록 반환 (공통 유틸) ─
+function getMergedIngredients(r) {
   const merged = {};
   for (const ing of r.allIngredients) {
     const key = ing.name + '|' + ing.cat;
@@ -556,19 +549,263 @@ function renderIngredientBreakdown(r) {
     merged[key].totalKcal  += ing.kcal;
     merged[key].totalGrams += ing.grams;
   }
+  return Object.values(merged).sort((a, b) => b.totalKcal - a.totalKcal);
+}
 
-  // PRF / non-PRF 분리 후 kcal 내림차순
-  const allIng = Object.values(merged).sort((a, b) => b.totalKcal - a.totalKcal);
+// ─ 탭 전환 ─
+function switchBreakdownTab(tab) {
+  const mapView   = document.getElementById('breakdown-map-view');
+  const tableView = document.getElementById('breakdown-table-view');
+  const tabMap    = document.getElementById('tab-map');
+  const tabTable  = document.getElementById('tab-table');
+  if (!mapView) return;
+
+  if (tab === 'map') {
+    mapView.classList.remove('hidden');
+    tableView.classList.add('hidden');
+    tabMap.classList.add('bg-emerald-700', 'text-white');
+    tabMap.classList.remove('bg-white', 'text-gray-600');
+    tabTable.classList.add('bg-white', 'text-gray-600');
+    tabTable.classList.remove('bg-emerald-700', 'text-white');
+    // SVG 연결선 렌더링 (레이아웃이 보인 뒤 실행)
+    setTimeout(drawMappingLines, 80);
+  } else {
+    tableView.classList.remove('hidden');
+    mapView.classList.add('hidden');
+    tabTable.classList.add('bg-emerald-700', 'text-white');
+    tabTable.classList.remove('bg-white', 'text-gray-600');
+    tabMap.classList.add('bg-white', 'text-gray-600');
+    tabMap.classList.remove('bg-emerald-700', 'text-white');
+  }
+}
+
+// ─ SVG 연결선 그리기 ─
+function drawMappingLines() {
+  const svg = document.getElementById('mapping-svg');
+  const wrap = document.getElementById('mapping-wrap');
+  if (!svg || !wrap) return;
+
+  const wRect = wrap.getBoundingClientRect();
+  svg.setAttribute('width',  wRect.width);
+  svg.setAttribute('height', wRect.height);
+  svg.innerHTML = '';
+
+  const ingNodes   = wrap.querySelectorAll('[data-ing]');
+  const phytoNodes = wrap.querySelectorAll('[data-phyto]');
+
+  // 활성(하이라이트) 상태
+  let activeIng = null, activePhyto = null;
+
+  function getCenter(el) {
+    const r = el.getBoundingClientRect();
+    return {
+      x: r.left - wRect.left + r.width / 2,
+      y: r.top  - wRect.top  + r.height / 2,
+    };
+  }
+
+  function drawAll(filterIng, filterPhyto) {
+    svg.innerHTML = '';
+    ingNodes.forEach(ingEl => {
+      const ingName   = ingEl.getAttribute('data-ing');
+      const ingPhytos = (ingEl.getAttribute('data-phytos') || '').split(',').filter(Boolean);
+      if (!ingPhytos.length) return;
+
+      const dimIng = filterIng && filterIng !== ingName;
+      ingPhytos.forEach(phytoKey => {
+        const phytoEl = wrap.querySelector('[data-phyto="' + phytoKey + '"]');
+        if (!phytoEl) return;
+
+        const dimPhyto = filterPhyto && filterPhyto !== phytoKey;
+        const active   = (!filterIng && !filterPhyto)
+                      || filterIng   === ingName
+                      || filterPhyto === phytoKey;
+
+        const p1 = getCenter(ingEl);
+        const p2 = getCenter(phytoEl);
+        const mx = (p1.x + p2.x) / 2;
+
+        const g = PHYTOCHEMICAL_GROUPS[phytoKey];
+        const col = g ? g.color : '#9CA3AF';
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d',
+          'M ' + p1.x + ' ' + p1.y +
+          ' C ' + mx + ' ' + p1.y + ', ' + mx + ' ' + p2.y + ', ' + p2.x + ' ' + p2.y
+        );
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', active ? col : '#E5E7EB');
+        path.setAttribute('stroke-width', active ? '2' : '1');
+        path.setAttribute('opacity', active ? '0.85' : '0.3');
+        path.setAttribute('stroke-dasharray', active ? 'none' : '4 3');
+        svg.appendChild(path);
+      });
+    });
+  }
+
+  // 초기 렌더
+  drawAll(null, null);
+
+  // 호버: 식재료 노드
+  ingNodes.forEach(ingEl => {
+    ingEl.addEventListener('mouseenter', () => {
+      activeIng = ingEl.getAttribute('data-ing');
+      drawAll(activeIng, null);
+      // 해당 파이토케미컬 노드 강조
+      const phytos = (ingEl.getAttribute('data-phytos') || '').split(',');
+      phytoNodes.forEach(p => {
+        p.classList.toggle('ring-2', phytos.includes(p.getAttribute('data-phyto')));
+        p.classList.toggle('scale-105', phytos.includes(p.getAttribute('data-phyto')));
+      });
+    });
+    ingEl.addEventListener('mouseleave', () => {
+      activeIng = null;
+      drawAll(null, null);
+      phytoNodes.forEach(p => { p.classList.remove('ring-2', 'scale-105'); });
+    });
+  });
+
+  // 호버: 파이토케미컬 노드
+  phytoNodes.forEach(phytoEl => {
+    phytoEl.addEventListener('mouseenter', () => {
+      activePhyto = phytoEl.getAttribute('data-phyto');
+      drawAll(null, activePhyto);
+      // 해당 식재료 노드 강조
+      ingNodes.forEach(ing => {
+        const phytos = (ing.getAttribute('data-phytos') || '').split(',');
+        const hit = phytos.includes(activePhyto);
+        ing.classList.toggle('ring-2', hit);
+        ing.classList.toggle('ring-emerald-400', hit);
+      });
+    });
+    phytoEl.addEventListener('mouseleave', () => {
+      activePhyto = null;
+      drawAll(null, null);
+      ingNodes.forEach(ing => { ing.classList.remove('ring-2', 'ring-emerald-400'); });
+    });
+  });
+}
+
+// ─ 매핑 뷰 렌더 ─
+function renderMappingView(allIng) {
+  const container = document.getElementById('breakdown-map-view');
+  if (!container) return;
+
+  // 오늘 식단에서 실제 등장한 파이토케미컬 계열만
+  const presentPhytoKeys = [...new Set(allIng.flatMap(i => i.phytos))];
+  // PRF / non-PRF 분리
+  const prfIngs  = allIng.filter(i => i.prf);
+  const otherIngs = allIng.filter(i => !i.prf && i.phytos.length > 0); // phyto 있는 것만
+
+  function ingNode(ing) {
+    const cat  = FOOD_CATEGORIES[ing.cat] || {};
+    const ring = ing.prf ? 'border-emerald-400 bg-emerald-50' : 'border-gray-200 bg-gray-50';
+    const txt  = ing.prf ? 'text-emerald-800' : 'text-gray-500';
+    return '<div data-ing="' + ing.name + '" data-phytos="' + ing.phytos.join(',') + '"'
+      + ' class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 cursor-pointer select-none transition-transform ' + ring + ' ' + txt + '"'
+      + ' title="' + ing.name + ' ' + ing.totalGrams + 'g · ' + ing.totalKcal + 'kcal">'
+      + '<span class="text-base leading-none">' + (cat.icon || '🔸') + '</span>'
+      + '<span class="text-xs font-semibold whitespace-nowrap">' + ing.name + '</span>'
+      + (ing.prf
+        ? '<span class="text-xs text-emerald-500 font-bold ml-0.5">PRF</span>'
+        : '')
+      + '</div>';
+  }
+
+  function phytoNode(key) {
+    const g = PHYTOCHEMICAL_GROUPS[key];
+    if (!g) return '';
+    return '<div data-phyto="' + key + '"'
+      + ' class="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer select-none transition-transform border-2 text-white font-semibold text-xs whitespace-nowrap"'
+      + ' style="background:' + g.color + '; border-color:' + g.color + ';"'
+      + ' title="' + g.name + ': ' + g.benefits.join(', ') + '">'
+      + '<span class="text-sm leading-none">' + g.icon + '</span>'
+      + '<span>' + g.name + '</span>'
+      + '</div>';
+  }
+
+  // 미등장 파이토케미컬 (회색으로 표시)
+  const absentPhytoKeys = Object.keys(PHYTOCHEMICAL_GROUPS).filter(k => !presentPhytoKeys.includes(k));
+
+  container.innerHTML =
+    // 범례
+    '<div class="flex flex-wrap items-center gap-4 text-xs text-gray-500 mb-5 pb-4 border-b border-gray-100">'
+    + '<span><span class="inline-block w-3 h-3 rounded-full bg-emerald-400 mr-1"></span>PRF 식재료 (PDI 산입)</span>'
+    + '<span><span class="inline-block w-3 h-3 rounded-full bg-gray-300 mr-1"></span>기타 식재료</span>'
+    + '<span class="text-amber-600"><i class="fas fa-info-circle mr-1"></i>호버하면 연결선이 강조됩니다 · 파이토케미컬 매핑은 추정 정보</span>'
+    + '</div>'
+
+    // 매핑 래퍼 (상대 위치 — SVG 오버레이용)
+    + '<div id="mapping-wrap" class="relative">'
+
+    // ── 3-column 레이아웃 ──
+    + '<div class="grid grid-cols-[1fr_60px_1fr] gap-0 items-start">'
+
+    // 왼쪽: 식재료
+    + '<div class="flex flex-col gap-2 items-end pr-2">'
+    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 self-end">식재료</div>'
+    + prfIngs.map(ingNode).join('')
+    + (otherIngs.length
+        ? '<div class="text-xs text-gray-300 mt-3 mb-1 self-end">기타</div>' + otherIngs.map(ingNode).join('')
+        : '')
+    + '</div>'
+
+    // 가운데: SVG 캔버스
+    + '<div class="relative"><svg id="mapping-svg" class="absolute inset-0 pointer-events-none overflow-visible" style="left:-120px;width:calc(100%+240px);top:0"></svg></div>'
+
+    // 오른쪽: 파이토케미컬 계열
+    + '<div class="flex flex-col gap-2 items-start pl-2">'
+    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">파이토케미컬 계열 <span class="font-normal">(추정)</span></div>'
+    + presentPhytoKeys.map(phytoNode).join('')
+    + (absentPhytoKeys.length
+        ? '<div class="text-xs text-gray-300 mt-3 mb-1">미등장 계열</div>'
+          + absentPhytoKeys.map(k => {
+              const g = PHYTOCHEMICAL_GROUPS[k];
+              return g
+                ? '<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 border-gray-200 text-gray-300 text-xs font-semibold opacity-50">'
+                  + g.icon + ' ' + g.name + '</div>'
+                : '';
+            }).join('')
+        : '')
+    + '</div>'
+
+    + '</div>' // grid
+    + '</div>'; // mapping-wrap
+}
+
+// ─ 식재료 분해 테이블 ─
+function renderIngredientBreakdown(r) {
+  const container = document.getElementById('ingredient-breakdown');
+  if (!container) return;
+
+  const allIng = getMergedIngredients(r);
   const prfList = allIng.filter(i => i.prf);
   const nonPrf  = allIng.filter(i => !i.prf);
 
+  // ── 탭 헤더 ──
+  const tabsHtml =
+    '<div class="flex gap-2 mb-5">'
+    + '<button id="tab-map" onclick="switchBreakdownTab(\'map\')"'
+    + '  class="px-4 py-2 rounded-xl text-sm font-medium border border-emerald-700 bg-emerald-700 text-white transition">'
+    + '  <i class="fas fa-project-diagram mr-1.5"></i>식재료 → 파이토케미컬 매핑'
+    + '</button>'
+    + '<button id="tab-table" onclick="switchBreakdownTab(\'table\')"'
+    + '  class="px-4 py-2 rounded-xl text-sm font-medium border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 transition">'
+    + '  <i class="fas fa-table mr-1.5"></i>상세 테이블'
+    + '</button>'
+    + '</div>';
+
+  // ── 매핑 뷰 HTML (기본 표시) ──
+  const mapViewHtml = '<div id="breakdown-map-view"></div>';
+
+  // ── 테이블 뷰 HTML ──
   function ingRow(i) {
     const cat = FOOD_CATEGORIES[i.cat] || {};
     const phytoChips = i.phytos.map(p => {
       const g = PHYTOCHEMICAL_GROUPS[p];
       return g ? '<span class="text-xs px-1.5 py-0.5 rounded text-white" style="background:' + g.color + '">' + g.name + '</span>' : '';
     }).join('');
-    return '<tr class="border-b border-gray-50 hover:bg-gray-50">'
+    return '<tr class="border-b border-gray-50 hover:bg-gray-50 transition">'
       + '<td class="py-2 px-3 text-sm font-medium text-gray-900">' + (cat.icon || '') + ' ' + i.name + '</td>'
       + '<td class="py-2 px-3 text-xs text-gray-500">' + cat.name + '</td>'
       + '<td class="py-2 px-3 text-xs text-right text-gray-600">' + i.totalGrams + 'g</td>'
@@ -576,9 +813,8 @@ function renderIngredientBreakdown(r) {
       + '<td class="py-2 px-3"><div class="flex flex-wrap gap-1">' + phytoChips + '</div></td>'
       + '</tr>';
   }
-
-  container.innerHTML =
-    '<div class="overflow-x-auto">'
+  const tableViewHtml =
+    '<div id="breakdown-table-view" class="hidden overflow-x-auto">'
     + '<table class="w-full text-sm">'
     + '<thead><tr class="bg-emerald-50 text-emerald-800">'
     + '<th class="py-2 px-3 text-left text-xs font-bold">식재료</th>'
@@ -588,9 +824,21 @@ function renderIngredientBreakdown(r) {
     + '<th class="py-2 px-3 text-left text-xs font-bold">파이토케미컬 <span class="font-normal text-gray-400">(추정)</span></th>'
     + '</tr></thead>'
     + '<tbody>'
-    + (prfList.length ? '<tr class="bg-emerald-50/50"><td colspan="5" class="py-1 px-3 text-xs font-bold text-emerald-700">● PRF 식재료 (파이토케미컬 풍부)</td></tr>' + prfList.map(ingRow).join('') : '')
-    + (nonPrf.length  ? '<tr class="bg-gray-50"><td colspan="5" class="py-1 px-3 text-xs font-bold text-gray-500">○ 기타 식재료</td></tr>' + nonPrf.map(ingRow).join('') : '')
+    + (prfList.length
+        ? '<tr class="bg-emerald-50/50"><td colspan="5" class="py-1 px-3 text-xs font-bold text-emerald-700">● PRF 식재료</td></tr>'
+          + prfList.map(ingRow).join('')
+        : '')
+    + (nonPrf.length
+        ? '<tr class="bg-gray-50"><td colspan="5" class="py-1 px-3 text-xs font-bold text-gray-500">○ 기타 식재료</td></tr>'
+          + nonPrf.map(ingRow).join('')
+        : '')
     + '</tbody></table></div>';
+
+  container.innerHTML = tabsHtml + mapViewHtml + tableViewHtml;
+
+  // 매핑 뷰 내용 채우고 연결선 그리기
+  renderMappingView(allIng);
+  setTimeout(drawMappingLines, 120);
 }
 
 // ─ 도넛 차트 ─
