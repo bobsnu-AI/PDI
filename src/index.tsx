@@ -1,12 +1,16 @@
 import { Hono } from 'hono'
-import { renderer } from './renderer'
+import appScript from '../public/static/app.js?raw'
+import htmlTemplate from '../public/index.html?raw'
 
 const app = new Hono()
 
-app.use(renderer)
-
-app.get('/', (c) => {
-  return c.render(<h1>Hello!</h1>)
+app.get('*', (c) => {
+  // Inline the app.js into the HTML
+  const html = htmlTemplate.replace(
+    '<script src="/static/app.js"></script>',
+    `<script>${appScript}</script>`
+  )
+  return c.html(html)
 })
 
 export default app
