@@ -534,256 +534,303 @@ function getMergedIngredients(r) {
 }
 
 // ══════════════════════════════════════════════
-// 식재료 분해 분석 (선형 플로우: 목록 → 식품군 매핑 → 파이토케미컬 매핑)
+// 생키 플로우차트: 음식 → 식재료(식품군) → 파이토케미컬
 // ══════════════════════════════════════════════
 
-// ─ SVG 베지어 연결선 그리기 (wrapId 기준) ─
-function drawLines(wrapId) {
-  const wrap = document.getElementById(wrapId);
+function renderIngredientBreakdown(r) {
+  const container = document.getElementById('ingredient-breakdown');
+  if (!container) return;
+
+  const allIng = getMergedIngredients(r);
+
+  // ── 데이터 준비 ──
+  // Col 1: 음식(레시피) — addedMeals 에서
+  const meals = addedMeals; // [{ name, meal, analysis }]
+
+  // Col 2: 식재료+식품군 (중복 제거됨)
+  // Col 3: 파이토케미컬
+  const presentPhytoKeys = [...new Set(allIng.flatMap(i => i.phytos))];
+
+  // 엣지 정의
+  // meal → ingredient: 어떤 meal이 어떤 ing를 포함하는지
+  const mealToIng = {}; // mealIdx → Set(ingName)
+  meals.forEach((m, mi) => {
+    mealToIng[mi] = new Set();
+    const a = m.analysis;
+    if (a && a.ingredients) {
+      a.ingredients.forEach(ing => {
+        // mergedIngredients 의 key는 name|cat
+        const merged = allIng.find(x => x.name === ing.name);
+        if (merged) mealToIng[mi].add(merged.name);
+      });
+    }
+  });
+
+  // ing → phyto
+  const ingToPhyto = {}; // ingName → [phytoKey]
+  allIng.forEach(i => { ingToPhyto[i.name] = i.phytos; });
+
+  // ── 컨테이너 HTML 생성 ──
+  container.innerHTML =
+    '<div class="text-xs text-amber-600 mb-4 flex items-center gap-2">'
+    + '<i class="fas fa-info-circle"></i>'
+    + '<span>노드에 마우스를 올리면 경로가 강조됩니다 · 파이토케미컬은 binary 존재 여부 추정</span>'
+    + '</div>'
+    + '<div id="sankey-wrap" style="position:relative;overflow:visible">'
+    // 3열 그리드
+    + '<div id="sankey-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;align-items:start;position:relative">'
+
+    // ── 열1: 음식 ──
+    + '<div id="col-meal" style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;padding-right:40px">'
+    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2" style="align-self:flex-end">🍽 음식</div>'
+    + meals.map((m, mi) => {
+        const mealLabel = { '아침':'🌅','점심':'☀️','저녁':'🌙','간식':'🍪' }[m.meal] || '🍽';
+        return '<div id="node-meal-' + mi + '" data-col="meal" data-id="' + mi + '"'
+          + ' class="sankey-node flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 cursor-pointer select-none transition-all border-blue-300 bg-blue-50 text-blue-800 text-xs font-semibold whitespace-nowrap"'
+          + ' style="max-width:140px">'
+          + '<span class="text-base leading-none">' + mealLabel + '</span>'
+          + '<div style="overflow:hidden">'
+          + '<div class="truncate font-bold" style="max-width:100px">' + m.name + '</div>'
+          + '<div class="text-blue-400 font-normal">' + m.meal + ' · ' + Math.round((m.analysis||{}).totalCal||0) + 'kcal</div>'
+          + '</div>'
+          + '</div>';
+      }).join('')
+    + '</div>'
+
+    // ── 열2: 식재료(식품군) ──
+    + '<div id="col-ing" style="display:flex;flex-direction:column;gap:8px;align-items:center;padding:0 20px">'
+    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">🥬 식재료 (식품군)</div>'
+    + allIng.map(ing => {
+        const cat  = FOOD_CATEGORIES[ing.cat] || {};
+        const isPRF = ing.prf;
+        const bg   = isPRF ? 'border-emerald-400 bg-emerald-50 text-emerald-800' : 'border-gray-200 bg-gray-50 text-gray-500';
+        return '<div id="node-ing-' + ing.name.replace(/\s/g,'_') + '" data-col="ing" data-id="' + ing.name + '"'
+          + ' class="sankey-node flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 cursor-pointer select-none transition-all text-xs font-semibold whitespace-nowrap ' + bg + '">'
+          + '<span class="text-sm leading-none">' + (cat.icon||'🔸') + '</span>'
+          + '<span>' + ing.name + '</span>'
+          + (isPRF ? '<span class="text-emerald-500 font-bold text-xs">PRF</span>' : '')
+          + '</div>';
+      }).join('')
+    + '</div>'
+
+    // ── 열3: 파이토케미컬 ──
+    + '<div id="col-phyto" style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding-left:40px">'
+    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">🧬 파이토케미컬 <span class="font-normal">(추정)</span></div>'
+    + presentPhytoKeys.map(key => {
+        const g = PHYTOCHEMICAL_GROUPS[key];
+        if (!g) return '';
+        return '<div id="node-phyto-' + key + '" data-col="phyto" data-id="' + key + '"'
+          + ' class="sankey-node flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer select-none transition-all border-2 text-white text-xs font-semibold whitespace-nowrap"'
+          + ' style="background:' + g.color + ';border-color:' + g.color + ';">'
+          + '<span class="text-sm leading-none">' + g.icon + '</span>'
+          + '<span>' + g.name + '</span>'
+          + '</div>';
+      }).join('')
+    + '</div>'
+
+    + '</div>' // sankey-grid
+    + '</div>'; // sankey-wrap
+
+  // ── SVG + 인터랙션 — 2 프레임 후 그리기 ──
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto });
+  }));
+}
+
+// ── 생키 SVG 그리기 ──
+function drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto }) {
+  const wrap = document.getElementById('sankey-wrap');
   if (!wrap) return;
 
   // 기존 SVG 제거
-  const old = wrap.querySelector('svg.line-svg');
+  const old = wrap.querySelector('svg.sankey-svg');
   if (old) old.remove();
 
   const wRect = wrap.getBoundingClientRect();
   if (!wRect.width) return;
 
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.classList.add('line-svg');
+  svg.classList.add('sankey-svg');
   svg.setAttribute('width',  wRect.width);
   svg.setAttribute('height', wRect.height);
-  svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;overflow:visible;z-index:2';
+  svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;overflow:visible;z-index:1';
   wrap.appendChild(svg);
 
-  const leftNodes  = wrap.querySelectorAll('[data-left]');
-  const rightNodes = wrap.querySelectorAll('[data-right]');
-
-  function cx(el) {
+  function mid(el) {
     const r = el.getBoundingClientRect();
     return { x: r.left - wRect.left + r.width / 2, y: r.top - wRect.top + r.height / 2 };
   }
+  function right(el) {
+    const r = el.getBoundingClientRect();
+    return { x: r.right - wRect.left, y: r.top - wRect.top + r.height / 2 };
+  }
+  function left(el) {
+    const r = el.getBoundingClientRect();
+    return { x: r.left - wRect.left, y: r.top - wRect.top + r.height / 2 };
+  }
 
-  function draw(filterL, filterR) {
+  // 엣지 목록 생성
+  // A: meal → ing
+  const edgesA = [];
+  meals.forEach((m, mi) => {
+    (mealToIng[mi] || new Set()).forEach(ingName => {
+      edgesA.push({ mealIdx: mi, ingName });
+    });
+  });
+  // B: ing → phyto
+  const edgesB = [];
+  allIng.forEach(ing => {
+    (ingToPhyto[ing.name] || []).forEach(phytoKey => {
+      edgesB.push({ ingName: ing.name, phytoKey });
+    });
+  });
+
+  function getNode(col, id) {
+    if (col === 'meal') return document.getElementById('node-meal-' + id);
+    if (col === 'ing')  return document.getElementById('node-ing-' + String(id).replace(/\s/g,'_'));
+    if (col === 'phyto')return document.getElementById('node-phyto-' + id);
+    return null;
+  }
+
+  function pathD(p1, p2) {
+    const cx = (p1.x + p2.x) / 2;
+    return 'M'+p1.x+' '+p1.y+' C'+cx+' '+p1.y+','+cx+' '+p2.y+','+p2.x+' '+p2.y;
+  }
+
+  function drawAll(highlightMeal, highlightIng, highlightPhyto) {
     svg.innerHTML = '';
-    leftNodes.forEach(lEl => {
-      const lKey   = lEl.getAttribute('data-left');
-      const rKeys  = (lEl.getAttribute('data-rights') || '').split(',').filter(Boolean);
-      rKeys.forEach(rKey => {
-        const rEl = wrap.querySelector('[data-right="' + rKey + '"]');
-        if (!rEl) return;
-        const active = (!filterL && !filterR) || filterL === lKey || filterR === rKey;
-        const p1 = cx(lEl), p2 = cx(rEl);
-        const mx = (p1.x + p2.x) / 2;
-        const col = rEl.getAttribute('data-color') || '#9CA3AF';
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', 'M'+p1.x+' '+p1.y+' C'+mx+' '+p1.y+','+mx+' '+p2.y+','+p2.x+' '+p2.y);
-        path.setAttribute('fill', 'none');
-        path.setAttribute('stroke', active ? col : '#E5E7EB');
-        path.setAttribute('stroke-width', active ? '2.5' : '1');
-        path.setAttribute('opacity',      active ? '0.85' : '0.2');
-        if (!active) path.setAttribute('stroke-dasharray', '4 3');
-        svg.appendChild(path);
+
+    edgesA.forEach(({ mealIdx, ingName }) => {
+      const mEl = getNode('meal', mealIdx);
+      const iEl = getNode('ing', ingName);
+      if (!mEl || !iEl) return;
+      const active = highlightMeal === null && highlightIng === null && highlightPhyto === null
+        || highlightMeal === mealIdx
+        || highlightIng  === ingName;
+      const p1 = right(mEl), p2 = left(iEl);
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pathD(p1, p2));
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', active ? '#3B82F6' : '#E5E7EB');
+      path.setAttribute('stroke-width', active ? '2.5' : '1');
+      path.setAttribute('opacity', active ? '0.8' : '0.2');
+      if (!active) path.setAttribute('stroke-dasharray', '4 3');
+      svg.appendChild(path);
+    });
+
+    edgesB.forEach(({ ingName, phytoKey }) => {
+      const iEl = getNode('ing', ingName);
+      const pEl = getNode('phyto', phytoKey);
+      if (!iEl || !pEl) return;
+      const active = highlightMeal === null && highlightIng === null && highlightPhyto === null
+        || highlightIng   === ingName
+        || highlightPhyto === phytoKey;
+      const g   = PHYTOCHEMICAL_GROUPS[phytoKey];
+      const col = g ? g.color : '#9CA3AF';
+      const p1 = right(iEl), p2 = left(pEl);
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pathD(p1, p2));
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', active ? col : '#E5E7EB');
+      path.setAttribute('stroke-width', active ? '2.5' : '1');
+      path.setAttribute('opacity', active ? '0.8' : '0.2');
+      if (!active) path.setAttribute('stroke-dasharray', '4 3');
+      svg.appendChild(path);
+    });
+  }
+
+  drawAll(null, null, null);
+
+  // 호버 인터랙션
+  const allNodes = wrap.querySelectorAll('.sankey-node');
+
+  function highlight(col, id) {
+    // 관련 노드 ID 계산
+    const relMeals  = new Set();
+    const relIngs   = new Set();
+    const relPhytos = new Set();
+
+    if (col === 'meal') {
+      relMeals.add(id);
+      (mealToIng[id] || new Set()).forEach(n => {
+        relIngs.add(n);
+        (ingToPhyto[n] || []).forEach(p => relPhytos.add(p));
       });
-    });
-  }
-
-  draw(null, null);
-
-  leftNodes.forEach(lEl => {
-    lEl.addEventListener('mouseenter', () => {
-      const lKey = lEl.getAttribute('data-left');
-      draw(lKey, null);
-      const rKeys = (lEl.getAttribute('data-rights') || '').split(',');
-      rightNodes.forEach(r => {
-        const hit = rKeys.includes(r.getAttribute('data-right'));
-        r.classList.toggle('ring-2', hit); r.classList.toggle('scale-105', hit);
+    } else if (col === 'ing') {
+      relIngs.add(id);
+      meals.forEach((m, mi) => { if ((mealToIng[mi]||new Set()).has(id)) relMeals.add(mi); });
+      (ingToPhyto[id] || []).forEach(p => relPhytos.add(p));
+    } else if (col === 'phyto') {
+      relPhytos.add(id);
+      allIng.forEach(ing => {
+        if ((ingToPhyto[ing.name]||[]).includes(id)) {
+          relIngs.add(ing.name);
+          meals.forEach((m, mi) => { if ((mealToIng[mi]||new Set()).has(ing.name)) relMeals.add(mi); });
+        }
       });
+    }
+
+    // 노드 강조/흐림
+    allNodes.forEach(n => {
+      const nc = n.getAttribute('data-col');
+      const ni = n.getAttribute('data-id');
+      let hit = false;
+      if (nc === 'meal')  hit = relMeals.has(Number(ni)) || relMeals.has(ni);
+      if (nc === 'ing')   hit = relIngs.has(ni);
+      if (nc === 'phyto') hit = relPhytos.has(ni);
+      n.style.opacity = hit ? '1' : '0.2';
+      n.style.transform = hit ? 'scale(1.05)' : '';
     });
-    lEl.addEventListener('mouseleave', () => {
-      draw(null, null);
-      rightNodes.forEach(r => r.classList.remove('ring-2','scale-105'));
+
+    // 엣지 강조
+    const hm = col === 'meal'  ? id   : (relMeals.size  === 1 ? [...relMeals][0]  : null);
+    const hi = col === 'ing'   ? id   : null;
+    const hp = col === 'phyto' ? id   : null;
+    // 직접 drawAll 로 전달
+    svg.innerHTML = '';
+    edgesA.forEach(({ mealIdx, ingName }) => {
+      const mEl = getNode('meal', mealIdx);
+      const iEl = getNode('ing', ingName);
+      if (!mEl || !iEl) return;
+      const active = relMeals.has(mealIdx) && relIngs.has(ingName);
+      const p1 = right(mEl), p2 = left(iEl);
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pathD(p1, p2));
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', active ? '#3B82F6' : '#E5E7EB');
+      path.setAttribute('stroke-width', active ? '2.5' : '1');
+      path.setAttribute('opacity', active ? '0.85' : '0.1');
+      if (!active) path.setAttribute('stroke-dasharray', '4 3');
+      svg.appendChild(path);
     });
+    edgesB.forEach(({ ingName, phytoKey }) => {
+      const iEl = getNode('ing', ingName);
+      const pEl = getNode('phyto', phytoKey);
+      if (!iEl || !pEl) return;
+      const active = relIngs.has(ingName) && relPhytos.has(phytoKey);
+      const g   = PHYTOCHEMICAL_GROUPS[phytoKey];
+      const col2 = g ? g.color : '#9CA3AF';
+      const p1 = right(iEl), p2 = left(pEl);
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pathD(p1, p2));
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', active ? col2 : '#E5E7EB');
+      path.setAttribute('stroke-width', active ? '2.5' : '1');
+      path.setAttribute('opacity', active ? '0.85' : '0.1');
+      if (!active) path.setAttribute('stroke-dasharray', '4 3');
+      svg.appendChild(path);
+    });
+  }
+
+  function unhighlight() {
+    allNodes.forEach(n => { n.style.opacity = '1'; n.style.transform = ''; });
+    drawAll(null, null, null);
+  }
+
+  allNodes.forEach(n => {
+    n.addEventListener('mouseenter', () => highlight(n.getAttribute('data-col'), n.getAttribute('data-id') == parseInt(n.getAttribute('data-id')) ? Number(n.getAttribute('data-id')) : n.getAttribute('data-id')));
+    n.addEventListener('mouseleave', unhighlight);
   });
-
-  rightNodes.forEach(rEl => {
-    rEl.addEventListener('mouseenter', () => {
-      const rKey = rEl.getAttribute('data-right');
-      draw(null, rKey);
-      leftNodes.forEach(l => {
-        const hit = (l.getAttribute('data-rights')||'').split(',').includes(rKey);
-        l.classList.toggle('ring-2', hit); l.classList.toggle('ring-emerald-400', hit);
-      });
-    });
-    rEl.addEventListener('mouseleave', () => {
-      draw(null, null);
-      leftNodes.forEach(l => l.classList.remove('ring-2','ring-emerald-400'));
-    });
-  });
-}
-
-// ─ 식재료 분해 분석 (메인 렌더) ─
-function renderIngredientBreakdown(r) {
-  const container = document.getElementById('ingredient-breakdown');
-  if (!container) return;
-
-  const allIng  = getMergedIngredients(r);
-  const prfList = allIng.filter(i => i.prf);
-  const nonPrf  = allIng.filter(i => !i.prf);
-
-  // ════ ① 식재료 목록 ════
-  function ingPill(i, withPhyto) {
-    const cat  = FOOD_CATEGORIES[i.cat] || {};
-    const ring = i.prf ? 'border-emerald-400 bg-emerald-50 text-emerald-800' : 'border-gray-200 bg-gray-50 text-gray-500';
-    const phytoChips = withPhyto ? i.phytos.map(p => {
-      const g = PHYTOCHEMICAL_GROUPS[p];
-      return g ? '<span class="text-xs px-1.5 py-0.5 rounded-full text-white ml-1" style="background:' + g.color + '">' + g.name + '</span>' : '';
-    }).join('') : '';
-    return '<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 ' + ring + ' text-xs font-semibold">'
-      + '<span class="text-sm leading-none">' + (cat.icon || '🔸') + '</span>'
-      + '<span class="whitespace-nowrap">' + i.name + '</span>'
-      + (i.prf ? '<span class="text-emerald-500 font-bold">PRF</span>' : '')
-      + '<span class="text-gray-400 font-normal ml-0.5">' + i.totalKcal + 'kcal</span>'
-      + phytoChips
-      + '</div>';
-  }
-
-  const listHtml =
-    '<div class="mb-8">'
-    + '<div class="flex items-center gap-2 mb-3">'
-    + '<span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">1</span>'
-    + '<span class="text-sm font-bold text-gray-700">식재료 분해</span>'
-    + '<span class="text-xs text-gray-400">· 입력한 레시피를 식재료 단위로 분해</span>'
-    + '</div>'
-    + (prfList.length
-      ? '<div class="mb-2"><span class="text-xs font-bold text-emerald-600 mr-2">● PRF 식재료</span>'
-        + '<div class="flex flex-wrap gap-2 mt-1.5">' + prfList.map(i => ingPill(i, false)).join('') + '</div></div>'
-      : '')
-    + (nonPrf.length
-      ? '<div><span class="text-xs font-bold text-gray-400 mr-2">○ 기타 식재료</span>'
-        + '<div class="flex flex-wrap gap-2 mt-1.5">' + nonPrf.map(i => ingPill(i, false)).join('') + '</div></div>'
-      : '')
-    + '</div>';
-
-  // ════ ② 식품군 매핑 (식재료 → 식품군) ════
-  // 식품군별로 식재료를 그룹핑
-  const catGroups = {};
-  allIng.forEach(i => {
-    if (!catGroups[i.cat]) catGroups[i.cat] = [];
-    catGroups[i.cat].push(i);
-  });
-
-  function catNode(catKey) {
-    const cat = FOOD_CATEGORIES[catKey] || {};
-    const ings = catGroups[catKey] || [];
-    const isPRF = cat.isPRF;
-    const bg = isPRF ? 'bg-emerald-50 border-emerald-300' : 'bg-gray-50 border-gray-200';
-    const tc = isPRF ? 'text-emerald-800' : 'text-gray-500';
-    return '<div data-right="' + catKey + '" data-color="' + (cat.color||'#9CA3AF') + '"'
-      + ' class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 cursor-pointer select-none transition-transform text-xs font-semibold whitespace-nowrap ' + bg + ' ' + tc + '">'
-      + '<span class="text-sm leading-none">' + (cat.icon||'🔸') + '</span>'
-      + '<span>' + (cat.name||catKey) + '</span>'
-      + (isPRF ? '<span class="text-emerald-500 font-bold">PRF</span>' : '')
-      + '</div>';
-  }
-
-  function ingNodeForCat(ing) {
-    const cat = FOOD_CATEGORIES[ing.cat] || {};
-    return '<div data-left="' + ing.name + '" data-rights="' + ing.cat + '"'
-      + ' class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 cursor-pointer select-none transition-transform '
-      + (ing.prf ? 'border-emerald-400 bg-emerald-50 text-emerald-800' : 'border-gray-200 bg-gray-50 text-gray-500') + ' text-xs font-semibold whitespace-nowrap">'
-      + '<span class="text-sm leading-none">' + (cat.icon||'🔸') + '</span>'
-      + '<span>' + ing.name + '</span>'
-      + (ing.prf ? '<span class="text-emerald-500 font-bold">PRF</span>' : '')
-      + '</div>';
-  }
-
-  const presentCatKeys = [...new Set(allIng.map(i => i.cat))];
-
-  const catMapHtml =
-    '<div class="mb-8">'
-    + '<div class="flex items-center gap-2 mb-3">'
-    + '<span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">2</span>'
-    + '<span class="text-sm font-bold text-gray-700">식품군 매핑</span>'
-    + '<span class="text-xs text-gray-400">· 각 식재료가 속하는 식품군 (호버 시 연결선 강조)</span>'
-    + '</div>'
-    + '<div id="catmap-wrap" style="position:relative">'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:start">'
-    + '<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;padding-right:56px">'
-    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1" style="align-self:flex-end">식재료</div>'
-    + allIng.map(ingNodeForCat).join('')
-    + '</div>'
-    + '<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding-left:56px">'
-    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">식품군</div>'
-    + presentCatKeys.map(catNode).join('')
-    + '</div>'
-    + '</div>'
-    + '</div>'  // catmap-wrap
-    + '</div>';
-
-  // ════ ③ 파이토케미컬 매핑 (식재료 → 파이토케미컬) ════
-  const ingWithPhyto = allIng.filter(i => i.phytos.length > 0);
-  const presentPhytoKeys = [...new Set(allIng.flatMap(i => i.phytos))];
-  const absentPhytoKeys  = Object.keys(PHYTOCHEMICAL_GROUPS).filter(k => !presentPhytoKeys.includes(k));
-
-  function ingNodeForPhyto(ing) {
-    const cat = FOOD_CATEGORIES[ing.cat] || {};
-    return '<div data-left="' + ing.name + '" data-rights="' + ing.phytos.join(',') + '"'
-      + ' class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 cursor-pointer select-none transition-transform '
-      + (ing.prf ? 'border-emerald-400 bg-emerald-50 text-emerald-800' : 'border-gray-200 bg-gray-50 text-gray-500') + ' text-xs font-semibold whitespace-nowrap">'
-      + '<span class="text-sm leading-none">' + (cat.icon||'🔸') + '</span>'
-      + '<span>' + ing.name + '</span>'
-      + (ing.prf ? '<span class="text-emerald-500 font-bold">PRF</span>' : '')
-      + '</div>';
-  }
-
-  function phytoNodeForMap(key) {
-    const g = PHYTOCHEMICAL_GROUPS[key];
-    if (!g) return '';
-    return '<div data-right="' + key + '" data-color="' + g.color + '"'
-      + ' class="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer select-none transition-transform border-2 text-white text-xs font-semibold whitespace-nowrap"'
-      + ' style="background:' + g.color + ';border-color:' + g.color + ';">'
-      + '<span class="text-sm leading-none">' + g.icon + '</span>'
-      + '<span>' + g.name + '</span>'
-      + '</div>';
-  }
-
-  const phytoMapHtml = ingWithPhyto.length === 0 ? '' :
-    '<div class="mb-6">'
-    + '<div class="flex items-center gap-2 mb-1">'
-    + '<span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">3</span>'
-    + '<span class="text-sm font-bold text-gray-700">파이토케미컬 매핑</span>'
-    + '<span class="text-xs text-gray-400">· 식재료별 파이토케미컬 계열 추정 (호버 시 연결선 강조)</span>'
-    + '</div>'
-    + '<div class="text-xs text-amber-600 mb-3 ml-8"><i class="fas fa-info-circle mr-1"></i>binary 존재 여부 추정 — 정량 함량(mg) 데이터 아님</div>'
-    + '<div id="phytomap-wrap" style="position:relative">'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:start">'
-    + '<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;padding-right:56px">'
-    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1" style="align-self:flex-end">식재료</div>'
-    + ingWithPhyto.map(ingNodeForPhyto).join('')
-    + '</div>'
-    + '<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding-left:56px">'
-    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">파이토케미컬 계열 <span class="font-normal">(추정)</span></div>'
-    + presentPhytoKeys.map(phytoNodeForMap).join('')
-    + (absentPhytoKeys.length
-        ? '<div class="text-xs text-gray-300 mt-3 mb-1">미등장</div>'
-          + absentPhytoKeys.map(k => {
-              const g = PHYTOCHEMICAL_GROUPS[k];
-              return g ? '<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 border-gray-200 text-gray-300 text-xs font-semibold opacity-40 whitespace-nowrap">' + g.icon + ' ' + g.name + '</div>' : '';
-            }).join('')
-        : '')
-    + '</div>'
-    + '</div>'
-    + '</div>'  // phytomap-wrap
-    + '</div>';
-
-  container.innerHTML = listHtml + catMapHtml + phytoMapHtml;
-
-  // SVG 그리기 — DOM 페인트 완료 후 2 프레임 대기
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    drawLines('catmap-wrap');
-    drawLines('phytomap-wrap');
-  }));
 }
 
 // ─ 도넛 차트 ─
