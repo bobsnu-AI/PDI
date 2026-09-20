@@ -344,7 +344,15 @@
     <div id="step-4" class="hidden animate-fade-in">
       <!-- PDI Score Card -->
       <div class="bg-white rounded-3xl shadow-lg p-8 mb-6">
-        <h3 class="text-xl font-bold text-gray-900 mb-6">📊 나의 PDI 평가 결과</h3>
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
+          <h3 class="text-xl font-bold text-gray-900">📊 나의 PDI 평가 결과</h3>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2 text-xs text-emerald-800 leading-relaxed max-w-md">
+            <span class="font-bold">📐 계산 방법 (McCarty, 2004)</span><br>
+            PDI = PRF 식품군 칼로리 ÷ 총 칼로리 × 100<br>
+            <span class="text-emerald-600">PRF: 통곡물·두류·채소·과일·견과·식물성오일·차류</span><br>
+            <span class="text-emerald-500 text-xs">목표 40% 근거: Gamba et al. 2023, CoLaus n=3,879</span>
+          </div>
+        </div>
         <div class="grid md:grid-cols-3 gap-8">
           <div class="flex flex-col items-center">
             <div class="relative w-48 h-48">
@@ -392,7 +400,16 @@
 
       <!-- Phytochemical Analysis -->
       <div class="bg-white rounded-3xl shadow-lg p-8 mb-6">
-        <h3 class="text-xl font-bold text-gray-900 mb-6">🧬 파이토케미컬 계열별 분석</h3>
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <h3 class="text-xl font-bold text-gray-900">🧬 파이토케미컬 계열별 분석</h3>
+          <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-xs text-amber-800 leading-relaxed max-w-sm">
+            <span class="font-bold">⚠️ 참고용 추정 정보</span><br>
+            이 섹션은 McCarty PDI 공식 외 추가 분석입니다.<br>
+            식재료별 파이토케미컬 계열은 식품영양학 문헌 기반<br>
+            <span class="font-medium">'존재 여부(binary)' 추정</span>이며,
+            정량 함량(mg) 데이터가 아닙니다.
+          </div>
+        </div>
         <div id="phyto-analysis-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
       </div>
 
@@ -409,8 +426,16 @@
 
       <!-- Ingredient Breakdown Table -->
       <div class="bg-white rounded-3xl shadow-lg p-8 mb-6">
-        <h3 class="text-xl font-bold text-gray-900 mb-2">🥢 식재료 분해 분석</h3>
-        <p class="text-gray-500 text-sm mb-6">입력한 음식을 식재료 단위로 분해하여 식품군과 파이토케미컬을 분석합니다</p>
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-2">
+          <h3 class="text-xl font-bold text-gray-900">🥢 식재료 분해 분석</h3>
+          <div class="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2 text-xs text-blue-800 leading-relaxed max-w-sm">
+            <span class="font-bold">ℹ️ PDI 계산 근거</span><br>
+            <span class="text-emerald-700 font-medium">초록색 PRF 식재료</span>의 칼로리 합계가 분자,
+            전체 칼로리가 분모입니다.<br>
+            파이토케미컬 열은 <span class="font-medium">참고용 추정</span>입니다.
+          </div>
+        </div>
+        <p class="text-gray-500 text-sm mb-6">입력한 음식을 식재료 단위로 분해하여 PRF 식품군 판정과 파이토케미컬 계열을 분석합니다</p>
         <div id="ingredient-breakdown"></div>
       </div>
 

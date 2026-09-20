@@ -307,10 +307,27 @@ function quickAdd(name) {
 }
 
 // ══════════════════════════════════════════════
-// PDI ENGINE  (식재료 집계 → 점수 계산)
+// PDI ENGINE  (McCarty 2004 방법론 준수)
+// ──────────────────────────────────────────────
+// PDI = PRF 식품군에서 온 kcal / 총 kcal × 100
+//
+// PRF(Phytochemical-Rich Foods) 판정 기준:
+//   통곡물 / 두류·콩가공품 / 채소·해조 / 과일 /
+//   견과·종실 / 식물성 오일 / 차·커피·코코아
+//   → INGREDIENTS[x].prf === true 로 코드화
+//
+// ※ 차류(tea)는 실제 kcal이 거의 0이므로
+//   McCarty 원 공식 그대로 실제 kcal만 산입
+//   (별도 보정값 없음)
+//
+// ※ 파이토케미컬 계열별 커버리지(phytoCoverage)는
+//   McCarty 공식 외 참고용 추정 정보입니다.
+//   개별 식재료-파이토케미컬 매핑은 식품영양학
+//   문헌(Phenol-Explorer, 농촌진흥청 식품성분DB 등)
+//   기반의 '존재 여부(binary)' 추정이며,
+//   정량 함량(mg/100g) 데이터가 아닙니다.
 // ══════════════════════════════════════════════
 function calculatePDI() {
-  // 모든 식사의 식재료를 합산
   let totalCalories = 0, prfCalories = 0;
   const categoryMap = {};
   const phytoMap    = {};
@@ -323,7 +340,7 @@ function calculatePDI() {
     for (const ing of analysis.ingredients) {
       allIngredients.push({ ...ing, dish: mealEntry.name });
 
-      // 카테고리 집계
+      // ── 식품군별 kcal 집계 ──
       if (!categoryMap[ing.cat]) {
         categoryMap[ing.cat] = {
           calories: 0, percentage: 0,
@@ -334,68 +351,107 @@ function calculatePDI() {
       categoryMap[ing.cat].calories += ing.kcal;
       categoryMap[ing.cat].ingredients.push(ing.name);
 
-      // PRF 칼로리
+      // ── McCarty PDI: PRF 식품군 kcal 그대로 산입 ──
+      // tea(차류)는 실제 kcal(≈0)을 그대로 사용
+      // — 별도 보정 없음, 공식 그대로
       if (ing.prf) {
-        prfCalories += (ing.cat === 'tea') ? 50 : ing.kcal;
+        prfCalories += ing.kcal;
       }
 
-      // 파이토케미컬 집계 (재료 개수 기준)
+      // ── 파이토케미컬 계열 추정 (참고용) ──
+      // prf:true 식품에서 어떤 계열이 검출되는지
+      // binary 추정 (함량 아님)
       for (const p of ing.phytos) {
         phytoMap[p] = (phytoMap[p] || 0) + 1;
       }
     }
   }
 
-  // 카테고리 % 계산
+  // 식품군 비율 계산
   for (const k in categoryMap) {
     categoryMap[k].percentage = totalCalories > 0
       ? (categoryMap[k].calories / totalCalories) * 100 : 0;
-    // 중복 제거
     categoryMap[k].ingredients = [...new Set(categoryMap[k].ingredients)];
   }
 
-  // PDI 점수
+  // ── PDI 점수 (McCarty 2004 공식) ──
   const pdiScore = totalCalories > 0 ? (prfCalories / totalCalories) * 100 : 0;
 
-  // 파이토케미컬 커버리지
+  // ── 파이토케미컬 커버리지 (참고용 추정) ──
   const phytoCoverage = Object.keys(PHYTOCHEMICAL_GROUPS).map(key => {
     const g = PHYTOCHEMICAL_GROUPS[key];
     const count = phytoMap[key] || 0;
+    // count = 해당 계열이 보고된 식재료 수 (binary 추정)
     let level, levelLabel;
-    if (count === 0)     { level = 'none';   levelLabel = '미섭취'; }
-    else if (count < 2)  { level = 'low';    levelLabel = '부족'; }
-    else if (count < 4)  { level = 'medium'; levelLabel = '적정'; }
-    else                 { level = 'high';   levelLabel = '충분'; }
-    return { key, name: g.name, present: count > 0, count, level, levelLabel, color: g.color, icon: g.icon, benefits: g.benefits };
+    if (count === 0)    { level = 'none';   levelLabel = '미검출'; }
+    else if (count < 2) { level = 'low';    levelLabel = '적음'; }
+    else if (count < 4) { level = 'medium'; levelLabel = '보통'; }
+    else                { level = 'high';   levelLabel = '풍부'; }
+    return { key, name: g.name, present: count > 0, count, level, levelLabel,
+             color: g.color, icon: g.icon, benefits: g.benefits };
   });
 
   const diversityScore = phytoCoverage.filter(p => p.present).length;
   const deficient = phytoCoverage.filter(p => !p.present || p.level === 'low').map(p => p.key);
 
-  // 영양 경고
+  // ── 주의사항 (McCarty 원칙 기반) ──
   const warnings = [];
-  if (addedMeals.length === 0) warnings.push('식사를 추가하지 않으셨습니다.');
-  if (!phytoMap['isoflavones']) warnings.push('이소플라본 미섭취 — 두류(두부·된장·콩나물) 식품을 추가해보세요');
   if (categoryMap['refined'] && categoryMap['refined'].percentage > 40) {
-    warnings.push('정제 곡물 비율 ' + categoryMap['refined'].percentage.toFixed(0) + '% — 통곡물로 일부 대체를 권장합니다');
+    warnings.push(
+      '정제 곡물 비율 ' + categoryMap['refined'].percentage.toFixed(0) +
+      '% — 통곡물(현미·잡곡·귀리)로 일부 대체하면 PDI를 높일 수 있습니다'
+    );
+  }
+  // PRF 식품군 중 두류 미섭취 여부 (식품군 수준 경고, McCarty 원칙)
+  if (!categoryMap['legumes']) {
+    warnings.push('두류·콩가공품 미섭취 — 두류는 핵심 PRF 식품군입니다 (된장찌개·두부·콩밥 등)');
+  }
+  if (!categoryMap['vegetables']) {
+    warnings.push('채소류 미섭취 — 채소는 핵심 PRF 식품군입니다');
   }
 
-  // 등급
+  // ── 등급 ──
   let grade, gradeLabel, gradeColor;
-  if (pdiScore >= 40)      { grade = 'excellent'; gradeLabel = '🌟 우수 (목표 달성!)'; gradeColor = '#10B981'; }
-  else if (pdiScore >= 30) { grade = 'good';      gradeLabel = '👍 양호';              gradeColor = '#3B82F6'; }
-  else if (pdiScore >= 20) { grade = 'fair';      gradeLabel = '📈 보통';              gradeColor = '#F59E0B'; }
-  else                     { grade = 'poor';      gradeLabel = '⚠️ 개선 필요';         gradeColor = '#EF4444'; }
+  if (pdiScore >= 40)      { grade = 'excellent'; gradeLabel = '🌟 목표 달성 (≥40%)'; gradeColor = '#10B981'; }
+  else if (pdiScore >= 30) { grade = 'good';      gradeLabel = '👍 양호 (30–39%)';     gradeColor = '#3B82F6'; }
+  else if (pdiScore >= 20) { grade = 'fair';      gradeLabel = '📈 보통 (20–29%)';     gradeColor = '#F59E0B'; }
+  else                     { grade = 'poor';      gradeLabel = '⚠️ 개선 필요 (<20%)';  gradeColor = '#EF4444'; }
 
-  // 개선 제안
+  // ── 식단 개선 제안 (식품군 수준, McCarty 원칙) ──
   const suggestions = [];
-  if (pdiScore < 40) suggestions.push('PRF 식재료(통곡물·두류·채소·과일) 비중을 높여 PDI 40% 목표를 달성하세요 (현재 ' + pdiScore.toFixed(1) + '%)');
-  if (!phytoMap['isoflavones'])    suggestions.push('🫘 두부·된장찌개·콩밥 등을 추가하면 이소플라본을 보충할 수 있습니다');
-  if (!phytoMap['carotenoids'])    suggestions.push('🥕 당근·고구마·단호박이 들어간 반찬이나 국을 추가해 카로티노이드를 보충하세요');
-  if (!phytoMap['catechins'])      suggestions.push('🍵 식후 녹차·홍차 한 잔으로 카테킨을 쉽게 보충할 수 있습니다');
-  if (!phytoMap['glucosinolates']) suggestions.push('🥦 배추김치·브로콜리·무가 들어간 국이나 나물로 글루코시놀레이트를 보충하세요');
-  if (!phytoMap['anthocyanins'])   suggestions.push('🫐 흑미밥·검은콩·블루베리 등 보라색 식품으로 안토시아닌을 보충하세요');
-  if (diversityScore < 6) suggestions.push('🌈 다양한 색깔의 채소·과일을 포함한 반찬으로 파이토케미컬 다양성을 높이세요 (현재 ' + diversityScore + '/12)');
+  if (pdiScore < 40) {
+    const gap = (40 - pdiScore).toFixed(1);
+    suggestions.push(
+      '📊 PRF 식품군(통곡물·두류·채소·과일·견과) 칼로리 비중을 높이면 PDI가 올라갑니다. ' +
+      '현재 ' + pdiScore.toFixed(1) + '%, 목표까지 약 ' + gap + '%p 필요합니다.'
+    );
+  }
+  // 부족한 PRF 식품군 기반 제안
+  if (!categoryMap['grains']) {
+    suggestions.push('🌾 흰쌀밥 대신 현미밥·잡곡밥을 선택하면 통곡물 PRF 칼로리가 추가됩니다');
+  }
+  if (!categoryMap['legumes']) {
+    suggestions.push('🫘 된장찌개·두부·콩나물 등 두류 반찬 1가지를 추가해보세요');
+  }
+  if (!categoryMap['vegetables']) {
+    suggestions.push('🥬 나물·김치·채소국 등 채소 반찬은 PRF 칼로리를 높이는 핵심입니다');
+  }
+  if (!categoryMap['fruits']) {
+    suggestions.push('🍎 식후 과일 1회 섭취가 PDI 향상에 효과적입니다');
+  }
+  if (!categoryMap['nuts']) {
+    suggestions.push('🥜 견과류 한 줌(호두·아몬드 등)을 간식으로 추가해보세요');
+  }
+  if (!categoryMap['tea']) {
+    suggestions.push('🍵 식후 녹차·보이차 한 잔은 칼로리 거의 없이 PRF 식품군을 추가하는 방법입니다');
+  }
+  // 파이토케미컬 다양성 보조 제안 (참고용 표시)
+  if (diversityScore < 6) {
+    suggestions.push(
+      '🌈 [참고] 다양한 색깔의 채소·과일을 포함하면 다양한 계열의 파이토케미컬을 ' +
+      '섭취할 수 있습니다 (현재 추정 ' + diversityScore + '/12 계열)'
+    );
+  }
 
   return {
     pdiScore, prfCalories, totalCalories,
@@ -462,7 +518,7 @@ function displayResults() {
       + '<div class="mt-2 h-1.5 bg-gray-200 rounded-full">'
       + '<div class="h-1.5 rounded-full transition-all duration-700" style="width:' + barW + '%;background:' + p.color + '"></div>'
       + '</div>'
-      + '<div class="text-xs text-gray-400 mt-1">재료 ' + p.count + '개에서 검출</div>'
+      + '<div class="text-xs text-gray-400 mt-1">추정 ' + p.count + '개 식재료에서 보고됨</div>'
       + '</div>';
   }).join('');
 
@@ -529,7 +585,7 @@ function renderIngredientBreakdown(r) {
     + '<th class="py-2 px-3 text-left text-xs font-bold">식품군</th>'
     + '<th class="py-2 px-3 text-right text-xs font-bold">섭취량</th>'
     + '<th class="py-2 px-3 text-right text-xs font-bold">칼로리</th>'
-    + '<th class="py-2 px-3 text-left text-xs font-bold">파이토케미컬</th>'
+    + '<th class="py-2 px-3 text-left text-xs font-bold">파이토케미컬 <span class="font-normal text-gray-400">(추정)</span></th>'
     + '</tr></thead>'
     + '<tbody>'
     + (prfList.length ? '<tr class="bg-emerald-50/50"><td colspan="5" class="py-1 px-3 text-xs font-bold text-emerald-700">● PRF 식재료 (파이토케미컬 풍부)</td></tr>' + prfList.map(ingRow).join('') : '')
