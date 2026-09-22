@@ -724,10 +724,11 @@ function renderIngredientBreakdown(r) {
     + '</div>' // sankey-grid
     + '</div>'; // sankey-wrap
 
-  // ── SVG + 인터랙션 — 2 프레임 후 그리기 ──
-  requestAnimationFrame(() => requestAnimationFrame(() => {
+  // ── SVG + 인터랙션 — DOM 완전 안정 후 그리기 ──
+  // phytoScore / categoryChart 렌더 후 레이아웃이 확정되어야 좌표가 정확함
+  setTimeout(() => {
     drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto });
-  }));
+  }, 350);
 }
 
 // ── 생키 SVG 그리기 ──
