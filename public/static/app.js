@@ -32,6 +32,8 @@ const PHYTOCHEMICAL_GROUPS = {
   gingerols:      { name: '진저롤·커큐민',    benefits: ['항염', '소화', '관절'],               color: '#D97706', icon: '🫚' },
   flavonols:      { name: '플라보놀',         benefits: ['항산화', '항염', '심혈관'],            color: '#B45309', icon: '🌼' },
   thioallyls:     { name: '티오알릴',         benefits: ['항염', '항혈전', '면역'],              color: '#4B5563', icon: '🧄' },
+  flavones:       { name: '플라본',           benefits: ['항산화', '항염', '혈당조절'],          color: '#A16207', icon: '🌾' },
+  tocopherols:    { name: '토코페롤류',        benefits: ['항산화', '세포보호', '면역'],          color: '#CA8A04', icon: '🌿' },
 };
 
 // ── 건강 목적 ────────────────────────────────
@@ -278,7 +280,7 @@ function renderMealCard(item) {
 }
 
 function renderPhytoMiniBar(analysis) {
-  const phytoSet = new Set(analysis.ingredients.flatMap(i => i.phytos));
+  const phytoSet = new Set(analysis.ingredients.flatMap(i => Object.keys((typeof i.phytos === 'object' && !Array.isArray(i.phytos)) ? i.phytos : {})));
   if (!phytoSet.size) return '';
   const chips = Array.from(phytoSet).map(key => {
     const g = PHYTOCHEMICAL_GROUPS[key];
@@ -358,11 +360,12 @@ function calculatePDI() {
         prfCalories += ing.kcal;
       }
 
-      // ── 파이토케미컬 계열 추정 (참고용) ──
-      // prf:true 식품에서 어떤 계열이 검출되는지
-      // binary 추정 (함량 아님)
-      for (const p of ing.phytos) {
-        phytoMap[p] = (phytoMap[p] || 0) + 1;
+      // ── 파이토케미컬 계열별 mg 합산 ──
+      // phytos는 { key: mg_per_100g } 오브젝트
+      const phytoObj = (typeof ing.phytos === 'object' && !Array.isArray(ing.phytos))
+        ? ing.phytos : {};
+      for (const [p, mg] of Object.entries(phytoObj)) {
+        phytoMap[p] = (phytoMap[p] || 0) + (mg || 0);
       }
     }
   }
@@ -377,17 +380,17 @@ function calculatePDI() {
   // ── PDI 점수 (McCarty 2004 공식) ──
   const pdiScore = totalCalories > 0 ? (prfCalories / totalCalories) * 100 : 0;
 
-  // ── 파이토케미컬 커버리지 (참고용 추정) ──
+  // ── 파이토케미컬 커버리지 (실측 mg 기반) ──
   const phytoCoverage = Object.keys(PHYTOCHEMICAL_GROUPS).map(key => {
     const g = PHYTOCHEMICAL_GROUPS[key];
-    const count = phytoMap[key] || 0;
-    // count = 해당 계열이 보고된 식재료 수 (binary 추정)
+    const totalMg = phytoMap[key] || 0;
+    // mg 기준 레벨: 0 / 0~5 / 5~20 / 20+
     let level, levelLabel;
-    if (count === 0)    { level = 'none';   levelLabel = '미검출'; }
-    else if (count < 2) { level = 'low';    levelLabel = '적음'; }
-    else if (count < 4) { level = 'medium'; levelLabel = '보통'; }
-    else                { level = 'high';   levelLabel = '풍부'; }
-    return { key, name: g.name, present: count > 0, count, level, levelLabel,
+    if (totalMg === 0)     { level = 'none';   levelLabel = '미검출'; }
+    else if (totalMg < 5)  { level = 'low';    levelLabel = `${totalMg.toFixed(1)}mg 적음`; }
+    else if (totalMg < 20) { level = 'medium'; levelLabel = `${totalMg.toFixed(1)}mg 보통`; }
+    else                   { level = 'high';   levelLabel = `${totalMg.toFixed(1)}mg 풍부`; }
+    return { key, name: g.name, present: totalMg > 0, totalMg: +totalMg.toFixed(2), level, levelLabel,
              color: g.color, icon: g.icon, benefits: g.benefits };
   });
 
@@ -549,7 +552,7 @@ function renderIngredientBreakdown(r) {
 
   // Col 2: 식재료+식품군 (중복 제거됨)
   // Col 3: 파이토케미컬
-  const presentPhytoKeys = [...new Set(allIng.flatMap(i => i.phytos))];
+  const presentPhytoKeys = [...new Set(allIng.flatMap(i => Object.keys((typeof i.phytos === 'object' && !Array.isArray(i.phytos)) ? i.phytos : {})))];
 
   // 엣지 정의
   // meal → ingredient: 어떤 meal이 어떤 ing를 포함하는지
@@ -568,13 +571,15 @@ function renderIngredientBreakdown(r) {
 
   // ing → phyto
   const ingToPhyto = {}; // ingName → [phytoKey]
-  allIng.forEach(i => { ingToPhyto[i.name] = i.phytos; });
+  allIng.forEach(i => {
+    ingToPhyto[i.name] = Object.keys((typeof i.phytos === 'object' && !Array.isArray(i.phytos)) ? i.phytos : {});
+  });
 
   // ── 컨테이너 HTML 생성 ──
   container.innerHTML =
     '<div class="text-xs text-amber-600 mb-4 flex items-center gap-2">'
     + '<i class="fas fa-info-circle"></i>'
-    + '<span>노드에 마우스를 올리면 경로가 강조됩니다 · 파이토케미컬은 binary 존재 여부 추정</span>'
+    + '<span>노드에 마우스를 올리면 경로가 강조됩니다 · 파이토케미컬 수치는 실측 mg/100g 기반</span>'
     + '</div>'
     + '<div id="sankey-wrap" style="position:relative;overflow:visible">'
     // 3열 그리드
