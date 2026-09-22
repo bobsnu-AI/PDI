@@ -1,0 +1,649 @@
+﻿db,rda_phyto_food,matched_kr_head,n_compounds
+rda_flavonoid,가을무,무,19
+rda_flavonoid,가을배추,배추,18
+rda_flavonoid,가지고추,가지,15
+rda_flavonoid,감귤(과육),감,13
+rda_flavonoid,감귤(과피),감,23
+rda_flavonoid,감귤(전체),감,30
+rda_flavonoid,갓,갓,57
+rda_flavonoid,개두릅(엄나무순),두릅,5
+rda_flavonoid,거봉(과육 및 과피),피,10
+rda_flavonoid,거봉(과피),피,10
+rda_flavonoid,거봉(송이가지),가지,14
+rda_flavonoid,고사리(데친 후 침지),고사리,9
+rda_flavonoid,고사리(데친것),고사리,9
+rda_flavonoid,고사리(생것),고사리,9
+rda_flavonoid,고추장,고추장,3
+rda_flavonoid,고춧잎,고춧잎,11
+rda_flavonoid,냉이,냉이,25
+rda_flavonoid,녹두,녹두,5
+rda_flavonoid,녹차(1차건조),녹차,19
+rda_flavonoid,녹차(2차건조),녹차,20
+rda_flavonoid,녹차(마무리건조),녹차,20
+rda_flavonoid,녹차(비비기),녹차,19
+rda_flavonoid,녹차(생엽),녹차,23
+rda_flavonoid,녹차(제품),녹차,19
+rda_flavonoid,녹차(첫덖음),녹차,20
+rda_flavonoid,늙은호박(과육),호박,11
+rda_flavonoid,늙은호박(전체),호박,12
+rda_flavonoid,단감나무(잎),감,18
+rda_flavonoid,단호박,호박,1
+rda_flavonoid,달단메밀(볶은것),메밀,8
+rda_flavonoid,달단메밀(생것),메밀,8
+rda_flavonoid,대봉감나무(잎),감,18
+rda_flavonoid,"대추나무(열매,건조)",대추,5
+rda_flavonoid,"대추나무(열매,생것)",대추,5
+rda_flavonoid,대추나무(잎),대추,6
+rda_flavonoid,대추방울토마토,토마토,8
+rda_flavonoid,대풍(가수),,11
+rda_flavonoid,대풍(무수),무,13
+rda_flavonoid,대풍(무처리),무,15
+rda_flavonoid,"대풍(볶음,170℃)",,14
+rda_flavonoid,"대풍(볶음,190℃)",,13
+rda_flavonoid,대풍(증자),,15
+rda_flavonoid,된장,된장,3
+rda_flavonoid,들깨,들깨,4
+rda_flavonoid,들깻묵,,5
+rda_flavonoid,들깻잎,들깻잎,8
+rda_flavonoid,딸기,딸기,8
+rda_flavonoid,라임(과육),라임,19
+rda_flavonoid,라임(과피),라임,19
+rda_flavonoid,라임(전체),라임,20
+rda_flavonoid,레몬(과육),레몬,14
+rda_flavonoid,레몬(과피),레몬,14
+rda_flavonoid,레몬(전체),레몬,14
+rda_flavonoid,망고(과피),망고,15
+rda_flavonoid,망고(전체),망고,12
+rda_flavonoid,매실(남고)June 15,매실,10
+rda_flavonoid,매실(남고)June 22,매실,10
+rda_flavonoid,매실(남고)June 3,매실,11
+rda_flavonoid,매실(수양매)June 15,매실,11
+rda_flavonoid,매실(수양매)June 22,매실,11
+rda_flavonoid,매실(수양매)June 3,매실,11
+rda_flavonoid,매실(임주)June 15,매실,11
+rda_flavonoid,매실(임주)June 22,매실,11
+rda_flavonoid,매실(임주)June 3,매실,11
+rda_flavonoid,머위(잎),머위,13
+rda_flavonoid,머위(줄기),머위,6
+rda_flavonoid,메밀(껍질제거),메밀,2
+rda_flavonoid,메밀(껍질포함),메밀,8
+rda_flavonoid,메주,,8
+rda_flavonoid,메주콩(대원),,11
+rda_flavonoid,멥쌀(백미),멥쌀,1
+rda_flavonoid,멥쌀(현미),멥쌀,11
+rda_flavonoid,방울양배추,양배추,3
+rda_flavonoid,방울토마토,토마토,8
+rda_flavonoid,배(과피),배,8
+rda_flavonoid,배암차즈기(곰보배추),배암차즈기(곰보배추),16
+rda_flavonoid,"보검선인장(백년초,열매)",선인장,22
+rda_flavonoid,"보검선인장(백년초,엽상경)",선인장,7
+rda_flavonoid,"보검선인장(백년초,엽상경,과육)",선인장,21
+rda_flavonoid,보리순,보리,26
+rda_flavonoid,복분자(A지역),복분자,5
+rda_flavonoid,복분자(B지역),복분자,5
+rda_flavonoid,복분자(C지역),복분자,5
+rda_flavonoid,복분자(D지역),복분자,5
+rda_flavonoid,복숭아(백도),복숭아,6
+rda_flavonoid,복숭아(천도),복숭아,6
+rda_flavonoid,복숭아(황도),복숭아,6
+rda_flavonoid,봄동,,21
+rda_flavonoid,부사(과육),,3
+rda_flavonoid,부사(과피),피,10
+rda_flavonoid,부사(전체),,10
+rda_flavonoid,붉은고추(생것),고추,19
+rda_flavonoid,붉은고추(태양건조),고추,15
+rda_flavonoid,브로콜리(꽃송이),브로콜리,18
+rda_flavonoid,브로콜리(줄기),브로콜리,19
+rda_flavonoid,블랙초크베리,,20
+rda_flavonoid,블루베리(Bluecrop),블루베리,21
+rda_flavonoid,블루베리(Bluegold),블루베리,22
+rda_flavonoid,블루베리(Chandler),블루베리,27
+rda_flavonoid,블루베리(Darrow),블루베리,12
+rda_flavonoid,블루베리(Elizabeth),블루베리,17
+rda_flavonoid,블루베리(Legacy),블루베리,22
+rda_flavonoid,블루베리(Nelson),블루베리,20
+rda_flavonoid,뽕잎(181-18),뽕잎,17
+rda_flavonoid,뽕잎(대당상),뽕잎,12
+rda_flavonoid,뽕잎(대심),뽕잎,17
+rda_flavonoid,뽕잎(백옥왕),뽕잎,15
+rda_flavonoid,뽕잎(수향),뽕잎,16
+rda_flavonoid,뽕잎(심흥),뽕잎,17
+rda_flavonoid,뽕잎(청수),뽕잎,13
+rda_flavonoid,뽕잎(청일),뽕잎,17
+rda_flavonoid,뽕잎(청일4X),뽕잎,17
+rda_flavonoid,뽕잎(캐나다뽕),뽕잎,17
+rda_flavonoid,뽕잎(터키D),뽕잎,17
+rda_flavonoid,뽕잎(환십조생),뽕잎,17
+rda_flavonoid,살구,살구,6
+rda_flavonoid,"서리태(청자3호,가수)",,11
+rda_flavonoid,"서리태(청자3호,무수)",무,13
+rda_flavonoid,"서리태(청자3호,무처리)",무,16
+rda_flavonoid,"서리태(청자3호,볶음,170℃)",,13
+rda_flavonoid,"서리태(청자3호,볶음,190℃)",,13
+rda_flavonoid,"서리태(청자3호,증자)",,16
+rda_flavonoid,서목태,,14
+rda_flavonoid,선유(가수),,9
+rda_flavonoid,선유(무수),무,13
+rda_flavonoid,선유(무처리),무,15
+rda_flavonoid,"선유(볶음,170℃)",,13
+rda_flavonoid,"선유(볶음,190℃)",,13
+rda_flavonoid,선유(증자),,14
+rda_flavonoid,셀러리,셀러리,18
+rda_flavonoid,숙주나물,숙주나물,13
+rda_flavonoid,시금치,시금치,17
+rda_flavonoid,쌈배추,배추,18
+rda_flavonoid,아스파라거스,아스파라거스,5
+rda_flavonoid,아오리(과육),,6
+rda_flavonoid,아오리(과피),피,9
+rda_flavonoid,아오리(전체),,9
+rda_flavonoid,애플망고(과피),망고,16
+rda_flavonoid,애플망고(전체),망고,11
+rda_flavonoid,애호박,호박,6
+rda_flavonoid,앵두,앵두,11
+rda_flavonoid,양배추,양배추,3
+rda_flavonoid,양앵두,앵두,3
+rda_flavonoid,양파(껍질),양파,14
+rda_flavonoid,양파(껍질제거),양파,10
+rda_flavonoid,양파(데친것),양파,10
+rda_flavonoid,열무,열무,18
+rda_flavonoid,오디(181-18),오디,9
+rda_flavonoid,오디(대당상),오디,7
+rda_flavonoid,오디(대심),오디,9
+rda_flavonoid,오디(백옥왕),오디,9
+rda_flavonoid,오디(수향),오디,9
+rda_flavonoid,오디(심흥),오디,5
+rda_flavonoid,오디(청수),오디,9
+rda_flavonoid,오디(청일),오디,9
+rda_flavonoid,오디(청일4X),오디,9
+rda_flavonoid,오디(캐나다뽕),오디,9
+rda_flavonoid,오디(터키 D),오디,10
+rda_flavonoid,오디(환십조생),오디,9
+rda_flavonoid,오렌지(과육),오렌지,9
+rda_flavonoid,오렌지(과피),오렌지,18
+rda_flavonoid,오렌지(전체),오렌지,18
+rda_flavonoid,오이,오이,4
+rda_flavonoid,오이고추,고추,16
+rda_flavonoid,와송,,13
+rda_flavonoid,완두(꼬투리),완두,26
+rda_flavonoid,완두(전체),완두,26
+rda_flavonoid,용과(과육),용과,13
+rda_flavonoid,용과(과피),용과,3
+rda_flavonoid,유자(전체),유자,18
+rda_flavonoid,자몽(과육),자몽,13
+rda_flavonoid,자몽(과피),자몽,17
+rda_flavonoid,자몽(전체),자몽,17
+rda_flavonoid,자색양파(껍질),양파,14
+rda_flavonoid,자색양파(껍질제거),양파,10
+rda_flavonoid,작두콩(꼬투리),,9
+rda_flavonoid,작두콩(백색),,9
+rda_flavonoid,작두콩(적색),,13
+rda_flavonoid,"저단선(천년초,엽상경)",,6
+rda_flavonoid,"저단선(천년초,엽상경,과육)",,18
+rda_flavonoid,적갓,갓,31
+rda_flavonoid,적꽃상추,상추,9
+rda_flavonoid,적상추,상추,10
+rda_flavonoid,적양배추,양배추,1
+rda_flavonoid,적포기상추,상추,9
+rda_flavonoid,참당귀(잎),당귀,21
+rda_flavonoid,참두릅(두릅나무순),두릅,3
+rda_flavonoid,참죽나무(잎),무,8
+rda_flavonoid,찹쌀현미(화선찰벼),찹쌀,11
+rda_flavonoid,청경채,청경채,10
+rda_flavonoid,청포도(과피),포도,13
+rda_flavonoid,청포도(송이가지),가지,13
+rda_flavonoid,청포도(씨),포도,3
+rda_flavonoid,청포도(열매전체),포도,10
+rda_flavonoid,체리,체리,4
+rda_flavonoid,초피나무(미숙과),무,15
+rda_flavonoid,초피나무(잎),무,16
+rda_flavonoid,초피나무(줄기),무,15
+rda_flavonoid,칡,,22
+rda_flavonoid,케일(노지),케일,28
+rda_flavonoid,케일(하우스),케일,24
+rda_flavonoid,켐벨(과육 및 과피),피,6
+rda_flavonoid,켐벨(과피),피,6
+rda_flavonoid,켐벨(송이가지),가지,7
+rda_flavonoid,켐벨(씨),,3
+rda_flavonoid,켐벨(열매전체),,7
+rda_flavonoid,콩나물,콩나물,14
+rda_flavonoid,토마토(일반),토마토,8
+rda_flavonoid,파프리카(녹색),파프리카,18
+rda_flavonoid,파프리카(적색),파프리카,16
+rda_flavonoid,파프리카(황색),파프리카,17
+rda_flavonoid,풋고추,고추,23
+rda_flavonoid,프랑스산 와인(끌로세리드 까망삭),,19
+rda_flavonoid,프랑스산 와인(라 크라사드 까베르네 시라),,10
+rda_flavonoid,프랑스산 와인(르 그랑누아 까베르네 쇼비뇽),,15
+rda_flavonoid,프랑스산 와인(바롱 레스탁 블랑),,1
+rda_flavonoid,피망(녹색),피망,13
+rda_flavonoid,피망(적색),피망,13
+rda_flavonoid,피자두,자두,8
+rda_flavonoid,한국산 와인(샤토마니 누보),,11
+rda_flavonoid,한국산 와인(샤토마니 드라이 레드 마스터즈 콜렉션),,14
+rda_flavonoid,한국산 와인(샤토마니 드라이 레드),,14
+rda_flavonoid,한국산 와인(샤토마니 드라이 화이트),,1
+rda_flavonoid,한라봉(과육),,12
+rda_flavonoid,한라봉(과피),피,25
+rda_flavonoid,한라봉(전체),,25
+rda_flavonoid,홍차(1차건조),홍차,22
+rda_flavonoid,홍차(가을),홍차,22
+rda_flavonoid,홍차(마무리건조),홍차,22
+rda_flavonoid,홍차(봄),홍차,22
+rda_flavonoid,홍차(비비기),홍차,24
+rda_flavonoid,홍차(상온발효),홍차,22
+rda_flavonoid,홍차(생엽),홍차,24
+rda_flavonoid,홍차(시들리기),홍차,24
+rda_flavonoid,홍차(여름),홍차,22
+rda_flavonoid,홍차(제품),홍차,22
+rda_flavonoid,황기,,15
+rda_flavonoid,흑미(무처리),무,12
+rda_flavonoid,흑태,,14
+rda_flavonoid,흑토마토,토마토,8
+rda_phenolic_acid,가을무,무,5
+rda_phenolic_acid,가을배추,배추,12
+rda_phenolic_acid,가지(껍질),가지,9
+rda_phenolic_acid,가지(알맹이),가지,3
+rda_phenolic_acid,가지(전체),가지,9
+rda_phenolic_acid,감귤(과육),감,1
+rda_phenolic_acid,감귤(과피),감,4
+rda_phenolic_acid,감귤(전체),감,2
+rda_phenolic_acid,갓(A 지역),갓,7
+rda_phenolic_acid,갓(B 지역),갓,6
+rda_phenolic_acid,갓(C 지역),갓,10
+rda_phenolic_acid,강황(A국가),강황,10
+rda_phenolic_acid,강황(B국가),강황,11
+rda_phenolic_acid,강황(C국가),강황,12
+rda_phenolic_acid,강황(D국가),강황,12
+rda_phenolic_acid,개두릅,두릅,15
+rda_phenolic_acid,검은보리,보리,1
+rda_phenolic_acid,겉보리,보리,1
+rda_phenolic_acid,곰취,,14
+rda_phenolic_acid,"과테말라 (레드티피카 K-72, 생두)",피,32
+rda_phenolic_acid,"과테말라 (레드티피카 K-72, 원두)",피,32
+rda_phenolic_acid,"과테말라 (레드파체 K-72, 생두)",파,31
+rda_phenolic_acid,"과테말라 (레드파체 K-72, 원두)",파,31
+rda_phenolic_acid,"과테말라 (마타퀘스틴틀라 리저브, 생두)",,31
+rda_phenolic_acid,"과테말라 (마타퀘스틴틀라 리저브, 원두)",,31
+rda_phenolic_acid,광대나물,,6
+rda_phenolic_acid,남서(껍질),,2
+rda_phenolic_acid,남서(알맹이),,2
+rda_phenolic_acid,남서(전체),,4
+rda_phenolic_acid,냉이,냉이,3
+rda_phenolic_acid,녹차 (1차건조),녹차,10
+rda_phenolic_acid,녹차 (2차건조),녹차,10
+rda_phenolic_acid,녹차 (마무리건조),녹차,10
+rda_phenolic_acid,녹차 (비비기),녹차,10
+rda_phenolic_acid,녹차 (생엽),녹차,10
+rda_phenolic_acid,녹차 (제품),녹차,10
+rda_phenolic_acid,녹차 (첫덖음),녹차,10
+rda_phenolic_acid,대원(무처리),무,1
+rda_phenolic_acid,대원(침지),,1
+rda_phenolic_acid,대원(침지후삶음),,1
+rda_phenolic_acid,대지(껍질),,2
+rda_phenolic_acid,대지(알맹이),,1
+rda_phenolic_acid,대지(전체),,2
+rda_phenolic_acid,대추나무잎,대추,4
+rda_phenolic_acid,대추방울토마토,토마토,10
+rda_phenolic_acid,돌미나리,미나리,12
+rda_phenolic_acid,들깨(볶은것),들깨,4
+rda_phenolic_acid,들깨(생것),들깨,4
+rda_phenolic_acid,들깻묵,,4
+rda_phenolic_acid,들깻잎,들깻잎,3
+rda_phenolic_acid,라임(과피),라임,1
+rda_phenolic_acid,레드향(과육),,2
+rda_phenolic_acid,레드향(과피),피,8
+rda_phenolic_acid,레드향(전체),,8
+rda_phenolic_acid,레몬밤,레몬,4
+rda_phenolic_acid,로즈마리,,3
+rda_phenolic_acid,마조람,조,3
+rda_phenolic_acid,마테,,29
+rda_phenolic_acid,"매실(남고, 6/15수확)",매실,10
+rda_phenolic_acid,"매실(남고, 6/22수확)",매실,10
+rda_phenolic_acid,"매실(남고, 6/3수확)",매실,10
+rda_phenolic_acid,"매실(수양매, 6/15수확)",매실,7
+rda_phenolic_acid,"매실(수양매, 6/22수확)",매실,7
+rda_phenolic_acid,"매실(수양매, 6/3수확)",매실,7
+rda_phenolic_acid,"매실(임주, 6/15수확)",매실,7
+rda_phenolic_acid,"매실(임주, 6/22수확)",매실,7
+rda_phenolic_acid,"매실(임주, 6/3수확)",매실,7
+rda_phenolic_acid,무순,무순,7
+rda_phenolic_acid,미나리,미나리,12
+rda_phenolic_acid,밀(알곡),밀,1
+rda_phenolic_acid,바질,바질,3
+rda_phenolic_acid,박하(지상부),박,6
+rda_phenolic_acid,밤고구마(껍질),고구마,29
+rda_phenolic_acid,밤고구마(알맹이),고구마,17
+rda_phenolic_acid,밤고구마(전체),고구마,26
+rda_phenolic_acid,방아풀,,5
+rda_phenolic_acid,방울양배추,양배추,8
+rda_phenolic_acid,방울토마토,토마토,10
+rda_phenolic_acid,배암차즈기(지상부),배,1
+rda_phenolic_acid,"베트남 (로부스타 사이공 하마 웻 폴리쉬, 생두)",,37
+rda_phenolic_acid,"베트남 (로부스타 사이공 하마 웻 폴리쉬, 원두)",,36
+rda_phenolic_acid,"베트남 (로부스타 폴리쉬, 생두)",,37
+rda_phenolic_acid,"베트남 (로부스타 폴리쉬, 원두)",,37
+rda_phenolic_acid,보리순,보리,3
+rda_phenolic_acid,"복숭아(백도, 과육)",복숭아,6
+rda_phenolic_acid,"복숭아(백도, 과피)",복숭아,7
+rda_phenolic_acid,"복숭아(천도, 과육)",복숭아,5
+rda_phenolic_acid,"복숭아(천도, 과피)",복숭아,6
+rda_phenolic_acid,"복숭아(황도, 과육)",복숭아,5
+rda_phenolic_acid,"복숭아(황도, 과피)",복숭아,6
+rda_phenolic_acid,봄동,,18
+rda_phenolic_acid,"브라질 (내추럴세라도, 생두)",,31
+rda_phenolic_acid,"브라질 (내추럴세라도, 원두)",,30
+rda_phenolic_acid,"브라질 (레드버번, 생두)",,31
+rda_phenolic_acid,"브라질 (레드버번, 원두)",,30
+rda_phenolic_acid,"브라질 (시티오 망게이라, 생두)",,33
+rda_phenolic_acid,"브라질 (시티오 망게이라, 원두)",,31
+rda_phenolic_acid,브로콜리 (꽃송이),브로콜리,8
+rda_phenolic_acid,브로콜리 (줄기),브로콜리,7
+rda_phenolic_acid,"사과(부사, 과육)",사과,4
+rda_phenolic_acid,"사과(부사, 과피)",사과,4
+rda_phenolic_acid,"사과(부사, 씨앗)",사과,1
+rda_phenolic_acid,"사과(부사, 전체)",사과,4
+rda_phenolic_acid,"사과(아오리, 과육)",사과,4
+rda_phenolic_acid,"사과(아오리, 과피)",사과,3
+rda_phenolic_acid,"사과(아오리, 전체)",사과,4
+rda_phenolic_acid,"사과(홍옥, 과육)",사과,4
+rda_phenolic_acid,"사과(홍옥, 과피)",사과,3
+rda_phenolic_acid,"사과(홍옥, 전체)",사과,4
+rda_phenolic_acid,살구,살구,7
+rda_phenolic_acid,새봉(껍질),,2
+rda_phenolic_acid,새봉(전체),,1
+rda_phenolic_acid,새쌀보리,보리,1
+rda_phenolic_acid,생강(A국가),생강,17
+rda_phenolic_acid,생강(B국가),생강,15
+rda_phenolic_acid,서둔찰보리,보리,1
+rda_phenolic_acid,서홍(껍질),,5
+rda_phenolic_acid,서홍(알맹이),,5
+rda_phenolic_acid,서홍(전체),,5
+rda_phenolic_acid,설향(A지역),,1
+rda_phenolic_acid,설향(B지역),,1
+rda_phenolic_acid,설향(C지역),,1
+rda_phenolic_acid,설향(D지역),,1
+rda_phenolic_acid,수미(껍질),,2
+rda_phenolic_acid,수미(전체),,2
+rda_phenolic_acid,스테비아,스테비아,10
+rda_phenolic_acid,"신고배(A지역, 과육)",배,2
+rda_phenolic_acid,"신고배(A지역, 과피)",배,2
+rda_phenolic_acid,"신고배(A지역, 전체)",배,2
+rda_phenolic_acid,"신고배(B지역, 과육)",배,1
+rda_phenolic_acid,"신고배(B지역, 과피)",배,2
+rda_phenolic_acid,"신고배(B지역, 전체)",배,2
+rda_phenolic_acid,"신고배(C지역, 과육)",배,1
+rda_phenolic_acid,"신고배(C지역, 과피)",배,2
+rda_phenolic_acid,"신고배(C지역, 전체)",배,2
+rda_phenolic_acid,쌀(백미),,2
+rda_phenolic_acid,쌀(현미),,2
+rda_phenolic_acid,쌈배추,배추,21
+rda_phenolic_acid,쑥,쑥,12
+rda_phenolic_acid,쑥갓(고온고압),쑥갓,9
+rda_phenolic_acid,쑥갓(데친것),쑥갓,11
+rda_phenolic_acid,쑥갓(무처리),쑥갓,10
+rda_phenolic_acid,아스파라거스,아스파라거스,7
+rda_phenolic_acid,앵두,앵두,5
+rda_phenolic_acid,야콘,,15
+rda_phenolic_acid,양배추,양배추,10
+rda_phenolic_acid,양상추,상추,9
+rda_phenolic_acid,양앵두,앵두,11
+rda_phenolic_acid,"양파 (노랑,썬파워)",양파,1
+rda_phenolic_acid,"양파 (적색,레드프라임)",라임,1
+rda_phenolic_acid,양파(껍질),양파,1
+rda_phenolic_acid,"에티오피아 (시다모 구지 이과바예 워시드, 생두)",피,32
+rda_phenolic_acid,"에티오피아 (시다모 구지 이과바예 워시드, 원두)",피,30
+rda_phenolic_acid,"에티오피아 (예가체프 워시드, 생두)",피,30
+rda_phenolic_acid,"에티오피아 (예가체프 워시드, 원두)",피,32
+rda_phenolic_acid,열무,열무,8
+rda_phenolic_acid,오레가노,오레가노,8
+rda_phenolic_acid,옥수수(수염),옥수수,3
+rda_phenolic_acid,옥수수(알곡),옥수수,1
+rda_phenolic_acid,"온두라스 (EP코판, 생두)",,32
+rda_phenolic_acid,"온두라스 (EP코판, 원두)",,33
+rda_phenolic_acid,"온두라스 (페르민에르난데스 코판, 생두)",,32
+rda_phenolic_acid,"온두라스 (페르민에르난데스 코판, 원두)",,34
+rda_phenolic_acid,유자(전체),유자,4
+rda_phenolic_acid,익모초,,3
+rda_phenolic_acid,"인도 (로부스타 카피로얄, 생두)",피,36
+rda_phenolic_acid,"인도 (로부스타 카피로얄, 원두)",피,40
+rda_phenolic_acid,"인도 (몬순말라바, 생두)",,34
+rda_phenolic_acid,"인도 (몬순말라바, 원두)",,34
+rda_phenolic_acid,인진쑥(고온고압),쑥,22
+rda_phenolic_acid,인진쑥(데친것),쑥,21
+rda_phenolic_acid,인진쑥(무처리),무,20
+rda_phenolic_acid,자두,자두,8
+rda_phenolic_acid,자색고구마(껍질),고구마,34
+rda_phenolic_acid,자색고구마(알맹이),고구마,34
+rda_phenolic_acid,자색고구마(전체),고구마,34
+rda_phenolic_acid,자색양파(껍질),양파,1
+rda_phenolic_acid,자소엽,,3
+rda_phenolic_acid,자영(껍질),,5
+rda_phenolic_acid,자영(알맹이),,5
+rda_phenolic_acid,자영(전체),,5
+rda_phenolic_acid,적갓,갓,13
+rda_phenolic_acid,적꽃상추,상추,10
+rda_phenolic_acid,적로메인상추 (A 지역),상추,10
+rda_phenolic_acid,적로메인상추 (B 지역),상추,10
+rda_phenolic_acid,적상추,상추,10
+rda_phenolic_acid,적양배추,양배추,4
+rda_phenolic_acid,적포기상추,상추,10
+rda_phenolic_acid,제주월동무 (무청),무청,7
+rda_phenolic_acid,"제주월동무 (전체, 무청제외)",무청,5
+rda_phenolic_acid,"제주월동무 (전체, 무청포함)",무청,5
+rda_phenolic_acid,제주월동무 (초록뿌리),무,5
+rda_phenolic_acid,제주월동무 (흰뿌리),무,2
+rda_phenolic_acid,조원(껍질),조,5
+rda_phenolic_acid,조원(알맹이),조,4
+rda_phenolic_acid,조원(전체),조,5
+rda_phenolic_acid,조풍(껍질),조,2
+rda_phenolic_acid,조풍(알맹이),조,1
+rda_phenolic_acid,조풍(전체),조,2
+rda_phenolic_acid,찰보리,보리,1
+rda_phenolic_acid,찰옥수수(알곡),옥수수,1
+rda_phenolic_acid,참두릅,두릅,16
+rda_phenolic_acid,참취,,14
+rda_phenolic_acid,찹쌀현미(화선),찹쌀,2
+rda_phenolic_acid,청경채,청경채,8
+rda_phenolic_acid,청상추,상추,10
+rda_phenolic_acid,체리,체리,11
+rda_phenolic_acid,체리세이지,체리,5
+rda_phenolic_acid,"케냐 (룽게토 카리미쿠이, 생두)",,32
+rda_phenolic_acid,"케냐 (룽게토 카리미쿠이, 원두)",,31
+rda_phenolic_acid,"케냐 (은가라마 카이나무이, 생두)",무,32
+rda_phenolic_acid,"케냐 (은가라마 카이나무이, 원두)",무,31
+rda_phenolic_acid,케일(노지),케일,14
+rda_phenolic_acid,케일(하우스),케일,12
+rda_phenolic_acid,"콜롬비아 (메델린, 생두)",,31
+rda_phenolic_acid,"콜롬비아 (메델린, 원두)",,29
+rda_phenolic_acid,"콜롬비아 (톨리마, 생두)",,31
+rda_phenolic_acid,"콜롬비아 (톨리마, 원두)",,27
+rda_phenolic_acid,타임,타임,2
+rda_phenolic_acid,토마토,토마토,10
+rda_phenolic_acid,페퍼민트,페퍼민트,8
+rda_phenolic_acid,피자두,자두,3
+rda_phenolic_acid,"하와이 (코나, 생두)",,31
+rda_phenolic_acid,"하와이 (코나, 원두)",,30
+rda_phenolic_acid,한라봉(과육),,8
+rda_phenolic_acid,한라봉(과피),피,8
+rda_phenolic_acid,한라봉(전체),,8
+rda_phenolic_acid,핫립세이지,,9
+rda_phenolic_acid,호박고구마(껍질),고구마,29
+rda_phenolic_acid,호박고구마(알맹이),고구마,22
+rda_phenolic_acid,호박고구마(전체),고구마,29
+rda_phenolic_acid,홍영(껍질),,5
+rda_phenolic_acid,홍영(알맹이),,5
+rda_phenolic_acid,홍영(전체),,5
+rda_phenolic_acid,홍차 (1차건조),홍차,8
+rda_phenolic_acid,홍차 (가을),홍차,7
+rda_phenolic_acid,홍차 (마무리건조),홍차,8
+rda_phenolic_acid,홍차 (봄),홍차,7
+rda_phenolic_acid,홍차 (비비기),홍차,10
+rda_phenolic_acid,홍차 (상온발효),홍차,8
+rda_phenolic_acid,홍차 (시들리기),홍차,10
+rda_phenolic_acid,홍차 (여름),홍차,7
+rda_phenolic_acid,홍차 (제품),홍차,9
+rda_phenolic_acid,흑미(가수),,1
+rda_phenolic_acid,흑미(무수),무,1
+rda_phenolic_acid,흑미(무처리),무,1
+rda_phenolic_acid,흑미(볶음 170℃),,1
+rda_phenolic_acid,흑미(볶음 190℃),,1
+rda_phenolic_acid,흑태,,1
+rda_phenolic_acid,흑토마토,토마토,7
+rda_phenolic_acid,히솝,,5
+rda_saponin,"가시오갈피, 순, 생것",가시오갈피,62
+rda_saponin,"가시오갈피, 열매, 생것",가시오갈피,62
+rda_saponin,"가시오갈피, 잎, 생것",가시오갈피,62
+rda_saponin,"가시오갈피, 줄기, 생것",가시오갈피,23
+rda_saponin,"가지, 껍질, 생것",가지,6
+rda_saponin,"가지, 껍질제거, 생것",가지,3
+rda_saponin,"가지, 껍질포함, 생것",가지,6
+rda_saponin,"강낭콩, 꼬투리, 생것",강낭콩,7
+rda_saponin,"강낭콩, 붉은색, 생것",강낭콩,11
+rda_saponin,"강낭콩, 흰색, 생것",강낭콩,11
+rda_saponin,"고추, 길상, 초록색, 생것",고추,14
+rda_saponin,"고추, 길상, 초록색, 잎, 생것",고추,1
+rda_saponin,"고추, 꽈리고추, 생것",고추,14
+rda_saponin,"고추, 꽈리고추, 잎, 생것",고추,1
+rda_saponin,"고추, 롱그린, 초록색, 생것",고추,14
+rda_saponin,"고추, 롱그린, 초록색, 잎, 생것",고추,1
+rda_saponin,"고추, 미인, 잎, 초록색, 생것",고추,1
+rda_saponin,"고추, 미인, 초록색, 생것",고추,14
+rda_saponin,"고추, 빨간색, 생것",고추,17
+rda_saponin,"고추, 빨간색, 씨, 말린것",고추,17
+rda_saponin,"고추, 빨간색, 씨포함, 말린것",고추,17
+rda_saponin,"고추, 청양, 초록색, 생것",고추,14
+rda_saponin,"고추, 청양, 초록색, 잎, 생것",고추,1
+rda_saponin,"귀리, 겉귀리, 다한, 도정, 생것",귀리,16
+rda_saponin,"귀리, 겉귀리, 다한, 전곡, 생것",귀리,16
+rda_saponin,"귀리, 겉귀리, 삼한, 도정, 생것",귀리,16
+rda_saponin,"귀리, 겉귀리, 삼한, 전곡, 생것",귀리,16
+rda_saponin,"귀리, 겉귀리, 조풍, 도정, 생것",귀리,16
+rda_saponin,"귀리, 겉귀리, 조풍, 전곡, 생것",귀리,16
+rda_saponin,"귀리, 겉귀리, 하이스피드, 도정, 생것",귀리,16
+rda_saponin,"귀리, 겉귀리, 하이스피드, 전곡, 생것",귀리,16
+rda_saponin,"귀리, 쌀귀리, 대양, 도정, 생것",귀리,16
+rda_saponin,"귀리, 쌀귀리, 수양, 도정, 생것",귀리,16
+rda_saponin,"귀리, 쌀귀리, 조양, 도정, 생것",귀리,16
+rda_saponin,낫또,,24
+rda_saponin,"녹두, 다현, 말린것",녹두,9
+rda_saponin,"녹두, 다현, 숙주나물, 생것",숙주나물,9
+rda_saponin,"녹두, 산포, 말린것",녹두,9
+rda_saponin,"녹두, 산포, 숙주나물, 생것",숙주나물,9
+rda_saponin,"녹두, 삼황, 말린것",녹두,9
+rda_saponin,"녹두, 삼황, 숙주나물, 생것",숙주나물,9
+rda_saponin,"녹차, 잎, 제조공정(1차건조)",녹차,8
+rda_saponin,"녹차, 잎, 제조공정(2차건조)",녹차,8
+rda_saponin,"녹차, 잎, 제조공정(마무리건조)",녹차,8
+rda_saponin,"녹차, 잎, 제조공정(말린것)",녹차,8
+rda_saponin,"녹차, 잎, 제조공정(비비기, 유념)",녹차,8
+rda_saponin,"녹차, 잎, 제조공정(생것)",녹차,8
+rda_saponin,"녹차, 잎, 제조공정(첫덖음)",녹차,8
+rda_saponin,"녹차, 잎, 채집시기(대작, 5월 하순), C사, 말린것",녹차,8
+rda_saponin,"녹차, 잎, 채집시기(세작, 5월 초순), A사, 말린것",녹차,8
+rda_saponin,"녹차, 잎, 채집시기(세작, 5월 초순), B사, 말린것",녹차,8
+rda_saponin,"녹차, 잎, 채집시기(세작, 5월 초순), C사, 말린것",녹차,8
+rda_saponin,"녹차, 잎, 채집시기(우전, 4월 하순), A사, 말린것",녹차,8
+rda_saponin,"녹차, 잎, 채집시기(우전, 4월 하순), B사, 말린것",녹차,8
+rda_saponin,"녹차, 잎, 채집시기(우전, 4월 하순), C사, 말린것",녹차,8
+rda_saponin,"녹차, 잎, 채집시기(중작, 5월 중순), C사, 말린것",녹차,8
+rda_saponin,"대추, 씨, 생것",대추,1
+rda_saponin,"대추, 열매, 씨제거, 생것",대추,5
+rda_saponin,"대추, 잎, 생것",대추,30
+rda_saponin,"더덕, 뿌리, 껍질, 생것",더덕,8
+rda_saponin,"더덕, 뿌리, 껍질제거, 구운것",더덕,8
+rda_saponin,"더덕, 뿌리, 껍질제거, 데친것",더덕,8
+rda_saponin,"더덕, 뿌리, 껍질제거, 생것",더덕,8
+rda_saponin,"더덕, 뿌리, 껍질포함, 생것",더덕,8
+rda_saponin,"더덕, 장아찌",더덕,7
+rda_saponin,"더덕, 조청",더덕,8
+rda_saponin,"더덕, 지상부, 생것",더덕,6
+rda_saponin,"도라지, 꽃봉오리, 생것",도라지,24
+rda_saponin,"도라지, 뿌리, 껍질제거, 데친것",도라지,36
+rda_saponin,"도라지, 뿌리, 껍질제거, 생것",도라지,37
+rda_saponin,"도라지, 뿌리, 껍질포함, 생것",도라지,37
+rda_saponin,"도라지, 뿌리상부, 생것",도라지,36
+rda_saponin,"도라지, 잎, 생것",도라지,22
+rda_saponin,"도라지, 줄기, 생것",도라지,25
+rda_saponin,"동부, 옥당, 생것",동부,9
+rda_saponin,"두릅, 개두릅(음나무, 엄나무), 순, 데친것",두릅,45
+rda_saponin,"두릅, 개두릅(음나무, 엄나무), 순, 생것",두릅,45
+rda_saponin,"두릅, 땅두릅, 순, 데친것",두릅,24
+rda_saponin,"두릅, 땅두릅, 순, 생것",두릅,24
+rda_saponin,"두릅, 참두릅, 순, 데친것",두릅,56
+rda_saponin,"두릅, 참두릅, 순, 생것",두릅,58
+rda_saponin,"두릅, 참두릅, 순, 장아찌, 간장",간장,45
+rda_saponin,"두릅, 참두릅, 순, 장아찌, 고추장",고추장,50
+rda_saponin,"병풀, 잎줄기, A지역",,5
+rda_saponin,"병풀, 잎줄기, B지역",,5
+rda_saponin,"섬오갈피, 순, 생것",피,40
+rda_saponin,"섬오갈피, 열매, 생것",피,18
+rda_saponin,"섬오갈피, 잎, 생것",피,40
+rda_saponin,"섬오갈피, 줄기, 생것",피,1
+rda_saponin,"시호, 뿌리, 국내산, 말린것",,20
+rda_saponin,"시호, 뿌리, 중국산, 말린것",,20
+rda_saponin,"완두, 꼬투리, 생것",완두,5
+rda_saponin,"완두, 생것",완두,4
+rda_saponin,"완두, 전체, 생것",완두,4
+rda_saponin,"인삼, 수삼, 뿌리, 생것",,23
+rda_saponin,"인삼, 수삼, 씨, 생것",,21
+rda_saponin,"인삼, 수삼, 열매, 씨제거, 생것",,29
+rda_saponin,"인삼, 수삼, 잎, 생것",,28
+rda_saponin,"인삼, 수삼, 줄기, 생것",,28
+rda_saponin,"인삼, 홍삼, 농축액, A사",,21
+rda_saponin,"인삼, 홍삼, 농축액, B사",,21
+rda_saponin,"인삼, 홍삼, 분말",,21
+rda_saponin,"인삼, 홍삼, 진액, A사",,21
+rda_saponin,"인삼, 홍삼, 진액, B사",,21
+rda_saponin,"인삼, 홍삼, 추출액",,18
+rda_saponin,"인삼, 홍삼, 환, A사",,21
+rda_saponin,"인삼, 홍삼, 환, B사",,21
+rda_saponin,"작두(도두), 꼬투리, 생것",작두(도두),1
+rda_saponin,"작두(도두), 붉은색, 생것",작두(도두),1
+rda_saponin,"작두(도두), 흰색, 생것",작두(도두),1
+rda_saponin,청국장,청국장,23
+rda_saponin,"청국장, 가루",청국장,19
+rda_saponin,"콩, 노란콩, 말린것",,25
+rda_saponin,"콩, 노란콩, 볶은것",,25
+rda_saponin,"콩, 노란콩, 불린것",,25
+rda_saponin,"콩, 노란콩, 삶은것",,25
+rda_saponin,"콩, 대원, 꼬투리, 말린것",,15
+rda_saponin,"콩, 대원, 말린것",,25
+rda_saponin,"콩, 대원, 잎, 생것",,12
+rda_saponin,"콩, 서리태, 말린것",,24
+rda_saponin,"콩, 서리태, 볶은것",,25
+rda_saponin,"콩, 서리태, 불린것",,25
+rda_saponin,"콩, 서리태, 삶은것",,25
+rda_saponin,"콩, 청자2호, 꼬투리, 말린것",,18
+rda_saponin,"콩, 청자2호, 말린것",,25
+rda_saponin,"콩, 청자2호, 잎, 생것",,16
+rda_saponin,"콩, 풍산, 꼬투리, 말린것",,18
+rda_saponin,"콩, 풍산, 나물, 1일 발아, 생것",,25
+rda_saponin,"콩, 풍산, 나물, 3일 발아, 생것",,25
+rda_saponin,"콩, 풍산, 나물, 5일 발아, 생것",,25
+rda_saponin,"콩, 풍산, 말린것",,24
+rda_saponin,"콩, 풍산, 잎, 생것",,11
+rda_saponin,"토종오갈피, 순, 생것",피,44
+rda_saponin,"토종오갈피, 열매, 생것",피,37
+rda_saponin,"토종오갈피, 잎, 생것",피,40
+rda_saponin,"토종오갈피, 잎, 장아찌",피,7
+rda_saponin,"토종오갈피, 줄기, 생것",피,10
+rda_saponin,"팥, 검은색, 검구슬, 말린것",팥,22
+rda_saponin,"팥, 녹색, 연두채, 말린것",팥,22
+rda_saponin,"팥, 적색, 서나, 말린것",팥,22
+rda_saponin,"팥, 적색, 아라리, 말린것",팥,22
+rda_saponin,"팥, 황색, 흰구슬, 말린것",팥,22
+rda_saponin,"팥, 황색, 흰나래, 말린것",팥,22
+rda_saponin,"홍차, 잎, 제조공정(1차건조)",홍차,8
+rda_saponin,"홍차, 잎, 제조공정(마무리건조)",홍차,8
+rda_saponin,"홍차, 잎, 제조공정(말린것)",홍차,8
+rda_saponin,"홍차, 잎, 제조공정(비비기, 유념)",홍차,8
+rda_saponin,"홍차, 잎, 제조공정(상온발효)",홍차,8
+rda_saponin,"홍차, 잎, 제조공정(생것)",홍차,8
+rda_saponin,"홍차, 잎, 제조공정(시들리기)",홍차,8
+rda_saponin,"홍차, 잎, 티백, A사",홍차,8
+rda_saponin,"홍차, 잎, 티백, B사",홍차,8
+rda_saponin,"황기, 뿌리, 말린것",,24
+rda_saponin,"황기, 뿌리, 생것",,24
+rda_saponin,"황기, 뿌리, 진액",,24
+rda_saponin,"황기, 뿌리, 환",,24
+rda_saponin,"황기, 씨앗, 생것",,5

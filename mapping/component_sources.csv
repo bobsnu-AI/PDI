@@ -1,0 +1,45 @@
+﻿family,rank,source_db,source_name,source_file,food_key,unit,basis,n_compounds,foods_mapped,coverage_pct,knhanes_pct
+플라보놀,1,rda_flavonoid,RDA 플라보노이드 DB 1.0,kr_rda/플라보노이드 Data Base 1.0.xlsx,한글 식품명,mg/100g,건조중량(DW),274,368,19.6,20.7
+플라보놀,2,phenol_explorer,Phenol-Explorer 3.6,phenol_explorer/composition-data.xlsx,food (영문명),mg/100g 또는 mg/100mL,신선중량(FW),76,372,19.8,20.4
+플라보놀,3,usda_flavonoid,USDA Flavonoid 3.3,usda/flavonoid_csv/FLAV_DAT.csv,NDB_No,mg/100g,신선중량(FW),4,609,32.4,35.9
+플라보놀,4,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),65,205,10.9,11.6
+플라반-3-올,1,rda_flavonoid,RDA 플라보노이드 DB 1.0,kr_rda/플라보노이드 Data Base 1.0.xlsx,한글 식품명,mg/100g,건조중량(DW),10,34,1.8,2.0
+플라반-3-올,2,phenol_explorer,Phenol-Explorer 3.6,phenol_explorer/composition-data.xlsx,food (영문명),mg/100g 또는 mg/100mL,신선중량(FW),34,170,9.1,9.7
+플라반-3-올,3,usda_flavonoid,USDA Flavonoid 3.3,usda/flavonoid_csv/FLAV_DAT.csv,NDB_No,mg/100g,신선중량(FW),10,234,12.5,13.7
+플라반-3-올,4,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),33,654,34.8,30.4
+이소플라본,1,rda_flavonoid,RDA 플라보노이드 DB 1.0,kr_rda/플라보노이드 Data Base 1.0.xlsx,한글 식품명,mg/100g,건조중량(DW),40,13,0.7,1.1
+이소플라본,2,phenol_explorer,Phenol-Explorer 3.6,phenol_explorer/composition-data.xlsx,food (영문명),mg/100g 또는 mg/100mL,신선중량(FW),15,27,1.4,2.0
+이소플라본,3,usda_isoflavone,USDA Isoflavone 2.1,usda/isoflavone_csv/ISFL_DAT.csv,NDB_No,mg/100g,신선중량(FW),7,513,27.3,25.6
+이소플라본,4,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),18,446,23.7,21.0
+안토시아니딘,1,phenol_explorer,Phenol-Explorer 3.6,phenol_explorer/composition-data.xlsx,food (영문명),mg/100g 또는 mg/100mL,신선중량(FW),67,63,3.4,3.4
+안토시아니딘,2,usda_flavonoid,USDA Flavonoid 3.3,usda/flavonoid_csv/FLAV_DAT.csv,NDB_No,mg/100g,신선중량(FW),6,107,5.7,7.0
+안토시아니딘,3,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),80,365,19.4,20.8
+플라바논,1,rda_flavonoid,RDA 플라보노이드 DB 1.0,kr_rda/플라보노이드 Data Base 1.0.xlsx,한글 식품명,mg/100g,건조중량(DW),29,33,1.8,1.8
+플라바논,2,phenol_explorer,Phenol-Explorer 3.6,phenol_explorer/composition-data.xlsx,food (영문명),mg/100g 또는 mg/100mL,신선중량(FW),22,55,2.9,2.9
+플라바논,3,usda_flavonoid,USDA Flavonoid 3.3,usda/flavonoid_csv/FLAV_DAT.csv,NDB_No,mg/100g,신선중량(FW),3,70,3.7,3.2
+플라바논,4,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),25,303,16.1,17.3
+플라본,1,rda_flavonoid,RDA 플라보노이드 DB 1.0,kr_rda/플라보노이드 Data Base 1.0.xlsx,한글 식품명,mg/100g,건조중량(DW),81,276,14.7,8.8
+플라본,2,phenol_explorer,Phenol-Explorer 3.6,phenol_explorer/composition-data.xlsx,food (영문명),mg/100g 또는 mg/100mL,신선중량(FW),45,153,8.1,9.7
+플라본,3,usda_flavonoid,USDA Flavonoid 3.3,usda/flavonoid_csv/FLAV_DAT.csv,NDB_No,mg/100g,신선중량(FW),2,321,17.1,19.4
+플라본,4,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),50,785,41.8,40.2
+프로안토시아니딘,1,usda_proanthocyanidin,USDA Proanthocyanidin 2,usda/proanthocyanidin_csv/PA_DAT.csv,NDB No,mg/100g,신선중량(FW),5,252,13.4,14.1
+프로안토시아니딘,2,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),14,195,10.4,10.7
+카로티노이드,1,rda_fct,국가표준식품성분표 10.4,kr_rda/식품성분표(10개정판).xlsx,DB10.4 색인(식품코드),µg 또는 mg/100g,신선중량(FW),1,1284,68.4,70.6
+카로티노이드,2,usda_sr_carotenoid,USDA SR Legacy 카로티노이드,usda/carotenoids.csv,ndb_number,µg/100g,신선중량(FW),5,718,38.2,42.3
+카로티노이드,3,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),17,1164,62.0,62.4
+페놀산,1,rda_flavonoid,RDA 플라보노이드 DB 1.0,kr_rda/플라보노이드 Data Base 1.0.xlsx,한글 식품명,mg/100g,건조중량(DW),7,46,2.4,2.2
+페놀산,2,rda_phenolic_acid,RDA 페놀산 DB,kr_rda/공공데이터_페놀산 DB.xlsx,한글 식품명,mg/100g,건조중량(DW),133,379,20.2,18.5
+페놀산,3,phenol_explorer,Phenol-Explorer 3.6,phenol_explorer/composition-data.xlsx,food (영문명),mg/100g 또는 mg/100mL,신선중량(FW),105,524,27.9,22.2
+페놀산,4,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),116,562,29.9,28.1
+스틸벤,1,phenol_explorer,Phenol-Explorer 3.6,phenol_explorer/composition-data.xlsx,food (영문명),mg/100g 또는 mg/100mL,신선중량(FW),7,24,1.3,1.6
+스틸벤,2,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),13,12,0.6,0.9
+리그난,1,phenol_explorer,Phenol-Explorer 3.6,phenol_explorer/composition-data.xlsx,food (영문명),mg/100g 또는 mg/100mL,신선중량(FW),27,456,24.3,27.2
+리그난,2,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),27,141,7.5,9.7
+사포닌,1,rda_saponin,RDA 사포닌 DB 3.0,kr_rda/RDA 기능성분 DB 3.0 사포닌 편.xlsx,한글 식품명,mg/100g,건조중량(DW),538,108,5.8,6.2
+사포닌,2,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),2,64,3.4,2.7
+토코페롤류,1,rda_fct,국가표준식품성분표 10.4,kr_rda/식품성분표(10개정판).xlsx,DB10.4 색인(식품코드),µg 또는 mg/100g,신선중량(FW),8,1313,69.9,78.3
+토코페롤류,2,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),3,1148,61.1,61.7
+기타,1,rda_flavonoid,RDA 플라보노이드 DB 1.0,kr_rda/플라보노이드 Data Base 1.0.xlsx,한글 식품명,mg/100g,건조중량(DW),33,239,12.7,7.4
+기타,2,rda_phenolic_acid,RDA 페놀산 DB,kr_rda/공공데이터_페놀산 DB.xlsx,한글 식품명,mg/100g,건조중량(DW),31,38,2.0,2.0
+기타,3,phenol_explorer,Phenol-Explorer 3.6,phenol_explorer/composition-data.xlsx,food (영문명),mg/100g 또는 mg/100mL,신선중량(FW),77,692,36.8,40.4
+기타,4,foodb,FooDB 2020-04-07,foodb/foodb_2020_04_07_csv/Content.csv,food_id,standard_content (mg/100g),신선중량(FW),3281,1223,65.1,65.7

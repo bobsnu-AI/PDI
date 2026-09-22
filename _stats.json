@@ -1,0 +1,265 @@
+{
+  "foodb_tables": {
+    "AccessionNumber": {
+      "rows": 1424,
+      "cols": 7,
+      "bytes": 99514
+    },
+    "Compound": {
+      "rows": 70477,
+      "cols": 16,
+      "bytes": 51314037
+    },
+    "CompoundAlternateParent": {
+      "rows": 50691,
+      "cols": 7,
+      "bytes": 4099389
+    },
+    "CompoundExternalDescriptor": {
+      "rows": 4009,
+      "cols": 8,
+      "bytes": 409629
+    },
+    "CompoundOntologyTerm": {
+      "rows": 1587712,
+      "cols": 6,
+      "bytes": 114471566
+    },
+    "CompoundSubstituent": {
+      "rows": 95299,
+      "cols": 7,
+      "bytes": 7592480
+    },
+    "CompoundSynonym": {
+      "rows": 171240,
+      "cols": 7,
+      "bytes": 18108089
+    },
+    "CompoundsEnzyme": {
+      "rows": 105089,
+      "cols": 8,
+      "bytes": 7464333
+    },
+    "CompoundsFlavor": {
+      "rows": 11775,
+      "cols": 10,
+      "bytes": 2849284
+    },
+    "CompoundsHealthEffect": {
+      "rows": 11062,
+      "cols": 14,
+      "bytes": 1339879
+    },
+    "CompoundsPathway": {
+      "rows": 1604,
+      "cols": 7,
+      "bytes": 101106
+    },
+    "Content": {
+      "rows": 5145532,
+      "cols": 26,
+      "bytes": 779793109
+    },
+    "Enzyme": {
+      "rows": 1744,
+      "cols": 32,
+      "bytes": 226242
+    },
+    "EnzymeSynonym": {
+      "rows": 0,
+      "cols": 6,
+      "bytes": 50
+    },
+    "Flavor": {
+      "rows": 883,
+      "cols": 8,
+      "bytes": 61490
+    },
+    "Food": {
+      "rows": 992,
+      "cols": 23,
+      "bytes": 885026
+    },
+    "FoodTaxonomy": {
+      "rows": 889,
+      "cols": 7,
+      "bytes": 72782
+    },
+    "HealthEffect": {
+      "rows": 1435,
+      "cols": 10,
+      "bytes": 271040
+    },
+    "MapItemsPathway": {
+      "rows": 0,
+      "cols": 6,
+      "bytes": 62
+    },
+    "NcbiTaxonomyMap": {
+      "rows": 242,
+      "cols": 5,
+      "bytes": 5850
+    },
+    "Nutrient": {
+      "rows": 39,
+      "cols": 23,
+      "bytes": 4851
+    },
+    "OntologySynonym": {
+      "rows": 1669,
+      "cols": 11,
+      "bytes": 137610
+    },
+    "OntologyTerm": {
+      "rows": 4370,
+      "cols": 12,
+      "bytes": 896550
+    },
+    "Pathway": {
+      "rows": 97,
+      "cols": 6,
+      "bytes": 9137
+    },
+    "PdbIdentifier": {
+      "rows": 0,
+      "cols": 5,
+      "bytes": 44
+    },
+    "Pfam": {
+      "rows": 0,
+      "cols": 5,
+      "bytes": 41
+    },
+    "PfamMembership": {
+      "rows": 0,
+      "cols": 5,
+      "bytes": 43
+    },
+    "Reference": {
+      "rows": 31778,
+      "cols": 12,
+      "bytes": 8533879
+    },
+    "Sequence": {
+      "rows": 0,
+      "cols": 8,
+      "bytes": 77
+    }
+  },
+  "foodb": {
+    "foods_total": 992,
+    "compounds_total": 70477,
+    "content_rows": 5145532,
+    "content_by_source_type": {
+      "Nutrient": 138032,
+      "Compound": 5007500
+    },
+    "quant_values": 858921,
+    "quant_values_standardised": 858600,
+    "foods_with_quant": 902,
+    "compounds_with_quant": 4130,
+    "compounds_with_inchikey": 70415
+  },
+  "phenol_explorer": {
+    "version": "3.6 (2016-12-10)",
+    "compounds_total": 501,
+    "foods_total": 459,
+    "compound_classes": 751,
+    "food_classes": 543,
+    "metabolites": 372,
+    "publications": 1308,
+    "composition_rows": 7486,
+    "foods_with_quant": 458,
+    "compounds_with_quant": 508,
+    "quant_values": 7486,
+    "compounds_with_pubchem_cid": 283,
+    "compounds_with_cas": 193
+  },
+  "usda_flavonoid_3.3": {
+    "foods_total": 512,
+    "compounds_total": 26,
+    "value_rows": 3641,
+    "value_column": "Flav_Val",
+    "foods_with_quant": 512,
+    "compounds_with_quant": 25,
+    "quant_values": 3641,
+    "quant_values_gt0": 1804,
+    "tables": {
+      "DATA_SRC": 311,
+      "DATSRCLN": 6087,
+      "FD_GROUP": 12,
+      "FLAV_DAT": 3641,
+      "FLAV_IND": 24130,
+      "FOOD_DES": 512,
+      "Food_Des_CR": 6,
+      "NUTR_DEF": 26,
+      "Nut_Val_CR": 59,
+      "SRCLink": 53
+    },
+    "individual_value_rows": 24130
+  },
+  "usda_isoflavone_2.1": {
+    "foods_total": 560,
+    "compounds_total": 7,
+    "value_rows": 2429,
+    "value_column": "Isfl_Val",
+    "foods_with_quant": 560,
+    "compounds_with_quant": 7,
+    "quant_values": 2429,
+    "quant_values_gt0": 1247,
+    "tables": {
+      "DATA_SRC": 106,
+      "DATSRCLN": 3619,
+      "FOOD_DES": 560,
+      "ISFL_DAT": 2429,
+      "NUTR_DEF": 7,
+      "SYBN_DTL": 2091
+    }
+  },
+  "usda_proanthocyanidin_2": {
+    "foods_total": 283,
+    "compounds_total": 5,
+    "value_rows": 1240,
+    "value_column": "Flav_Val",
+    "foods_with_quant": 283,
+    "compounds_with_quant": 5,
+    "quant_values": 1240,
+    "quant_values_gt0": 563,
+    "tables": {
+      "DATA_SRC": 67,
+      "DATSRCLN": 1722,
+      "FD_GROUP": 12,
+      "FOOD_DES": 283,
+      "NUTR_DEF": 5,
+      "PA_DAT": 1240
+    }
+  },
+  "usda_sr_legacy_carotenoids": {
+    "source": "FoodData_Central_sr_legacy_food_csv_2018-04",
+    "foods_total": 7793,
+    "compounds_total": 5,
+    "compounds": [
+      "alpha_carotene_ug",
+      "beta_carotene_ug",
+      "beta_cryptoxanthin_ug",
+      "lutein_zeaxanthin_ug",
+      "lycopene_ug"
+    ],
+    "foods_with_quant": 5448,
+    "foods_with_quant_gt0": 2718,
+    "quant_values": 26741,
+    "quant_values_gt0": 6271
+  },
+  "overlap_pe_foodb": {
+    "pe_compounds": 501,
+    "pe_with_pubchem_cid": 283,
+    "pe_with_resolved_inchikey": 283,
+    "pe_distinct_inchikeys": 280,
+    "foodb_distinct_inchikeys": 69605,
+    "match_full_inchikey": 177,
+    "match_inchikey_skeleton_14": 250,
+    "match_cas": 174,
+    "match_exact_name_ci": 264,
+    "match_inchikey_or_cas_union": 227
+  }
+}

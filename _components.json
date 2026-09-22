@@ -1,0 +1,382 @@
+{
+  "base_foods": 1878,
+  "knhanes_base": 854,
+  "families": {
+    "플라보놀": {
+      "union_foods": 784,
+      "union_pct": 41.7,
+      "knhanes_foods": 385,
+      "knhanes_pct": 45.1,
+      "sources": [
+        {
+          "db": "rda_flavonoid",
+          "n_compounds": 274,
+          "foods": 368,
+          "pct": 19.6
+        },
+        {
+          "db": "phenol_explorer",
+          "n_compounds": 76,
+          "foods": 372,
+          "pct": 19.8
+        },
+        {
+          "db": "usda_flavonoid",
+          "n_compounds": 4,
+          "foods": 609,
+          "pct": 32.4
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 65,
+          "foods": 205,
+          "pct": 10.9
+        }
+      ]
+    },
+    "플라반-3-올": {
+      "union_foods": 697,
+      "union_pct": 37.1,
+      "knhanes_foods": 281,
+      "knhanes_pct": 32.9,
+      "sources": [
+        {
+          "db": "rda_flavonoid",
+          "n_compounds": 10,
+          "foods": 34,
+          "pct": 1.8
+        },
+        {
+          "db": "phenol_explorer",
+          "n_compounds": 34,
+          "foods": 170,
+          "pct": 9.1
+        },
+        {
+          "db": "usda_flavonoid",
+          "n_compounds": 10,
+          "foods": 234,
+          "pct": 12.5
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 33,
+          "foods": 654,
+          "pct": 34.8
+        }
+      ]
+    },
+    "이소플라본": {
+      "union_foods": 652,
+      "union_pct": 34.7,
+      "knhanes_foods": 282,
+      "knhanes_pct": 33.0,
+      "sources": [
+        {
+          "db": "rda_flavonoid",
+          "n_compounds": 40,
+          "foods": 13,
+          "pct": 0.7
+        },
+        {
+          "db": "phenol_explorer",
+          "n_compounds": 15,
+          "foods": 27,
+          "pct": 1.4
+        },
+        {
+          "db": "usda_isoflavone",
+          "n_compounds": 7,
+          "foods": 513,
+          "pct": 27.3
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 18,
+          "foods": 446,
+          "pct": 23.7
+        }
+      ]
+    },
+    "안토시아니딘": {
+      "union_foods": 407,
+      "union_pct": 21.7,
+      "knhanes_foods": 198,
+      "knhanes_pct": 23.2,
+      "sources": [
+        {
+          "db": "phenol_explorer",
+          "n_compounds": 67,
+          "foods": 63,
+          "pct": 3.4
+        },
+        {
+          "db": "usda_flavonoid",
+          "n_compounds": 6,
+          "foods": 107,
+          "pct": 5.7
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 80,
+          "foods": 365,
+          "pct": 19.4
+        }
+      ]
+    },
+    "플라바논": {
+      "union_foods": 328,
+      "union_pct": 17.5,
+      "knhanes_foods": 156,
+      "knhanes_pct": 18.3,
+      "sources": [
+        {
+          "db": "rda_flavonoid",
+          "n_compounds": 29,
+          "foods": 33,
+          "pct": 1.8
+        },
+        {
+          "db": "phenol_explorer",
+          "n_compounds": 22,
+          "foods": 55,
+          "pct": 2.9
+        },
+        {
+          "db": "usda_flavonoid",
+          "n_compounds": 3,
+          "foods": 70,
+          "pct": 3.7
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 25,
+          "foods": 303,
+          "pct": 16.1
+        }
+      ]
+    },
+    "플라본": {
+      "union_foods": 922,
+      "union_pct": 49.1,
+      "knhanes_foods": 405,
+      "knhanes_pct": 47.4,
+      "sources": [
+        {
+          "db": "rda_flavonoid",
+          "n_compounds": 81,
+          "foods": 276,
+          "pct": 14.7
+        },
+        {
+          "db": "phenol_explorer",
+          "n_compounds": 45,
+          "foods": 153,
+          "pct": 8.1
+        },
+        {
+          "db": "usda_flavonoid",
+          "n_compounds": 2,
+          "foods": 321,
+          "pct": 17.1
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 50,
+          "foods": 785,
+          "pct": 41.8
+        }
+      ]
+    },
+    "프로안토시아니딘": {
+      "union_foods": 348,
+      "union_pct": 18.5,
+      "knhanes_foods": 168,
+      "knhanes_pct": 19.7,
+      "sources": [
+        {
+          "db": "usda_proanthocyanidin",
+          "n_compounds": 5,
+          "foods": 252,
+          "pct": 13.4
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 14,
+          "foods": 195,
+          "pct": 10.4
+        }
+      ]
+    },
+    "카로티노이드": {
+      "union_foods": 1640,
+      "union_pct": 87.3,
+      "knhanes_foods": 745,
+      "knhanes_pct": 87.2,
+      "sources": [
+        {
+          "db": "rda_fct",
+          "n_compounds": 1,
+          "foods": 1284,
+          "pct": 68.4
+        },
+        {
+          "db": "usda_sr_carotenoid",
+          "n_compounds": 5,
+          "foods": 718,
+          "pct": 38.2
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 17,
+          "foods": 1164,
+          "pct": 62.0
+        }
+      ]
+    },
+    "페놀산": {
+      "union_foods": 881,
+      "union_pct": 46.9,
+      "knhanes_foods": 378,
+      "knhanes_pct": 44.3,
+      "sources": [
+        {
+          "db": "rda_flavonoid",
+          "n_compounds": 7,
+          "foods": 46,
+          "pct": 2.4
+        },
+        {
+          "db": "rda_phenolic_acid",
+          "n_compounds": 133,
+          "foods": 379,
+          "pct": 20.2
+        },
+        {
+          "db": "phenol_explorer",
+          "n_compounds": 105,
+          "foods": 524,
+          "pct": 27.9
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 116,
+          "foods": 562,
+          "pct": 29.9
+        }
+      ]
+    },
+    "스틸벤": {
+      "union_foods": 27,
+      "union_pct": 1.4,
+      "knhanes_foods": 16,
+      "knhanes_pct": 1.9,
+      "sources": [
+        {
+          "db": "phenol_explorer",
+          "n_compounds": 7,
+          "foods": 24,
+          "pct": 1.3
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 13,
+          "foods": 12,
+          "pct": 0.6
+        }
+      ]
+    },
+    "리그난": {
+      "union_foods": 523,
+      "union_pct": 27.8,
+      "knhanes_foods": 274,
+      "knhanes_pct": 32.1,
+      "sources": [
+        {
+          "db": "phenol_explorer",
+          "n_compounds": 27,
+          "foods": 456,
+          "pct": 24.3
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 27,
+          "foods": 141,
+          "pct": 7.5
+        }
+      ]
+    },
+    "사포닌": {
+      "union_foods": 172,
+      "union_pct": 9.2,
+      "knhanes_foods": 76,
+      "knhanes_pct": 8.9,
+      "sources": [
+        {
+          "db": "rda_saponin",
+          "n_compounds": 538,
+          "foods": 108,
+          "pct": 5.8
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 2,
+          "foods": 64,
+          "pct": 3.4
+        }
+      ]
+    },
+    "토코페롤류": {
+      "union_foods": 1582,
+      "union_pct": 84.2,
+      "knhanes_foods": 769,
+      "knhanes_pct": 90.0,
+      "sources": [
+        {
+          "db": "rda_fct",
+          "n_compounds": 8,
+          "foods": 1313,
+          "pct": 69.9
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 3,
+          "foods": 1148,
+          "pct": 61.1
+        }
+      ]
+    },
+    "기타": {
+      "union_foods": 1267,
+      "union_pct": 67.5,
+      "knhanes_foods": 586,
+      "knhanes_pct": 68.6,
+      "sources": [
+        {
+          "db": "rda_flavonoid",
+          "n_compounds": 33,
+          "foods": 239,
+          "pct": 12.7
+        },
+        {
+          "db": "rda_phenolic_acid",
+          "n_compounds": 31,
+          "foods": 38,
+          "pct": 2.0
+        },
+        {
+          "db": "phenol_explorer",
+          "n_compounds": 77,
+          "foods": 692,
+          "pct": 36.8
+        },
+        {
+          "db": "foodb",
+          "n_compounds": 3281,
+          "foods": 1223,
+          "pct": 65.1
+        }
+      ]
+    }
+  }
+}

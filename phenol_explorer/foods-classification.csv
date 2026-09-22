@@ -1,0 +1,544 @@
+class,subclass,food_name,food_id
+Alcoholic beverages,Beers,Beer [Ale],492
+Alcoholic beverages,Beers,Beer [Dark],494
+Alcoholic beverages,Beers,Beer [Alcohol free],531
+Alcoholic beverages,Beers,Beer [Regular],539
+Alcoholic beverages,Ciders,Cider,28
+Alcoholic beverages,Liquors - Nut liquors,"Walnut, liquor",720
+Alcoholic beverages,Spirits - Brandy,Cognac,193
+Alcoholic beverages,Spirits - Rum,Rum,194
+Alcoholic beverages,Spirits - Whisky,Scotch whisky,192
+Alcoholic beverages,Wines - Berry wines,"Muscadine grape, red wine",145
+Alcoholic beverages,Wines - Berry wines,"Blackcurrant, wine",148
+Alcoholic beverages,Wines - Berry wines,"Black crowberry, wine",150
+Alcoholic beverages,Wines - Berry wines,"Fox grape, red wine",233
+Alcoholic beverages,Wines - Berry wines,"Fox grape, white wine",234
+Alcoholic beverages,Wines - Fortified Wines,Sherry,147
+Alcoholic beverages,Wines - Grape wines,Wine [Red],135
+Alcoholic beverages,Wines - Grape wines,Wine [White],136
+Alcoholic beverages,Wines - Grape wines,Wine [Rosé],137
+Alcoholic beverages,Wines - Sparkling wines,Champagne,139
+Cereals and cereal products,Cereal products,"Breakfast cereals, bran",219
+Cereals and cereal products,Cereal products,"Bread, refined flour",226
+Cereals and cereal products,Cereal products,Pasta,227
+Cereals and cereal products,Cereal products,"Bread, common wheat, whole grain flour",229
+Cereals and cereal products,Cereal products,"Bread, rye, whole grain flour",293
+Cereals and cereal products,Cereal products,"Pasta, whole grain",299
+Cereals and cereal products,Cereal products,"Breakfast cereals, muesli",301
+Cereals and cereal products,Cereal products,"Breakfast cereals, oat, whole-meal",975
+Cereals and cereal products,Cereal products,"Breakfast cereals, corn",976
+Cereals and cereal products,Cereals,"Hard wheat, whole grain flour",210
+Cereals and cereal products,Cereals,"Hard wheat, semolina",216
+Cereals and cereal products,Cereals,"Hard wheat, refined flour",218
+Cereals and cereal products,Cereals,"Common wheat, whole grain flour",224
+Cereals and cereal products,Cereals,"Common wheat, refined flour",225
+Cereals and cereal products,Cereals,"Rye, whole grain flour",292
+Cereals and cereal products,Cereals,"Barley, whole grain flour",300
+Cereals and cereal products,Cereals,"Maize, whole grain",304
+Cereals and cereal products,Cereals,"Oat, whole grain flour",305
+Cereals and cereal products,Cereals,"Sorghum, whole grain",308
+Cereals and cereal products,Cereals,"Common wheat, germ",315
+Cereals and cereal products,Cereals,"Rye, refined flour",316
+Cereals and cereal products,Cereals,"Buckwheat, refined flour",317
+Cereals and cereal products,Cereals,"Buckwheat, whole grain flour",321
+Cereals and cereal products,Cereals,"Rice, refined",324
+Cereals and cereal products,Cereals,"Oat, refined flour",325
+Cereals and cereal products,Cereals,"Maize, refined flour",326
+Cereals and cereal products,Cereals,"Buckwheat, grits",337
+Cereals and cereal products,Cereals,"Oat, rolled",338
+Cereals and cereal products,Cereals,"Rice, whole grain",354
+Cereals and cereal products,Cereals,Maize [Blue],402
+Cereals and cereal products,Cereals,Maize [Purple],404
+Cereals and cereal products,Cereals,Maize [Red],405
+Cereals and cereal products,Cereals,Rice,445
+Cereals and cereal products,Cereals,"Rice, parboiled",522
+Cereals and cereal products,Cereals,"Buckwheat, groats, thermally treated",529
+Cereals and cereal products,Cereals,Maize [White],887
+Cereals and cereal products,Cereals,"Common wheat, whole grain flour with bran",1385
+Cereals and cereal products,Cereals,"Barley, raw, hulled",1389
+Coffee and cocoa,Cocoa - Chocolate,"Chocolate, dark",439
+Coffee and cocoa,Cocoa - Chocolate,"Chocolate, milk",440
+Coffee and cocoa,Cocoa - Cocoa powders,"Cocoa, powder",536
+Fruits and fruit products,Dried fruits - Dried berries,"Grape, raisin",146
+Fruits and fruit products,Dried fruits - Dried drupes,"Plum, prune",51
+Fruits and fruit products,Dried fruits - Dried drupes,"Apricot, dried",558
+Fruits and fruit products,Dried fruits - Dried other fruits,"Date, dried",913
+Fruits and fruit products,Dried fruits - Dried other fruits,"Fig, dried",920
+Fruits and fruit products,Fruits - Berries,Aestivalis grape [Black],62
+Fruits and fruit products,Fruits - Berries,"Red raspberry, raw",67
+Fruits and fruit products,Fruits - Berries,"Strawberry, raw",69
+Fruits and fruit products,Fruits - Berries,American cranberry,74
+Fruits and fruit products,Fruits - Berries,Chinese bayberry,75
+Fruits and fruit products,Fruits - Berries,"Blackcurrant, raw",77
+Fruits and fruit products,Fruits - Berries,"Blackberry, raw",79
+Fruits and fruit products,Fruits - Berries,"Lowbush blueberry, raw",81
+Fruits and fruit products,Fruits - Berries,"Lingonberry, raw",83
+Fruits and fruit products,Fruits - Berries,"Cranberry [Unknown species], raw",84
+Fruits and fruit products,Fruits - Berries,"Redcurrant, raw",86
+Fruits and fruit products,Fruits - Berries,Greencurrant,89
+Fruits and fruit products,Fruits - Berries,Whitecurrant,90
+Fruits and fruit products,Fruits - Berries,Gooseberry,91
+Fruits and fruit products,Fruits - Berries,"Bog bilberry, raw",92
+Fruits and fruit products,Fruits - Berries,European cranberry,93
+Fruits and fruit products,Fruits - Berries,"Bilberry, raw",94
+Fruits and fruit products,Fruits - Berries,"Highbush blueberry, raw",95
+Fruits and fruit products,Fruits - Berries,Blueberry [Unknown species],96
+Fruits and fruit products,Fruits - Berries,Arctic blackberry,98
+Fruits and fruit products,Fruits - Berries,Cloudberry,99
+Fruits and fruit products,Fruits - Berries,Rabbiteye blueberry,100
+Fruits and fruit products,Fruits - Berries,"Black raspberry, raw",101
+Fruits and fruit products,Fruits - Berries,Jostaberry,104
+Fruits and fruit products,Fruits - Berries,"Raspberry [Unknown species], raw",105
+Fruits and fruit products,Fruits - Berries,Black chokeberry,106
+Fruits and fruit products,Fruits - Berries,Black crowberry,107
+Fruits and fruit products,Fruits - Berries,"Rowanberry, raw",108
+Fruits and fruit products,Fruits - Berries,Black huckleberry,109
+Fruits and fruit products,Fruits - Berries,Oval-leaf huckleberry,110
+Fruits and fruit products,Fruits - Berries,Evergreen huckleberry,111
+Fruits and fruit products,Fruits - Berries,Red huckleberry,112
+Fruits and fruit products,Fruits - Berries,Half-highbush blueberry,113
+Fruits and fruit products,Fruits - Berries,Cascade huckleberry,114
+Fruits and fruit products,Fruits - Berries,Sea-buckthornberry,115
+Fruits and fruit products,Fruits - Berries,Sweet rowanberry,116
+Fruits and fruit products,Fruits - Berries,Black elderberry,124
+Fruits and fruit products,Fruits - Berries,Canada blueberry,125
+Fruits and fruit products,Fruits - Berries,Buffalo,126
+Fruits and fruit products,Fruits - Berries,Skunk,127
+Fruits and fruit products,Fruits - Berries,Grape [Black],141
+Fruits and fruit products,Fruits - Berries,Grape [Green],143
+Fruits and fruit products,Fruits - Berries,Fox grape [Black],158
+Fruits and fruit products,Fruits - Berries,"Strawberry, puree",1184
+Fruits and fruit products,Fruits - Berries,"Bilberry, jam",1230
+Fruits and fruit products,Fruits - Berries,"Raspberry [Unknown species], raw, frozen",1316
+Fruits and fruit products,Fruits - Berries,"Blackberry, raw, frozen",1318
+Fruits and fruit products,Fruits - Berries,"Highbush blueberry, raw, canned",1391
+Fruits and fruit products,Fruits - Berries,"Highbush blueberry, blanched, canned",1392
+Fruits and fruit products,Fruits - Berries,"Strawberry, jam, frozen",1433
+Fruits and fruit products,Fruits - Citrus,Orange [Blond],8
+Fruits and fruit products,Fruits - Citrus,Grapefruit,11
+Fruits and fruit products,Fruits - Citrus,Lemon,16
+Fruits and fruit products,Fruits - Citrus,Tangerine,22
+Fruits and fruit products,Fruits - Citrus,Lime,205
+Fruits and fruit products,Fruits - Citrus,Orange [Blood],1369
+Fruits and fruit products,Fruits - Drupes,"Peach, whole",44
+Fruits and fruit products,Fruits - Drupes,"Peach, peeled",45
+Fruits and fruit products,Fruits - Drupes,"Sweet cherry, raw",46
+Fruits and fruit products,Fruits - Drupes,Sour cherry,47
+Fruits and fruit products,Fruits - Drupes,"Plum, fresh",50
+Fruits and fruit products,Fruits - Drupes,"Sweet cherry, canned",53
+Fruits and fruit products,Fruits - Drupes,"Apricot, raw",54
+Fruits and fruit products,Fruits - Drupes,"Nectarine, whole",55
+Fruits and fruit products,Fruits - Drupes,"Nectarine, peeled",60
+Fruits and fruit products,Fruits - Drupes,"Nectarine, puree",1307
+Fruits and fruit products,Fruits - Drupes,"Nectarine, puree, high-pressure processed",1308
+Fruits and fruit products,Fruits - Drupes,"Nectarine, puree, pasteurized",1310
+Fruits and fruit products,Fruits - Gourds,Cantaloupe,3
+Fruits and fruit products,Fruits - Gourds,Melon,160
+Fruits and fruit products,Fruits - Gourds,Watermelon,181
+Fruits and fruit products,Fruits - Gourds,Muskmelon,182
+Fruits and fruit products,Fruits - Gourds,Honeydew melon,449
+Fruits and fruit products,Fruits - Other fruits,"Date, fresh",914
+Fruits and fruit products,Fruits - Other fruits,"Fig, whole, fresh",915
+Fruits and fruit products,Fruits - Other fruits,"Fig, peeled, fresh",916
+Fruits and fruit products,Fruits - Pomes,"Apple [Dessert], whole, raw",23
+Fruits and fruit products,Fruits - Pomes,"Apple [Dessert], peeled",24
+Fruits and fruit products,Fruits - Pomes,"Apple [Cider], whole",33
+Fruits and fruit products,Fruits - Pomes,"Apple [Cider], peeled",34
+Fruits and fruit products,Fruits - Pomes,"Pear, whole",39
+Fruits and fruit products,Fruits - Pomes,"Pear, peeled",40
+Fruits and fruit products,Fruits - Pomes,"Quince, peeled, raw",41
+Fruits and fruit products,Fruits - Pomes,Medlar,187
+Fruits and fruit products,Fruits - Pomes,"Apple [Dessert], puree",198
+Fruits and fruit products,Fruits - Pomes,"Apple, whole, raw",1303
+Fruits and fruit products,Fruits - Stalk vegetables,"Rhubarb, raw",157
+Fruits and fruit products,Fruits - Tropical fruits,Kiwi,155
+Fruits and fruit products,Fruits - Tropical fruits,Mango,156
+Fruits and fruit products,Fruits - Tropical fruits,"Banana, raw",159
+Fruits and fruit products,Fruits - Tropical fruits,Pineapple,161
+Fruits and fruit products,Fruits - Tropical fruits,Lichee,167
+Fruits and fruit products,Fruits - Tropical fruits,Guava,168
+Fruits and fruit products,Fruits - Tropical fruits,Pomegranate,180
+Fruits and fruit products,Fruits - Tropical fruits,Custard apple,185
+Fruits and fruit products,Fruits - Tropical fruits,Star fruit,200
+Fruits and fruit products,Fruits - Tropical fruits,Papaya,201
+Fruits and fruit products,Fruits - Tropical fruits,Longan,909
+Fruits and fruit products,Fruits - Tropical fruits,Passion fruit,910
+Fruits and fruit products,Fruits - Tropical fruits,Loquat,912
+Fruits and fruit products,Fruits - Tropical fruits,"Persimmon, fresh",918
+Fruits and fruit products,Jams - Berry jams,"Red raspberry, jam",68
+Fruits and fruit products,Jams - Berry jams,"Blackcurrant, jam",78
+Fruits and fruit products,Jams - Berry jams,"Blackberry, jam",80
+Fruits and fruit products,Jams - Berry jams,"Lowbush blueberry, jam",82
+Fruits and fruit products,Jams - Berry jams,"Strawberry, jam",88
+Fruits and fruit products,Jams - Berry jams,"Blueberry [Unknown species], jam",97
+Fruits and fruit products,Jams - Drupe jams,"Apricot, jam",58
+Fruits and fruit products,Jams - Drupe jams,"Sweet cherry, jam",120
+Fruits and fruit products,Jams - Drupe jams,"Sour cherry, jam",122
+Fruits and fruit products,Jams - Drupe jams,"Plum, jam",123
+Fruits and fruit products,Jams - Pome jams,"Apple [Dessert], jam",27
+Fruits and fruit products,Jams - Pome jams,"Quince, jelly",42
+Fruits and fruit products,Jams - Pome jams,"Quince, jam",43
+Fruits and fruit products,Jams - Pome jams,"Apple [Dessert], jelly",932
+Fruits and fruit products,Jams - Pome jams,"Apple [Dessert], compote",933
+Fruits and fruit products,Jams - Pome jams,"Quince, peeled, jam",1465
+Fruits and fruit products,Jams-Berry jams,"Black raspberry, jam",1228
+Non-alcoholic beverages,Cocoa beverage - Chocolate,"Chocolate, milk, beverage",688
+Non-alcoholic beverages,Coffee  beverage - Arabica Coffee  beverages,Arabica coffee beverage [Filter],662
+Non-alcoholic beverages,Coffee  beverage - Robusta Coffee  beverages,Robusta coffee beverage [Filter],666
+Non-alcoholic beverages,Coffee  beverage - Unknown Coffee  beverages,Coffee beverage [Filter],552
+Non-alcoholic beverages,Coffee  beverage - Unknown Coffee  beverages,"Coffee beverage [Filter], decaffeinated",553
+Non-alcoholic beverages,Fruit juices - Berry juices,"Strawberry, pure juice",70
+Non-alcoholic beverages,Fruit juices - Berry juices,"Rowanberry, pure juice",71
+Non-alcoholic beverages,Fruit juices - Berry juices,"Red raspberry, pure juice",103
+Non-alcoholic beverages,Fruit juices - Berry juices,"Grape [Unknown color], juice",131
+Non-alcoholic beverages,Fruit juices - Berry juices,"Sea-buckthornberry, pure juice",133
+Non-alcoholic beverages,Fruit juices - Berry juices,"Muscadine grape [Black], pure juice",162
+Non-alcoholic beverages,Fruit juices - Berry juices,"Muscadine grape [Green], pure juice",163
+Non-alcoholic beverages,Fruit juices - Berry juices,"Blackcurrant, juice",188
+Non-alcoholic beverages,Fruit juices - Berry juices,"Fox grape [Green], pure juice",204
+Non-alcoholic beverages,Fruit juices - Berry juices,"Grape [Green], pure juice",243
+Non-alcoholic beverages,Fruit juices - Berry juices,"Grape [Black], pure juice",246
+Non-alcoholic beverages,Fruit juices - Berry juices,"Cranberry [Unknown species], juice",1127
+Non-alcoholic beverages,Fruit juices - Berry juices,"Strawberry, pure juice, pasteurized",1328
+Non-alcoholic beverages,Fruit juices - Berry juices,"Strawberry, pure juice, high-intensity pulsed electric fields",1330
+Non-alcoholic beverages,Fruit juices - Berry juices,"Blueberry [Unknown species], pure juice",1336
+Non-alcoholic beverages,Fruit juices - Berry juices,"Highbush blueberry, pure juice",1395
+Non-alcoholic beverages,Fruit juices - Berry juices,"Blueberry [Unknown species], pure juice, high-pressure processed",1421
+Non-alcoholic beverages,Fruit juices - Berry juices,"Blueberry [Unknown species], pure juice, high-intensity pulsed electric fields",1422
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Orange [Blond], pure juice",6
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Orange [Blood], juice from concentrate",7
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Orange [Blond], juice from concentrate",9
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Orange [Blood], pure juice",10
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Grapefruit, juice from concentrate",12
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Pummelo, pure juice",13
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Grapefruit, pure juice",15
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Lemon, pure juice",17
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Grapefruit/Pummelo hybrid, pure juice",18
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Tangerine, pure juice",20
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Tangerine, juice from concentrate",21
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Lemon, juice from concentrate",195
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Lime, pure juice",206
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Orange, pure juice",1324
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Orange, pure juice, pasteurized",1342
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Orange, pure juice, high-pressure processed",1344
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Orange, pure juice, high-intensity pulsed electric fields",1346
+Non-alcoholic beverages,Fruit juices - Citrus juices,"Tangerine, pure juice, pasteurized",1371
+Non-alcoholic beverages,Fruit juices - Drupe juices,"Sweet cherry, pure juice",49
+Non-alcoholic beverages,Fruit juices - Drupe juices,"Plum, prune, pure juice",64
+Non-alcoholic beverages,Fruit juices - Drupe juices,"Plum, prune, juice from concentrate",65
+Non-alcoholic beverages,Fruit juices - Pome juices,"Apple [Dessert], pure juice",25
+Non-alcoholic beverages,Fruit juices - Pome juices,"Apple [Dessert], juice from concentrate",26
+Non-alcoholic beverages,Fruit juices - Pome juices,"Apple [Cider], pure juice",35
+Non-alcoholic beverages,Fruit juices - Pome juices,"Apple [Cider], juice from concentrate",36
+Non-alcoholic beverages,Fruit juices - Pome juices,"Pear, pure juice",38
+Non-alcoholic beverages,Fruit juices - Pome juices,"Apple [Dessert], juice",239
+Non-alcoholic beverages,Fruit juices - Tropical fruit juices,"Pineapple, pure juice",164
+Non-alcoholic beverages,Fruit juices - Tropical fruit juices,"Pomegranate, pure juice",191
+Non-alcoholic beverages,Fruit juices - Tropical fruit juices,"Pomegranate, juice from concentrate",917
+Non-alcoholic beverages,Fruit juices - Tropical fruit juices,"Kiwi, pure juice",921
+Non-alcoholic beverages,Fruit juices - Tropical fruit juices,"Kiwi, juice from concentrate",922
+Non-alcoholic beverages,Fruit juices - Tropical fruit juices,"Pomegranate, pure juice, pasteurized",1299
+Non-alcoholic beverages,Herb infusions,"Common sage, tea",4
+Non-alcoholic beverages,Herb infusions,"Common thyme, tea",857
+Non-alcoholic beverages,Herb infusions,"Rosemary, tea",862
+Non-alcoholic beverages,Herb infusions,"German camomile, tea",863
+Non-alcoholic beverages,Herb infusions,"Lemon grass, tea",864
+Non-alcoholic beverages,Herb infusions,"Coriander, tea",865
+Non-alcoholic beverages,Herb infusions,"Fennel, tea",866
+Non-alcoholic beverages,Herb infusions,"Hyssop, tea",867
+Non-alcoholic beverages,Herb infusions,"Spearmint, tea",868
+Non-alcoholic beverages,Herb infusions,"Peppermint, tea",869
+Non-alcoholic beverages,Herb infusions,"Lovage, tea",870
+Non-alcoholic beverages,Herb infusions,"Sweet bay, tea",871
+Non-alcoholic beverages,Herb infusions,"Lemon verbena, tea",872
+Non-alcoholic beverages,Herb infusions,"Roman camomile, tea",873
+Non-alcoholic beverages,Herb infusions,"Sweet basil, tea",874
+Non-alcoholic beverages,Herb infusions,"Winter savory, tea",875
+Non-alcoholic beverages,Herb infusions,"Small-leaf linden, tea",876
+Non-alcoholic beverages,Herb infusions,"Lemon thyme, tea",877
+Non-alcoholic beverages,Herb infusions,"Tarragon, tea",878
+Non-alcoholic beverages,Soy drinks,"Soy, milk",938
+Non-alcoholic beverages,Tea infusions,"Tea [Green], infusion",29
+Non-alcoholic beverages,Tea infusions,"Tea [Black], infusion",30
+Non-alcoholic beverages,Tea infusions,"Tea [Oolong], infusion",31
+Non-alcoholic beverages,Tea infusions,"Tea [Black], bottled",207
+Non-alcoholic beverages,Tea infusions,"Tea [Green], bottled",208
+Non-alcoholic beverages,Tea infusions,"Tea [Oolong], bottled",209
+Non-alcoholic beverages,Vegetable juices - Fruit vegetable juices,"Tomato, juice",385
+Non-alcoholic beverages,Vegetable juices - Root vegetable juices,"Carrot, juice",463
+Oils,Oils - Cereal oils,"Maize, bran oil",903
+Oils,Oils - Fruit vegetable oils,"Olive, oil, virgin",808
+Oils,Oils - Fruit vegetable oils,"Olive, oil, extra virgin",822
+Oils,Oils - Fruit vegetable oils,"Olive, oil, refined",823
+Oils,Oils - Nut oils,"Peanut, butter",714
+Oils,Oils - Other seed oils,"Sunflower seed, oil",825
+Oils,Oils - Other seed oils,"Rape seed, oil",842
+Oils,Oils - Other seed oils,"Sesame seed [Black], oil",848
+Oils,Oils - Other seed oils,"Sesame seed, oil",851
+Oils,Oils - Other seed oils,"Soy, oil",937
+Seasonings,Herbs,"Garlic, fresh",329
+Seasonings,Herbs,"Celery leaves, fresh",348
+Seasonings,Herbs,"Wild turnip tops, fresh",451
+Seasonings,Herbs,"Purslane, fresh",453
+Seasonings,Herbs,"Parsley, dried",465
+Seasonings,Herbs,"Watercress, fresh",466
+Seasonings,Herbs,"Chinese chives, fresh",476
+Seasonings,Herbs,"Welsh onion, fresh",477
+Seasonings,Herbs,"Oregano, fresh (wild marjoram)",728
+Seasonings,Herbs,"Peppermint, fresh",729
+Seasonings,Herbs,"Lemon balm, fresh",730
+Seasonings,Herbs,"Oregano, dried (wild marjoram)",731
+Seasonings,Herbs,"Peppermint, dried",732
+Seasonings,Herbs,"Lemon balm, dried",733
+Seasonings,Herbs,"Rosemary, fresh",734
+Seasonings,Herbs,"Common sage, fresh",735
+Seasonings,Herbs,"Common thyme, fresh",736
+Seasonings,Herbs,"Pot marjoram, dried",737
+Seasonings,Herbs,"Summer savory, dried",738
+Seasonings,Herbs,"Winter savory, dried",739
+Seasonings,Herbs,"Sweet basil, dried",740
+Seasonings,Herbs,"Hyssop, dried",741
+Seasonings,Herbs,"Marjoram, dried",742
+Seasonings,Herbs,"Common sage, dried",743
+Seasonings,Herbs,"Rosemary, dried",744
+Seasonings,Herbs,"Lemon grass, fresh",745
+Seasonings,Herbs,"Lemon verbena, fresh",746
+Seasonings,Herbs,"Fennel, fresh leaves",748
+Seasonings,Herbs,"Lovage, fresh",751
+Seasonings,Herbs,"Orange mint, fresh",752
+Seasonings,Herbs,"Italian oregano, fresh",753
+Seasonings,Herbs,"Lemon thyme, fresh",754
+Seasonings,Herbs,"Parsley, fresh",755
+Seasonings,Herbs,"Pineapple sage, fresh",756
+Seasonings,Herbs,"Spearmint, fresh",757
+Seasonings,Herbs,"Sweet bay, fresh",758
+Seasonings,Herbs,"Sweet basil, fresh",759
+Seasonings,Herbs,"Winter savory, fresh",760
+Seasonings,Herbs,"Dill, fresh",761
+Seasonings,Herbs,"Chives, fresh",762
+Seasonings,Herbs,"Common thyme, dried",763
+Seasonings,Herbs,"Spearmint, dried",764
+Seasonings,Herbs,"Fenugreek, fresh",767
+Seasonings,Herbs,"Coriander, fresh",771
+Seasonings,Herbs,"Tarragon, fresh",774
+Seasonings,Herbs,"Summer savory, fresh",776
+Seasonings,Herbs,"Hyssop, fresh",777
+Seasonings,Herbs,"Marjoram, fresh",778
+Seasonings,Herbs,"Dill, dried",784
+Seasonings,Herbs,"Lemon verbena, dried",787
+Seasonings,Herbs,"German camomile, dried",788
+Seasonings,Herbs,"Silver linden, dried",789
+Seasonings,Herbs,"Coriander, dried",790
+Seasonings,Herbs,"Anise herb, dried",791
+Seasonings,Herbs,"Fennel, dried",792
+Seasonings,Herbs,"Sorrel, dried",794
+Seasonings,Herbs,"Mexican oregano, dried",796
+Seasonings,Herbs,"Common verbena, fresh",829
+Seasonings,Herbs,"Angelica, fresh",833
+Seasonings,Herbs,"Sweet bay, dried",839
+Seasonings,Herbs,"Fenugreek, dried",844
+Seasonings,Herbs,"Roman camomile, dried",850
+Seasonings,Other seasonings,Vinegar,140
+Seasonings,Other seasonings,Soy sauce,941
+Seasonings,Spices,Coriander seed,490
+Seasonings,Spices,Fenugreek seed,769
+Seasonings,Spices,"Ginger, fresh",775
+Seasonings,Spices,Cumin,779
+Seasonings,Spices,Cardamom,780
+Seasonings,Spices,"Ginger, dried",785
+Seasonings,Spices,Capers,786
+Seasonings,Spices,"Horseradish, dried",793
+Seasonings,Spices,Cloves,797
+Seasonings,Spices,Pepper spice [Black],798
+Seasonings,Spices,"Turmeric, dried",799
+Seasonings,Spices,Caraway,804
+Seasonings,Spices,Saffron,805
+Seasonings,Spices,Celery seed,807
+Seasonings,Spices,Ceylan cinnamon,830
+Seasonings,Spices,Nutmeg,831
+Seasonings,Spices,Nutmeg [Mace],832
+Seasonings,Spices,Star anise,835
+Seasonings,Spices,Pepper spice [White],837
+Seasonings,Spices,Pepper spice [Green],838
+Seasonings,Spices,"Horseradish, fresh",845
+Seasonings,Spices,Chinese cinnamon,879
+Seasonings,Spices - Spice blends,"Curry, powder",834
+Seeds,Nuts,Walnut,184
+Seeds,Nuts,"Chestnut, raw",467
+Seeds,Nuts,Peanut,475
+Seeds,Nuts,Pecan nut,707
+Seeds,Nuts,Brazil nut,708
+Seeds,Nuts,"Cashew nut, raw",709
+Seeds,Nuts,"Hazelnut, raw",710
+Seeds,Nuts,Pistachio,711
+Seeds,Nuts,Almond,712
+Seeds,Nuts,"Peanut, roasted",713
+Seeds,Nuts,"Peanut, dehulled",716
+Seeds,Nuts,"Peanut, dehulled, roasted",717
+Seeds,Nuts,"Walnut, dehulled",719
+Seeds,Nuts,"Pistachio, dehulled",721
+Seeds,Nuts,"Almond, dehulled",722
+Seeds,Nuts,Macadamia nut,723
+Seeds,Nuts,Pines,724
+Seeds,Nuts,Japanese walnut,727
+Seeds,Other seeds,"Flaxseed, meal",809
+Seeds,Other seeds,"Sunflower seed, meal",812
+Seeds,Other seeds,"Poppy seed, meal",815
+Seeds,Other seeds,"Sesame seed, meal",847
+Seeds,Pulses - Beans - Common bean,"Common bean [Black], whole, raw",542
+Seeds,Pulses - Beans - Common bean,"Common bean [White], whole, raw",543
+Seeds,Pulses - Beans - Common bean,"Common bean [Black], dehulled, raw",544
+Seeds,Pulses - Beans - Common bean,"Common bean [White], dehulled, raw",545
+Seeds,Pulses - Beans - Common bean,"Common bean [Others], dehulled, raw",583
+Seeds,Pulses - Beans - Common bean,"Common bean [Others], whole, raw",585
+Seeds,Pulses - Beans - Common bean,"Common bean [Others], whole, soaked, boiled",590
+Seeds,Pulses - Beans - Other  beans,"Adzuki bean, whole, raw",563
+Seeds,Pulses - Beans - Other  beans,"Broad bean seed, whole, raw",564
+Seeds,Pulses - Beans - Other  beans,"Mung bean, dehulled, raw",571
+Seeds,Pulses - Beans - Other  beans,"Broad bean seed, dehulled, raw",573
+Seeds,Pulses - Beans - Other  beans,"Lima bean, dehulled, raw",576
+Seeds,Pulses - Beans - Other  beans,"Mung bean, whole, raw",580
+Seeds,Pulses - Beans - Other  beans,"Climbing bean, whole, raw",602
+Seeds,Pulses - Beans - Other  beans,"Lima bean, whole, raw",669
+Seeds,Pulses - Beans - Other  beans,"Broad bean seed, whole, frozen",1380
+Seeds,Pulses - Lentils,"Lentils, whole, raw",470
+Seeds,Pulses - Lentils,"Lentils, dehulled, raw",566
+Seeds,Pulses - Lentils,"Lentils, whole, soaked, boiled",619
+Seeds,Pulses - Peas,"Cowpea, whole, raw",561
+Seeds,Pulses - Peas,"Pigeon pea, whole, raw",568
+Seeds,Pulses - Peas,"Grass pea, whole, raw",569
+Seeds,Pulses - Peas,"Dried pea, dehulled, raw",572
+Seeds,Pulses - Peas,"Pigeon pea, dehulled, raw",574
+Seeds,Pulses - Peas,"Cowpea, dehulled, raw",577
+Seeds,Pulses - Peas,"Chickpea, dehulled, raw",578
+Seeds,Pulses - Peas,"Chickpea, whole, raw",581
+Seeds,Pulses - Peas,"Dried pea, whole, raw",650
+Seeds,Pulses - Peas,"Black-eyed pea, whole, raw",1225
+Seeds,Soy and soy products,"Soybean, sprout, raw",472
+Seeds,Soy and soy products,"Soy, tofu",826
+Seeds,Soy and soy products,"Soy, meat",939
+Seeds,Soy and soy products,"Soy paste, miso",942
+Seeds,Soy and soy products,"Soy paste, nato",943
+Seeds,Soy and soy products,"Soy paste, doenjang",944
+Seeds,Soy and soy products,"Soy paste, cheonggukang",945
+Seeds,Soy and soy products,"Soy, flour",947
+Seeds,Soy and soy products,"Soybean, edamame",948
+Seeds,Soy and soy products,"Soy, defatted flour",949
+Seeds,Soy and soy products,"Soy, milk powder",950
+Seeds,Soy and soy products,"Soy, sausage",951
+Seeds,Soy and soy products,"Soy, tempe",952
+Seeds,Soy and soy products,"Soybean, roasted",953
+Seeds,Soy and soy products,"Soy, burger, raw",954
+Seeds,Soy and soy products,"Soy, flakes",955
+Seeds,Soy and soy products,"Soy, pudding",957
+Seeds,Soy and soy products,"Soy, yogurt",959
+Seeds,Soy and soy products,"Soy, bacon bits",961
+Seeds,Soy and soy products,"Soy, cheese",962
+Seeds,Soy and soy products,"Soy, tofu, fermented",963
+Seeds,Soy and soy products,"Soybean, raw",1223
+Vegetables,Cabbages,"Broccoli, raw",263
+Vegetables,Cabbages,"Cauliflower, raw",264
+Vegetables,Cabbages,"Common cabbage [White], raw",265
+Vegetables,Cabbages,"Common cabbage [Purple], raw",271
+Vegetables,Cabbages,"Kai-lan, raw",273
+Vegetables,Cabbages,"Kale, raw",276
+Vegetables,Cabbages,"Common cabbage [Unknown colour], raw",277
+Vegetables,Cabbages,"Common cabbage [Green], raw",282
+Vegetables,Cabbages,"Common cabbage [Red], raw",283
+Vegetables,Cabbages,"Savoy cabbage, raw",284
+Vegetables,Cabbages,Sauerkraut,285
+Vegetables,Cabbages,"Kale [Curly], raw",287
+Vegetables,Cabbages,"Mustard cabbage, raw",291
+Vegetables,Cabbages,"Brussel sprouts, raw",333
+Vegetables,Cabbages,"Black cabbage, raw",362
+Vegetables,Cabbages,"Collards, raw",363
+Vegetables,Cabbages,"Oxheart cabbage, raw",461
+Vegetables,Cabbages,"Italian cabbage, raw",491
+Vegetables,Cabbages,"Broccoli, blanched",1201
+Vegetables,Cabbages,"Cauliflower, blanched",1203
+Vegetables,Cabbages,"Common cabbage [Unknown colour], blanched",1352
+Vegetables,Cabbages,"Kale, blanched, frozen",1402
+Vegetables,Cabbages,"Kale, boiled, frozen",1403
+Vegetables,Cabbages,"Kale, blanched, canned",1404
+Vegetables,Cabbages,"Broccoli, frozen",1434
+Vegetables,Cabbages - Chinese cabbages,"Pak choy, raw",322
+Vegetables,Cabbages - Chinese cabbages,"Napa cabbage, raw",323
+Vegetables,Fruit vegetables,"Avocado, raw",154
+Vegetables,Fruit vegetables,"Tomato, whole, raw",258
+Vegetables,Fruit vegetables,"Tomato [Cherry], whole, raw",260
+Vegetables,Fruit vegetables,"Eggplant [Purple], whole, raw",359
+Vegetables,Fruit vegetables,"Chilli pepper [Green], raw",360
+Vegetables,Fruit vegetables,"Chilli pepper [Red], raw",361
+Vegetables,Fruit vegetables,"Tomato [Yellow], whole, raw",387
+Vegetables,Fruit vegetables,"Chilli pepper [Yellow], raw",540
+Vegetables,Fruit vegetables,"Eggplant [Purple], peeled, raw",693
+Vegetables,Fruit vegetables,"Chilli pepper C. chinense [Yellow], raw",699
+Vegetables,Fruit vegetables,"Sweet pepper [Green], raw",701
+Vegetables,Fruit vegetables,"Sweet pepper [Red], raw",702
+Vegetables,Fruit vegetables,"Sweet pepper [Yellow], raw",703
+Vegetables,Fruit vegetables,"Pepper [Unknown color], raw",705
+Vegetables,Fruit vegetables,"Olive [Green], raw",749
+Vegetables,Fruit vegetables,"Olive [Black], raw",750
+Vegetables,Fruit vegetables,"Chilli pepper C. chinense [Green], raw",1265
+Vegetables,Fruit vegetables,"Chilli pepper C. pubescens [Yellow], raw",1280
+Vegetables,Fruit vegetables,"Tomato, paste, pasteurized",1387
+Vegetables,Fruit vegetables,"Tomato, ketchup",1410
+Vegetables,Gourds,"Pumpkin, raw",183
+Vegetables,Gourds,"Cucumber, raw",270
+Vegetables,Gourds,"Squash, raw",331
+Vegetables,Gourds,"Zucchini, raw",502
+Vegetables,Leaf vegetables,"Spinach, raw",272
+Vegetables,Leaf vegetables,"Chicory [Red], raw",309
+Vegetables,Leaf vegetables,"Chicory [Green], raw",310
+Vegetables,Leaf vegetables,"Endive [Curly], raw",311
+Vegetables,Leaf vegetables,"Endive [Escarole], raw",312
+Vegetables,Leaf vegetables,"Lettuce [Green], raw",313
+Vegetables,Leaf vegetables,"Lettuce [Red], raw",314
+Vegetables,Leaf vegetables,"Swiss chard leaves [Red], raw",319
+Vegetables,Leaf vegetables,"Swiss chard leaves [White], raw",393
+Vegetables,Leaf vegetables,"Arugula, raw",435
+Vegetables,Leaf vegetables,"Beet greens, raw",500
+Vegetables,Leaf vegetables,"Dandelion, raw",747
+Vegetables,Leaf vegetables,"Garden cress, raw",773
+Vegetables,Leaf vegetables,"Spinach, raw, stored refrigerated",1181
+Vegetables,Onion-family vegetables,"Leek, raw",1
+Vegetables,Onion-family vegetables,"Onion [Red], raw",255
+Vegetables,Onion-family vegetables,"Onion [White], raw",256
+Vegetables,Onion-family vegetables,"Onion [Yellow], raw",257
+Vegetables,Onion-family vegetables,"Onion [Unknown color], raw",274
+Vegetables,Onion-family vegetables,"Shallot, raw",380
+Vegetables,Onion-family vegetables,"Shallot [Pink], raw",382
+Vegetables,Pod vegetables,"Green bean, raw",334
+Vegetables,Pod vegetables,"Broad bean pod, raw",570
+Vegetables,Pod vegetables,"Green bean, raw, frozen",1377
+Vegetables,Pulse vegetables,"Fresh pea, blanched",430
+Vegetables,Pulse vegetables,"Sugar pea, raw",446
+Vegetables,Pulse vegetables,"Fresh pea, raw",649
+Vegetables,Pulse vegetables,"Fresh pea, frozen",1375
+Vegetables,Root vegetables,"Carrot, raw",269
+Vegetables,Root vegetables,"Radish [Black], raw",349
+Vegetables,Root vegetables,"Parsnip, raw",350
+Vegetables,Root vegetables,"Celeriac, raw",351
+Vegetables,Root vegetables,"Kohlrabi, raw",352
+Vegetables,Root vegetables,"Radish, raw",353
+Vegetables,Root vegetables,"Swede, raw",408
+Vegetables,Root vegetables,"Turnip root, raw",471
+Vegetables,Root vegetables,"Red beetroot, raw",499
+Vegetables,Root vegetables,"Burdock root, raw",507
+Vegetables,Root vegetables,"Carrot, blanched",508
+Vegetables,Root vegetables,"Turnip yellow, raw",1281
+Vegetables,Root vegetables,"Turnip white, raw",1285
+Vegetables,Root vegetables,"Swede, blanched",1357
+Vegetables,Shoot vegetables,"Asparagus, raw",328
+Vegetables,Shoot vegetables,"Globe artichoke, heads, raw",368
+Vegetables,Shoot vegetables,Fennel,977
+Vegetables,Shoot vegetables,"Asparagus, raw, stored refrigerated",1332
+Vegetables,Stalk vegetables,"Swiss chard stems [Red], raw",320
+Vegetables,Stalk vegetables,"Swiss chard stems [White], raw",392
+Vegetables,Stalk vegetables,"Celery stalks, raw",407
+Vegetables,Tubers,"Potato, peeled, raw",247
+Vegetables,Tubers,"Potato, raw",254
+Vegetables,Tubers,"Sweet potato, raw",332
+Vegetables,Tubers,"Potato [Purple], raw",481
+Vegetables,Tubers,"Potato, peeled, blanched",509
+Vegetables,Tubers,"Potato, blanched",1355

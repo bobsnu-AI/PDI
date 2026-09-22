@@ -1,0 +1,1738 @@
+{
+  "coverage": {
+    "phenol_explorer": {
+      "matched_foods": 1022,
+      "matched_pct": 54.4,
+      "usable_foods": 1022,
+      "usable_pct": 54.4,
+      "matched_knhanes": 453,
+      "knhanes_pct": 53.0,
+      "distinct_compounds": 336,
+      "by_family": {
+        "플라보놀": 55,
+        "플라반-3-올": 28,
+        "이소플라본": 14,
+        "안토시아니딘": 52,
+        "플라바논": 5,
+        "플라본": 19,
+        "페놀산": 81,
+        "스틸벤": 3,
+        "리그난": 21,
+        "기타": 58
+      },
+      "tiers": {
+        "T1_exact_en": 737,
+        "T2_sci_species": 190,
+        "T3_sci_genus": 69,
+        "T4_rule": 26
+      },
+      "phyto_compounds": 278,
+      "saponins_in_기타": 0
+    },
+    "usda_flavonoid": {
+      "matched_foods": 1039,
+      "matched_pct": 55.3,
+      "usable_foods": 773,
+      "usable_pct": 41.2,
+      "matched_knhanes": 387,
+      "knhanes_pct": 45.3,
+      "distinct_compounds": 25,
+      "by_family": {
+        "플라보놀": 4,
+        "플라반-3-올": 10,
+        "안토시아니딘": 6,
+        "플라바논": 3,
+        "플라본": 2
+      },
+      "tiers": {
+        "T1_exact_en": 831,
+        "T2_sci_species": 130,
+        "T3_sci_genus": 66,
+        "T4_rule": 12
+      },
+      "phyto_compounds": 25,
+      "saponins_in_기타": 0
+    },
+    "usda_isoflavone": {
+      "matched_foods": 834,
+      "matched_pct": 44.4,
+      "usable_foods": 513,
+      "usable_pct": 27.3,
+      "matched_knhanes": 219,
+      "knhanes_pct": 25.6,
+      "distinct_compounds": 7,
+      "by_family": {
+        "이소플라본": 7
+      },
+      "tiers": {
+        "T1_exact_en": 803,
+        "T4_rule": 31
+      },
+      "phyto_compounds": 7,
+      "saponins_in_기타": 0
+    },
+    "usda_proanthocyanidin": {
+      "matched_foods": 920,
+      "matched_pct": 49.0,
+      "usable_foods": 252,
+      "usable_pct": 13.4,
+      "matched_knhanes": 120,
+      "knhanes_pct": 14.1,
+      "distinct_compounds": 5,
+      "by_family": {
+        "프로안토시아니딘": 5
+      },
+      "tiers": {
+        "T1_exact_en": 672,
+        "T2_sci_species": 144,
+        "T3_sci_genus": 98,
+        "T4_rule": 6
+      },
+      "phyto_compounds": 5,
+      "saponins_in_기타": 0
+    },
+    "usda_sr_carotenoid": {
+      "matched_foods": 1048,
+      "matched_pct": 55.8,
+      "usable_foods": 718,
+      "usable_pct": 38.2,
+      "matched_knhanes": 361,
+      "knhanes_pct": 42.3,
+      "distinct_compounds": 5,
+      "by_family": {
+        "카로티노이드": 5
+      },
+      "tiers": {
+        "T1_exact_en": 938,
+        "T4_rule": 110
+      },
+      "phyto_compounds": 5,
+      "saponins_in_기타": 0
+    },
+    "foodb": {
+      "matched_foods": 1296,
+      "matched_pct": 69.0,
+      "usable_foods": 1235,
+      "usable_pct": 65.8,
+      "matched_knhanes": 567,
+      "knhanes_pct": 66.4,
+      "distinct_compounds": 1447,
+      "by_family": {
+        "플라보놀": 51,
+        "플라반-3-올": 28,
+        "이소플라본": 17,
+        "안토시아니딘": 59,
+        "플라바논": 12,
+        "플라본": 38,
+        "프로안토시아니딘": 9,
+        "카로티노이드": 11,
+        "페놀산": 95,
+        "스틸벤": 1,
+        "리그난": 23,
+        "기타": 1103
+      },
+      "tiers": {
+        "T1_exact_en": 915,
+        "T2_sci_species": 273,
+        "T4_rule": 36,
+        "T3_sci_genus": 72
+      },
+      "phyto_compounds": 344,
+      "saponins_in_기타": 2
+    },
+    "rda_flavonoid": {
+      "matched_foods": 531,
+      "matched_pct": 28.3,
+      "usable_foods": 531,
+      "usable_pct": 28.3,
+      "matched_knhanes": 207,
+      "knhanes_pct": 24.2,
+      "distinct_compounds": 367,
+      "by_family": {
+        "플라보놀": 206,
+        "플라반-3-올": 9,
+        "이소플라본": 16,
+        "플라바논": 27,
+        "플라본": 81,
+        "페놀산": 7,
+        "기타": 21
+      },
+      "tiers": {
+        "T0_kr_name": 531
+      },
+      "phyto_compounds": 346,
+      "saponins_in_기타": 0
+    },
+    "rda_phenolic_acid": {
+      "matched_foods": 383,
+      "matched_pct": 20.4,
+      "usable_foods": 383,
+      "usable_pct": 20.4,
+      "matched_knhanes": 161,
+      "knhanes_pct": 18.9,
+      "distinct_compounds": 133,
+      "by_family": {
+        "페놀산": 104,
+        "기타": 29
+      },
+      "tiers": {
+        "T0_kr_name": 383
+      },
+      "phyto_compounds": 104,
+      "saponins_in_기타": 0
+    },
+    "rda_saponin": {
+      "matched_foods": 108,
+      "matched_pct": 5.8,
+      "usable_foods": 108,
+      "usable_pct": 5.8,
+      "matched_knhanes": 53,
+      "knhanes_pct": 6.2,
+      "distinct_compounds": 236,
+      "by_family": {
+        "기타": 236
+      },
+      "tiers": {
+        "T0_kr_name": 108
+      },
+      "phyto_compounds": 0,
+      "saponins_in_기타": 236
+    }
+  },
+  "union": {
+    "base_foods": 1878,
+    "knhanes_base": 854,
+    "usable_foods": 1431,
+    "usable_pct": 76.2,
+    "knhanes_usable": 682,
+    "knhanes_pct": 79.9,
+    "strict_usable_foods": 1390,
+    "strict_usable_pct": 74.0,
+    "strict_knhanes_usable": 670,
+    "strict_knhanes_pct": 78.5,
+    "tier_totals": {
+      "T1_exact_en": 4896,
+      "T2_sci_species": 737,
+      "T3_sci_genus": 305,
+      "T4_rule": 221,
+      "T0_kr_name": 1022
+    },
+    "by_family_db_compound_pairs": {
+      "플라보놀": 316,
+      "플라반-3-올": 75,
+      "이소플라본": 54,
+      "안토시아니딘": 117,
+      "플라바논": 47,
+      "플라본": 140,
+      "프로안토시아니딘": 14,
+      "카로티노이드": 16,
+      "페놀산": 287,
+      "스틸벤": 4,
+      "리그난": 44,
+      "기타": 1447
+    },
+    "phyto_db_compound_pairs": 1114,
+    "foods_by_family": {
+      "플라보놀": {
+        "foods": 804,
+        "pct": 42.8,
+        "knhanes_foods": 401,
+        "knhanes_pct": 47.0
+      },
+      "플라반-3-올": {
+        "foods": 755,
+        "pct": 40.2,
+        "knhanes_foods": 320,
+        "knhanes_pct": 37.5
+      },
+      "이소플라본": {
+        "foods": 652,
+        "pct": 34.7,
+        "knhanes_foods": 282,
+        "knhanes_pct": 33.0
+      },
+      "안토시아니딘": {
+        "foods": 407,
+        "pct": 21.7,
+        "knhanes_foods": 198,
+        "knhanes_pct": 23.2
+      },
+      "플라바논": {
+        "foods": 340,
+        "pct": 18.1,
+        "knhanes_foods": 162,
+        "knhanes_pct": 19.0
+      },
+      "플라본": {
+        "foods": 927,
+        "pct": 49.4,
+        "knhanes_foods": 408,
+        "knhanes_pct": 47.8
+      },
+      "프로안토시아니딘": {
+        "foods": 348,
+        "pct": 18.5,
+        "knhanes_foods": 168,
+        "knhanes_pct": 19.7
+      },
+      "카로티노이드": {
+        "foods": 1285,
+        "pct": 68.4,
+        "knhanes_foods": 598,
+        "knhanes_pct": 70.0
+      },
+      "페놀산": {
+        "foods": 881,
+        "pct": 46.9,
+        "knhanes_foods": 378,
+        "knhanes_pct": 44.3
+      },
+      "스틸벤": {
+        "foods": 66,
+        "pct": 3.5,
+        "knhanes_foods": 29,
+        "knhanes_pct": 3.4
+      },
+      "리그난": {
+        "foods": 525,
+        "pct": 28.0,
+        "knhanes_foods": 275,
+        "knhanes_pct": 32.2
+      },
+      "기타": {
+        "foods": 1296,
+        "pct": 69.0,
+        "knhanes_foods": 596,
+        "knhanes_pct": 69.8
+      }
+    }
+  },
+  "by_group": {
+    "채소": {
+      "n": 613,
+      "cov": 493,
+      "pct": 80.4
+    },
+    "곡류": {
+      "n": 446,
+      "cov": 396,
+      "pct": 88.8
+    },
+    "과일": {
+      "n": 265,
+      "cov": 236,
+      "pct": 89.1
+    },
+    "향신료·조미료": {
+      "n": 135,
+      "cov": 63,
+      "pct": 46.7
+    },
+    "버섯": {
+      "n": 95,
+      "cov": 54,
+      "pct": 56.8
+    },
+    "두류": {
+      "n": 88,
+      "cov": 69,
+      "pct": 78.4
+    },
+    "견과종실": {
+      "n": 78,
+      "cov": 66,
+      "pct": 84.6
+    },
+    "음료(차)": {
+      "n": 68,
+      "cov": 29,
+      "pct": 42.6
+    },
+    "해조": {
+      "n": 53,
+      "cov": 21,
+      "pct": 39.6
+    },
+    "음료": {
+      "n": 37,
+      "cov": 4,
+      "pct": 10.8
+    }
+  },
+  "foodb_detail": {
+    "foods_with_quant": 841,
+    "foods_with_detected_only": 126,
+    "compounds_quant": 3744,
+    "compounds_detected_only": 57625,
+    "matched_base_foods_quant": 1235,
+    "matched_base_foods_detected_only": 48,
+    "quant_by_family": {
+      "플라보놀": 51,
+      "플라반-3-올": 28,
+      "이소플라본": 17,
+      "안토시아니딘": 59,
+      "플라바논": 12,
+      "플라본": 38,
+      "프로안토시아니딘": 9,
+      "카로티노이드": 11,
+      "페놀산": 95,
+      "스틸벤": 1,
+      "리그난": 23,
+      "기타": 1103
+    },
+    "detected_only_by_family": {
+      "플라보놀": 298,
+      "플라반-3-올": 82,
+      "이소플라본": 131,
+      "안토시아니딘": 169,
+      "플라바논": 85,
+      "플라본": 235,
+      "프로안토시아니딘": 37,
+      "카로티노이드": 127,
+      "페놀산": 332,
+      "스틸벤": 32,
+      "리그난": 45,
+      "기타": 56052
+    }
+  },
+  "korean_native": {
+    "차류": {
+      "total": 50,
+      "failed": 35,
+      "fail_pct": 70.0,
+      "failed_knhanes": 13,
+      "mapped_items_by_family": {
+        "플라보놀": 14,
+        "플라반-3-올": 15,
+        "이소플라본": 15,
+        "플라바논": 14,
+        "플라본": 14,
+        "프로안토시아니딘": 15,
+        "카로티노이드": 15,
+        "페놀산": 14,
+        "리그난": 15,
+        "기타": 15
+      }
+    },
+    "장류": {
+      "total": 25,
+      "failed": 11,
+      "fail_pct": 44.0,
+      "failed_knhanes": 5,
+      "mapped_items_by_family": {
+        "이소플라본": 14,
+        "카로티노이드": 11,
+        "리그난": 8,
+        "기타": 13
+      }
+    },
+    "김치류": {
+      "total": 39,
+      "failed": 4,
+      "fail_pct": 10.3,
+      "failed_knhanes": 4,
+      "mapped_items_by_family": {
+        "플라보놀": 17,
+        "플라반-3-올": 8,
+        "이소플라본": 3,
+        "안토시아니딘": 8,
+        "플라바논": 5,
+        "플라본": 17,
+        "프로안토시아니딘": 1,
+        "카로티노이드": 33,
+        "페놀산": 14,
+        "리그난": 5,
+        "기타": 15
+      }
+    },
+    "떡류": {
+      "total": 40,
+      "failed": 17,
+      "fail_pct": 42.5,
+      "failed_knhanes": 11,
+      "mapped_items_by_family": {
+        "플라반-3-올": 1,
+        "카로티노이드": 23,
+        "리그난": 1,
+        "기타": 23
+      }
+    },
+    "나물류": {
+      "total": 113,
+      "failed": 49,
+      "fail_pct": 43.4,
+      "failed_knhanes": 16,
+      "mapped_items_by_family": {
+        "플라보놀": 44,
+        "플라반-3-올": 9,
+        "이소플라본": 8,
+        "안토시아니딘": 6,
+        "플라바논": 13,
+        "플라본": 30,
+        "프로안토시아니딘": 3,
+        "카로티노이드": 25,
+        "페놀산": 40,
+        "리그난": 10,
+        "기타": 53
+      }
+    }
+  },
+  "bobsnu": {
+    "약콩/검정콩(쥐눈이콩)": {
+      "rda_items": 11,
+      "rda_examples": [
+        "멥쌀떡, 백설기, 검정콩",
+        "멥쌀떡, 송편, 검정콩",
+        "대두, 검은색, 서리태, 말린것",
+        "대두, 검은색, 서리태, 삶은것"
+      ],
+      "dbs": {
+        "phenol_explorer": {
+          "parent": {
+            "n_db_foods": 4,
+            "top": [
+              [
+                "Soybean, sprout, raw",
+                27
+              ],
+              [
+                "Soybean, roasted",
+                18
+              ],
+              [
+                "Soy, oil",
+                12
+              ],
+              [
+                "Soybean, edamame",
+                12
+              ]
+            ],
+            "families": {
+              "이소플라본": 40,
+              "페놀산": 15,
+              "리그난": 12,
+              "플라보놀": 1,
+              "기타": 1
+            },
+            "phyto_compounds": 68
+          }
+        },
+        "usda_flavonoid": {
+          "specific": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "Soybeans, black, mature seeds, raw",
+                1
+              ]
+            ],
+            "families": {
+              "플라반-3-올": 1
+            },
+            "phyto_compounds": 1
+          },
+          "parent": {
+            "n_db_foods": 2,
+            "top": [
+              [
+                "Soybeans, green, raw",
+                2
+              ],
+              [
+                "Soybeans, black, mature seeds, raw",
+                1
+              ]
+            ],
+            "families": {
+              "플라보놀": 2,
+              "플라반-3-올": 1
+            },
+            "phyto_compounds": 3
+          }
+        },
+        "usda_isoflavone": {
+          "parent": {
+            "n_db_foods": 22,
+            "top": [
+              [
+                "Soybeans, mature seeds, raw (all sources)",
+                7
+              ],
+              [
+                "Soybeans, mature seeds, sprouted, raw",
+                6
+              ],
+              [
+                "Soybeans, mature seeds, cooked, boiled, without ",
+                6
+              ],
+              [
+                "Soybeans, mature seeds, dry roasted (includes so",
+                6
+              ]
+            ],
+            "families": {
+              "이소플라본": 95
+            },
+            "phyto_compounds": 95
+          }
+        },
+        "usda_sr_carotenoid": {
+          "parent": {
+            "n_db_foods": 9,
+            "top": [
+              [
+                "Soybeans, mature seeds, sprouted, cooked, steame",
+                3
+              ],
+              [
+                "Soybeans, mature seeds, sprouted, cooked, steame",
+                3
+              ],
+              [
+                "Soybean, curd cheese",
+                1
+              ],
+              [
+                "Margarine, regular, hard, soybean (hydrogenated)",
+                1
+              ]
+            ],
+            "families": {
+              "카로티노이드": 13
+            },
+            "phyto_compounds": 13
+          }
+        },
+        "foodb": {
+          "parent": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "Soy bean",
+                172
+              ]
+            ],
+            "families": {
+              "기타": 134,
+              "이소플라본": 16,
+              "페놀산": 8,
+              "플라본": 5,
+              "리그난": 4,
+              "카로티노이드": 4,
+              "플라반-3-올": 1
+            },
+            "phyto_compounds": 38
+          }
+        },
+        "rda_flavonoid": {
+          "specific": {
+            "n_db_foods": 8,
+            "top": [
+              [
+                "서리태(청자3호,무처리)",
+                16
+              ],
+              [
+                "서리태(청자3호,증자)",
+                16
+              ],
+              [
+                "서목태",
+                14
+              ],
+              [
+                "흑태",
+                14
+              ]
+            ],
+            "families": {
+              "이소플라본": 110
+            },
+            "phyto_compounds": 110
+          },
+          "parent": {
+            "n_db_foods": 9,
+            "top": [
+              [
+                "서리태(청자3호,무처리)",
+                16
+              ],
+              [
+                "서리태(청자3호,증자)",
+                16
+              ],
+              [
+                "서목태",
+                14
+              ],
+              [
+                "흑태",
+                14
+              ]
+            ],
+            "families": {
+              "이소플라본": 124
+            },
+            "phyto_compounds": 124
+          }
+        },
+        "rda_phenolic_acid": {
+          "specific": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "흑태",
+                1
+              ]
+            ],
+            "families": {
+              "페놀산": 1
+            },
+            "phyto_compounds": 1
+          },
+          "parent": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "흑태",
+                1
+              ]
+            ],
+            "families": {
+              "페놀산": 1
+            },
+            "phyto_compounds": 1
+          }
+        },
+        "rda_saponin": {
+          "specific": {
+            "n_db_foods": 4,
+            "top": [
+              [
+                "콩, 서리태, 불린것",
+                25
+              ],
+              [
+                "콩, 서리태, 삶은것",
+                25
+              ],
+              [
+                "콩, 서리태, 볶은것",
+                25
+              ],
+              [
+                "콩, 서리태, 말린것",
+                24
+              ]
+            ],
+            "families": {
+              "기타": 99
+            },
+            "phyto_compounds": 0
+          },
+          "parent": {
+            "n_db_foods": 20,
+            "top": [
+              [
+                "콩, 서리태, 불린것",
+                25
+              ],
+              [
+                "콩, 서리태, 삶은것",
+                25
+              ],
+              [
+                "콩, 서리태, 볶은것",
+                25
+              ],
+              [
+                "콩, 노란콩, 말린것",
+                25
+              ]
+            ],
+            "families": {
+              "기타": 438
+            },
+            "phyto_compounds": 0
+          }
+        }
+      },
+      "has_specific": [
+        "rda_flavonoid",
+        "rda_phenolic_acid",
+        "rda_saponin",
+        "usda_flavonoid"
+      ],
+      "parent_only": [
+        "foodb",
+        "phenol_explorer",
+        "usda_isoflavone",
+        "usda_sr_carotenoid"
+      ]
+    },
+    "쌀눈(쌀 배아)": {
+      "rda_items": 3,
+      "rda_examples": [
+        "멥쌀, 쌀눈, 생것",
+        "멥쌀, 쌀눈, 찐것",
+        "멥쌀, 쌀눈, 볶은것"
+      ],
+      "dbs": {
+        "phenol_explorer": {
+          "parent": {
+            "n_db_foods": 3,
+            "top": [
+              [
+                "Rice, parboiled",
+                12
+              ],
+              [
+                "Rice, whole grain",
+                12
+              ],
+              [
+                "Rice, refined",
+                9
+              ]
+            ],
+            "families": {
+              "페놀산": 21,
+              "기타": 12
+            },
+            "phyto_compounds": 21
+          }
+        },
+        "usda_isoflavone": {
+          "parent": {
+            "n_db_foods": 5,
+            "top": [
+              [
+                "Sauce mx, Rice-A-Roni, chicken flavor",
+                4
+              ],
+              [
+                "Rice, brown, long-grain, raw",
+                3
+              ],
+              [
+                "Rice, brown, long-grain, cooked",
+                1
+              ],
+              [
+                "Rice, white, long-grain, regular, cooked",
+                1
+              ]
+            ],
+            "families": {
+              "이소플라본": 10
+            },
+            "phyto_compounds": 10
+          }
+        },
+        "usda_proanthocyanidin": {
+          "parent": {
+            "n_db_foods": 5,
+            "top": [
+              [
+                "Rice, red, raw",
+                5
+              ],
+              [
+                "Rice, black, raw",
+                4
+              ],
+              [
+                "Wild rice, raw",
+                3
+              ],
+              [
+                "Wild rice mix of 3 blends (wild, white and Basma",
+                2
+              ]
+            ],
+            "families": {
+              "프로안토시아니딘": 15
+            },
+            "phyto_compounds": 15
+          }
+        },
+        "usda_sr_carotenoid": {
+          "specific": {
+            "n_db_foods": 3,
+            "top": [
+              [
+                "Rice bran, crude",
+                1
+              ],
+              [
+                "Bread, rice bran",
+                1
+              ],
+              [
+                "Bread, rice bran, toasted",
+                1
+              ]
+            ],
+            "families": {
+              "카로티노이드": 3
+            },
+            "phyto_compounds": 3
+          },
+          "parent": {
+            "n_db_foods": 44,
+            "top": [
+              [
+                "Spanish rice mix, dry mix, unprepared",
+                5
+              ],
+              [
+                "Soup, chicken rice, canned, chunky, ready-to-ser",
+                5
+              ],
+              [
+                "Rice bowl with chicken, frozen entree, prepared ",
+                5
+              ],
+              [
+                "Restaurant, Mexican, spanish rice",
+                4
+              ]
+            ],
+            "families": {
+              "카로티노이드": 115
+            },
+            "phyto_compounds": 115
+          }
+        },
+        "foodb": {
+          "parent": {
+            "n_db_foods": 4,
+            "top": [
+              [
+                "Rice",
+                144
+              ],
+              [
+                "Wild rice",
+                56
+              ],
+              [
+                "Rice bread",
+                53
+              ],
+              [
+                "Rice cake",
+                35
+              ]
+            ],
+            "families": {
+              "기타": 258,
+              "카로티노이드": 16,
+              "페놀산": 8,
+              "플라반-3-올": 3,
+              "이소플라본": 2,
+              "플라본": 1
+            },
+            "phyto_compounds": 30
+          }
+        },
+        "rda_flavonoid": {
+          "parent": {
+            "n_db_foods": 2,
+            "top": [
+              [
+                "멥쌀(현미)",
+                11
+              ],
+              [
+                "멥쌀(백미)",
+                1
+              ]
+            ],
+            "families": {
+              "플라본": 10,
+              "기타": 2
+            },
+            "phyto_compounds": 10
+          }
+        },
+        "rda_phenolic_acid": {
+          "parent": {
+            "n_db_foods": 2,
+            "top": [
+              [
+                "쌀(백미)",
+                2
+              ],
+              [
+                "쌀(현미)",
+                2
+              ]
+            ],
+            "families": {
+              "페놀산": 4
+            },
+            "phyto_compounds": 4
+          }
+        }
+      },
+      "has_specific": [
+        "usda_sr_carotenoid"
+      ],
+      "parent_only": [
+        "foodb",
+        "phenol_explorer",
+        "rda_flavonoid",
+        "rda_phenolic_acid",
+        "usda_isoflavone",
+        "usda_proanthocyanidin"
+      ]
+    },
+    "새싹삼(인삼 묘삼)": {
+      "rda_items": 0,
+      "rda_examples": [],
+      "dbs": {
+        "rda_saponin": {
+          "parent": {
+            "n_db_foods": 13,
+            "top": [
+              [
+                "인삼, 수삼, 열매, 씨제거, 생것",
+                29
+              ],
+              [
+                "인삼, 수삼, 잎, 생것",
+                28
+              ],
+              [
+                "인삼, 수삼, 줄기, 생것",
+                28
+              ],
+              [
+                "인삼, 수삼, 뿌리, 생것",
+                23
+              ]
+            ],
+            "families": {
+              "기타": 294
+            },
+            "phyto_compounds": 0
+          }
+        }
+      },
+      "has_specific": [],
+      "parent_only": [
+        "rda_saponin"
+      ]
+    },
+    "무씨(무 종자)": {
+      "rda_items": 7,
+      "rda_examples": [
+        "대나무순(죽순), 생것",
+        "대나무순(죽순), 삶은것",
+        "대나무순(죽순), 삶아서 말린것",
+        "대나무순(죽순), 삶아서 말린것, 삶은것"
+      ],
+      "dbs": {
+        "phenol_explorer": {
+          "parent": {
+            "n_db_foods": 2,
+            "top": [
+              [
+                "Radish, raw",
+                12
+              ],
+              [
+                "Radish [Black], raw",
+                5
+              ]
+            ],
+            "families": {
+              "리그난": 6,
+              "플라보놀": 6,
+              "플라본": 4,
+              "기타": 1
+            },
+            "phyto_compounds": 16
+          }
+        },
+        "usda_flavonoid": {
+          "specific": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "Radish seeds, sprouted, raw",
+                1
+              ]
+            ],
+            "families": {
+              "플라보놀": 1
+            },
+            "phyto_compounds": 1
+          },
+          "parent": {
+            "n_db_foods": 4,
+            "top": [
+              [
+                "Radishes, raw",
+                2
+              ],
+              [
+                "Radish leaves, raw",
+                2
+              ],
+              [
+                "Radishes, oriental, raw",
+                1
+              ],
+              [
+                "Radish seeds, sprouted, raw",
+                1
+              ]
+            ],
+            "families": {
+              "플라보놀": 5,
+              "안토시아니딘": 1
+            },
+            "phyto_compounds": 6
+          }
+        },
+        "usda_sr_carotenoid": {
+          "parent": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "Radishes, raw",
+                2
+              ]
+            ],
+            "families": {
+              "카로티노이드": 2
+            },
+            "phyto_compounds": 2
+          }
+        },
+        "foodb": {
+          "parent": {
+            "n_db_foods": 4,
+            "top": [
+              [
+                "Radish",
+                112
+              ],
+              [
+                "Daikon radish",
+                100
+              ],
+              [
+                "Radish (var.)",
+                11
+              ],
+              [
+                "Black radish",
+                5
+              ]
+            ],
+            "families": {
+              "기타": 181,
+              "플라본": 19,
+              "카로티노이드": 8,
+              "안토시아니딘": 6,
+              "리그난": 6,
+              "페놀산": 3,
+              "플라반-3-올": 3,
+              "플라바논": 2
+            },
+            "phyto_compounds": 47
+          }
+        },
+        "rda_flavonoid": {
+          "parent": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "가을무",
+                19
+              ]
+            ],
+            "families": {
+              "플라보놀": 19
+            },
+            "phyto_compounds": 19
+          }
+        },
+        "rda_phenolic_acid": {
+          "specific": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "무순",
+                7
+              ]
+            ],
+            "families": {
+              "페놀산": 7
+            },
+            "phyto_compounds": 7
+          },
+          "parent": {
+            "n_db_foods": 2,
+            "top": [
+              [
+                "무순",
+                7
+              ],
+              [
+                "가을무",
+                5
+              ]
+            ],
+            "families": {
+              "페놀산": 12
+            },
+            "phyto_compounds": 12
+          }
+        }
+      },
+      "has_specific": [
+        "rda_phenolic_acid",
+        "usda_flavonoid"
+      ],
+      "parent_only": [
+        "foodb",
+        "phenol_explorer",
+        "rda_flavonoid",
+        "usda_sr_carotenoid"
+      ]
+    },
+    "대마씨(햄프씨드)": {
+      "rda_items": 1,
+      "rda_examples": [
+        "삼씨(대마씨), 말린것"
+      ],
+      "dbs": {
+        "usda_sr_carotenoid": {
+          "specific": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "Seeds, hemp seed, hulled",
+                1
+              ]
+            ],
+            "families": {
+              "카로티노이드": 1
+            },
+            "phyto_compounds": 1
+          },
+          "parent": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "Seeds, hemp seed, hulled",
+                1
+              ]
+            ],
+            "families": {
+              "카로티노이드": 1
+            },
+            "phyto_compounds": 1
+          }
+        }
+      },
+      "has_specific": [
+        "usda_sr_carotenoid"
+      ],
+      "parent_only": []
+    },
+    "새싹보리": {
+      "rda_items": 0,
+      "rda_examples": [],
+      "dbs": {
+        "phenol_explorer": {
+          "parent": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "Barley, whole grain flour",
+                18
+              ]
+            ],
+            "families": {
+              "기타": 8,
+              "리그난": 6,
+              "플라반-3-올": 4
+            },
+            "phyto_compounds": 10
+          }
+        },
+        "usda_flavonoid": {
+          "parent": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "Barley, hulled",
+                1
+              ]
+            ],
+            "families": {
+              "플라반-3-올": 1
+            },
+            "phyto_compounds": 1
+          }
+        },
+        "usda_isoflavone": {
+          "parent": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "Barley, pearled, raw",
+                2
+              ]
+            ],
+            "families": {
+              "이소플라본": 2
+            },
+            "phyto_compounds": 2
+          }
+        },
+        "usda_proanthocyanidin": {
+          "parent": {
+            "n_db_foods": 4,
+            "top": [
+              [
+                "Babyfood, cereal, barley, dry",
+                3
+              ],
+              [
+                "Barley, hulled",
+                3
+              ],
+              [
+                "Barley flour or meal",
+                3
+              ],
+              [
+                "Barley malt",
+                2
+              ]
+            ],
+            "families": {
+              "프로안토시아니딘": 11
+            },
+            "phyto_compounds": 11
+          }
+        },
+        "usda_sr_carotenoid": {
+          "parent": {
+            "n_db_foods": 9,
+            "top": [
+              [
+                "Soup, beef barley, ready to serve",
+                4
+              ],
+              [
+                "CAMPBELL'S CHUNKY, Hearty Beef Barley Soup",
+                4
+              ],
+              [
+                "Barley malt flour",
+                2
+              ],
+              [
+                "Barley, hulled",
+                2
+              ]
+            ],
+            "families": {
+              "카로티노이드": 20
+            },
+            "phyto_compounds": 20
+          }
+        },
+        "foodb": {
+          "parent": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "Barley",
+                152
+              ]
+            ],
+            "families": {
+              "기타": 137,
+              "리그난": 6,
+              "카로티노이드": 4,
+              "프로안토시아니딘": 2,
+              "이소플라본": 2,
+              "플라반-3-올": 1
+            },
+            "phyto_compounds": 15
+          }
+        },
+        "rda_flavonoid": {
+          "specific": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "보리순",
+                26
+              ]
+            ],
+            "families": {
+              "플라본": 19,
+              "기타": 3,
+              "페놀산": 2,
+              "플라보놀": 2
+            },
+            "phyto_compounds": 23
+          },
+          "parent": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "보리순",
+                26
+              ]
+            ],
+            "families": {
+              "플라본": 19,
+              "기타": 3,
+              "페놀산": 2,
+              "플라보놀": 2
+            },
+            "phyto_compounds": 23
+          }
+        },
+        "rda_phenolic_acid": {
+          "specific": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "보리순",
+                3
+              ]
+            ],
+            "families": {
+              "페놀산": 3
+            },
+            "phyto_compounds": 3
+          },
+          "parent": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "보리순",
+                3
+              ]
+            ],
+            "families": {
+              "페놀산": 3
+            },
+            "phyto_compounds": 3
+          }
+        }
+      },
+      "has_specific": [
+        "rda_flavonoid",
+        "rda_phenolic_acid"
+      ],
+      "parent_only": [
+        "foodb",
+        "phenol_explorer",
+        "usda_flavonoid",
+        "usda_isoflavone",
+        "usda_proanthocyanidin",
+        "usda_sr_carotenoid"
+      ]
+    },
+    "카카오": {
+      "rda_items": 6,
+      "rda_examples": [
+        "케이크, 초콜릿 케이크",
+        "시리얼, 옥수수, 코코아",
+        "코코아, 가루",
+        "코코아, 밀크코코아, 가루"
+      ],
+      "dbs": {
+        "phenol_explorer": {
+          "specific": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "Cocoa, powder",
+                37
+              ]
+            ],
+            "families": {
+              "페놀산": 13,
+              "플라반-3-올": 12,
+              "기타": 9,
+              "리그난": 2,
+              "플라보놀": 1
+            },
+            "phyto_compounds": 28
+          },
+          "parent": {
+            "n_db_foods": 4,
+            "top": [
+              [
+                "Cocoa, powder",
+                37
+              ],
+              [
+                "Chocolate, dark",
+                20
+              ],
+              [
+                "Chocolate, milk, beverage",
+                18
+              ],
+              [
+                "Chocolate, milk",
+                12
+              ]
+            ],
+            "families": {
+              "플라반-3-올": 50,
+              "페놀산": 15,
+              "기타": 11,
+              "플라보놀": 5,
+              "리그난": 2,
+              "스틸벤": 2,
+              "플라본": 2
+            },
+            "phyto_compounds": 76
+          }
+        },
+        "usda_flavonoid": {
+          "specific": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "Cacao beans",
+                4
+              ]
+            ],
+            "families": {
+              "플라반-3-올": 4
+            },
+            "phyto_compounds": 4
+          },
+          "parent": {
+            "n_db_foods": 9,
+            "top": [
+              [
+                "Milk, chocolate, fluid, commercial, reduced fat,",
+                4
+              ],
+              [
+                "Cocoa mix, powder",
+                3
+              ],
+              [
+                "Cocoa, dry powder, unsweetened",
+                3
+              ],
+              [
+                "Cocoa, dry powder, unsweetened, processed with a",
+                3
+              ]
+            ],
+            "families": {
+              "플라반-3-올": 18,
+              "플라보놀": 5
+            },
+            "phyto_compounds": 23
+          }
+        },
+        "usda_isoflavone": {
+          "parent": {
+            "n_db_foods": 7,
+            "top": [
+              [
+                "Soymilk, fluid, chocolate, with added caclium, v",
+                4
+              ],
+              [
+                "Doughnuts, cake-type, plain, chocolate-coated or",
+                4
+              ],
+              [
+                "Formulated bar, POWER BAR, chocolate",
+                4
+              ],
+              [
+                "Formulated bar, Cliff Luna Nuts Over Chocolate F",
+                4
+              ]
+            ],
+            "families": {
+              "이소플라본": 23
+            },
+            "phyto_compounds": 23
+          }
+        },
+        "usda_proanthocyanidin": {
+          "specific": {
+            "n_db_foods": 1,
+            "top": [
+              [
+                "Cacao beans ",
+                5
+              ]
+            ],
+            "families": {
+              "프로안토시아니딘": 5
+            },
+            "phyto_compounds": 5
+          },
+          "parent": {
+            "n_db_foods": 9,
+            "top": [
+              [
+                "Baking chocolate, unsweetened, squares",
+                5
+              ],
+              [
+                "Candies, milk chocolate",
+                5
+              ],
+              [
+                "Cocoa, dry powder, unsweetened",
+                5
+              ],
+              [
+                "Cocoa, dry powder, unsweetened, processed with a",
+                5
+              ]
+            ],
+            "families": {
+              "프로안토시아니딘": 37
+            },
+            "phyto_compounds": 37
+          }
+        },
+        "usda_sr_carotenoid": {
+          "specific": {
+            "n_db_foods": 4,
+            "top": [
+              [
+                "Chocolate, dark, 45- 59% cacao solids",
+                4
+              ],
+              [
+                "Chocolate, dark, 60-69% cacao solids",
+                4
+              ],
+              [
+                "Chocolate, dark, 70-85% cacao solids",
+                4
+              ],
+              [
+                "Candies, chocolate, dark, NFS (45-59% cacao soli",
+                4
+              ]
+            ],
+            "families": {
+              "카로티노이드": 16
+            },
+            "phyto_compounds": 16
+          },
+          "parent": {
+            "n_db_foods": 150,
+            "top": [
+              [
+                "Desserts, mousse, chocolate, prepared-from-recip",
+                4
+              ],
+              [
+                "Chocolate, dark, 45- 59% cacao solids",
+                4
+              ],
+              [
+                "Chocolate, dark, 60-69% cacao solids",
+                4
+              ],
+              [
+                "Chocolate, dark, 70-85% cacao solids",
+                4
+              ]
+            ],
+            "families": {
+              "카로티노이드": 203
+            },
+            "phyto_compounds": 203
+          }
+        },
+        "foodb": {
+          "specific": {
+            "n_db_foods": 2,
+            "top": [
+              [
+                "Cocoa powder",
+                124
+              ],
+              [
+                "Cocoa bean",
+                39
+              ]
+            ],
+            "families": {
+              "기타": 138,
+              "페놀산": 12,
+              "플라반-3-올": 5,
+              "카로티노이드": 4,
+              "프로안토시아니딘": 3,
+              "플라본": 1
+            },
+            "phyto_compounds": 25
+          },
+          "parent": {
+            "n_db_foods": 7,
+            "top": [
+              [
+                "Cocoa powder",
+                124
+              ],
+              [
+                "Chocolate",
+                118
+              ],
+              [
+                "Hot chocolate",
+                117
+              ],
+              [
+                "Cocoa butter",
+                95
+              ]
+            ],
+            "families": {
+              "기타": 551,
+              "카로티노이드": 24,
+              "플라반-3-올": 17,
+              "페놀산": 14,
+              "플라본": 7,
+              "프로안토시아니딘": 6,
+              "스틸벤": 1
+            },
+            "phyto_compounds": 69
+          }
+        }
+      },
+      "has_specific": [
+        "foodb",
+        "phenol_explorer",
+        "usda_flavonoid",
+        "usda_proanthocyanidin",
+        "usda_sr_carotenoid"
+      ],
+      "parent_only": [
+        "usda_isoflavone"
+      ]
+    }
+  }
+}

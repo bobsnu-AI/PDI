@@ -1,0 +1,286 @@
+NDB No,FdGrp_Cd,Long_Desc,SciName
+01102,0100,"Milk, chocolate, fluid, commercial, whole, with added vitamin A and vitamin D",
+02003,0200,"Spices, basil, dried",Ocimum basilicum
+02009,0200,"Spices, chili powder",
+02010,0200,"Spices, cinnamon, ground",Cinnamomum aromaticum
+02011,0200,"Spices, cloves, ground",Syzygium aromaticum
+02015,0200,"Spices, curry powder",
+02020,0200,"Spices, garlic powder",Allium sativum
+02021,0200,"Spices, ginger, ground",Zingiber officinale
+02024,0200,"Spices, mustard seed, ground",Sinapis alba and Brassica juncea
+02026,0200,"Spices, onion powder",Allium cepa
+02027,0200,"Spices, oregano, dried",Origanum vulgare
+02028,0200,"Spices, paprika",Capsicum annuum
+02029,0200,"Spices, parsley, dried",Petroselinum crispum
+02030,0200,"Spices, pepper, black",Piper nigrum
+02033,0200,"Spices, poppy seed",Papaver somniferum
+02043,0200,"Spices, turmeric, ground",Curcuma longa L.
+03091,0300,"Babyfood, vegetables, green beans, strained",
+03104,0300,"Babyfood, vegetables, squash, strained",
+03116,0300,"Babyfood, fruit, applesauce, strained",
+03121,0300,"Babyfood, vegetables, peas, strained",
+03130,0300,"Babyfood, fruit, peaches, strained",
+03132,0300,"Babyfood, fruit, pears, strained",
+03165,0300,"Babyfood, fruit, apple and blueberry, junior",
+03166,0300,"Babyfood, juice, apple",
+03181,0300,"Babyfood, cereal, barley, dry",
+03225,0300,"Babyfood, dessert, cherry vanilla pudding, junior",
+09003,0900,"Apples, raw, with skin",Malus domestica
+09004,0900,"Apples, raw, without skin",Malus domestica
+09016,0900,"Apple juice, canned or bottled, unsweetened, without added ascorbic acid",
+09021,0900,"Apricots, raw",Prunus armeniaca
+09037,0900,"Avocados, raw, all commercial varieties",Persea americana
+09040,0900,"Bananas, raw",Musa acuminata Colla
+09042,0900,"Blackberries, raw",Rubus spp.
+09050,0900,"Blueberries, raw",Vaccinium spp.
+09052,0900,"Blueberries, canned, heavy syrup, solids and liquids",
+09054,0900,"Blueberries, frozen, unsweetened",
+09070,0900,"Cherries, sweet, raw",Prunus avium
+09078,0900,"Cranberries, raw",Vaccinium macrocarpon
+09079,0900,"Cranberries, dried, sweetened",
+09081,0900,"Cranberry sauce, canned, sweetened",
+09083,0900,"Currants, european black, raw",Ribes nigrum
+09086,0900,"Custard-apple, (bullock's-heart), raw",Annona reticulata
+09087,0900,"Dates, deglet noor",Phoenix dactylifera
+09088,0900,"Elderberries, raw",Sambucus spp.
+09089,0900,"Figs, raw",Ficus carica
+09107,0900,"Gooseberries, raw",Ribes spp.
+09112,0900,"Grapefruit, raw, pink and red, all areas",Citrus paradisi
+09124,0900,"Grapefruit juice, white, canned, sweetened",
+09135,0900,"Grape juice, canned or bottled, unsweetened, without added ascorbic acid",
+09148,0900,"Kiwifruit, green, raw",Actinidia deliciosa
+09159,0900,"Limes, raw",Citrus latifolia
+09176,0900,"Mangos, raw",Mangifera indica
+09181,0900,"Melons, cantaloupe, raw",Cucumis melo
+09184,0900,"Melons, honeydew, raw",Cucumis melo
+09191,0900,"Nectarines, yellow, raw",Prunus persica var. nucipersica
+09200,0900,"Oranges, raw, all commercial varieties",Citrus sinensis
+09202,0900,"Oranges, raw, navels",Citrus sinensis
+09209,0900,"Orange juice, chilled, includes from concentrate",
+09218,0900,"Tangerines, (mandarin oranges), raw",Citrus reticulata
+09236,0900,"Peaches, raw",Prunus persica
+09241,0900,"Peaches, canned, heavy syrup pack, solids and liquids",
+09252,0900,"Pears, raw",Pyrus communis
+09266,0900,"Pineapple, raw, all varieties",Ananas comosus
+09279,0900,"Plums, raw",Prunus spp.
+09286,0900,"Pomegranates, raw",Punica granatum
+09291,0900,"Plums, dried (prunes), uncooked",
+09296,0900,"Quinces, raw",Cydonia oblonga
+09298,0900,"Raisins, seedless",Vitis vinifera
+09302,0900,"Raspberries, raw",Rubus spp.
+09307,0900,"Rhubarb, raw",Rheum rhabarbarum
+09316,0900,"Strawberries, raw",Fragaria X ananassa
+09326,0900,"Watermelon, raw",Citrullus lanatus
+09370,0900,"Peaches, canned, heavy syrup, drained solids",
+09413,0900,"Pears, raw, red anjou",Pyrus communis
+09430,0900,"Pineapple, raw, extra sweet variety",Ananas comosus
+09442,0900,"Pomegranate juice, bottled",
+09500,0900,"Apples, raw, red delicious, with skin",Malus domestica
+09501,0900,"Apples, raw, golden delicious, with skin",Malus domestica
+09502,0900,"Apples, raw, granny smith, with skin",Malus domestica
+09503,0900,"Apples, raw, gala, with skin",Malus domestica
+09504,0900,"Apples, raw, fuji, with skin",Malus domestica
+11008,1100,"Artichokes, (globe or french), cooked, boiled, drained, without salt",
+11012,1100,"Asparagus, cooked, boiled, drained",
+11052,1100,"Beans, snap, green, raw",Phaseolus vulgaris
+11080,1100,"Beets, raw",Beta vulgaris
+11088,1100,"Broadbeans, immature seeds, raw",Vicia faba
+11090,1100,"Broccoli, raw",Brassica oleracea var. italica
+11091,1100,"Broccoli, cooked, boiled, drained, without salt",
+11096,1100,"Broccoli raab, raw",Brassica ruvo
+11097,1100,"Broccoli raab, cooked",
+11109,1100,"Cabbage, raw",Brassica oleracea (Capitata Group)
+11110,1100,"Cabbage, cooked, boiled, drained, without salt",
+11112,1100,"Cabbage, red, raw",Brassica oleracea (Capitata Group)
+11113,1100,"Cabbage, red, cooked, boiled, drained, without salt",
+11116,1100,"Cabbage, chinese (pak-choi), raw",Brassica rapa (Chinensis Group)
+11124,1100,"Carrots, raw",Daucus carota
+11125,1100,"Carrots, cooked, boiled, drained, without salt",
+11135,1100,"Cauliflower, raw",Brassica oleracea (Botrytis Group)
+11141,1100,"Celeriac, raw",Apium graveolens
+11143,1100,"Celery, raw",Apium graveolens
+11167,1100,"Corn, sweet, yellow, raw",
+11205,1100,"Cucumber, with peel, raw",Cucumis sativus
+11206,1100,"Cucumber, peeled, raw",
+11209,1100,"Eggplant, raw",Solanum melongena
+11215,1100,"Garlic, raw",Allium sativum
+11226,1100,"Jerusalem-artichokes, raw",Helianthus tuberosus
+11248,1100,"Lentils, sprouted, raw",Lens culinaris
+11251,1100,"Lettuce, cos or romaine, raw",Lactuca sativa var. logifolia
+11252,1100,"Lettuce, iceberg (includes crisphead types), raw",Lactuca sativa var. capitata
+11253,1100,"Lettuce, green leaf, raw",Lactuca sativa var. crispa
+11257,1100,"Lettuce, red leaf, raw",Lactuca sativa var. crispa
+11282,1100,"Onions, raw",Allium cepa
+11283,1100,"Onions, cooked, boiled, drained, without salt",
+11294,1100,"Onions, sweet, raw",Allium cepa
+11298,1100,"Parsnips, raw",Pastinaca sativa
+11304,1100,"Peas, green, raw",Pisum sativum
+11333,1100,"Peppers, sweet, green, raw",Capsicum annuum
+11334,1100,"Peppers, sweet, green, cooked, boiled, drained, without salt",
+11353,1100,"Potatoes, russet, flesh and skin, raw",Solanum tuberosum
+11354,1100,"Potatoes, white, flesh and skin, raw",Solanum tuberosum
+11355,1100,"Potatoes, red, flesh and skin, raw",Solanum tuberosum
+11356,1100,"Potatoes, Russet, flesh and skin, baked",
+11357,1100,"Potatoes, white, flesh and skin, baked",
+11358,1100,"Potatoes, red, flesh and skin, baked",
+11365,1100,"Potatoes, boiled, cooked in skin, flesh, without salt",
+11367,1100,"Potatoes, boiled, cooked without skin, flesh, without salt",
+11429,1100,"Radishes, raw",Raphanus sativus
+11435,1100,"Rutabagas, raw",Brassica napus var. napobrassica
+11457,1100,"Spinach, raw",Spinacia oleracea
+11463,1100,"Spinach, frozen, chopped or leaf, unprepared",
+11477,1100,"Squash, summer, zucchini, includes skin, raw",
+11507,1100,"Sweet potato, raw, unprepared",Ipomoea batatas
+11508,1100,"Sweet potato, cooked, baked in skin, without salt",
+11510,1100,"Sweet potato, cooked, boiled, without skin",
+11529,1100,"Tomatoes, red, ripe, raw, year round average",Solanum lycopersicum
+11530,1100,"Tomatoes, red, ripe, cooked",
+11564,1100,"Turnips, raw",Brassica rapa (Rapifera Group)
+11821,1100,"Peppers, sweet, red, raw",
+11823,1100,"Peppers, sweet, red, cooked, boiled, drained, without salt",
+11953,1100,"Squash, zucchini, baby, raw",Cucurbita spp.
+11960,1100,"Carrots, baby, raw",Daucus carota
+12061,1200,"Nuts, almonds",Prunus dulcis
+12078,1200,"Nuts, brazilnuts, dried, unblanched",Bertholletia excelsa
+12087,1200,"Nuts, cashew nuts, raw",Anacardium occidentale
+12099,1200,"Nuts, chestnuts, european, dried, unpeeled",
+12120,1200,"Nuts, hazelnuts or filberts",Corylus spp.
+12132,1200,"Nuts, macadamia nuts, dry roasted, without salt added",
+12142,1200,"Nuts, pecans",Carya illinoinensis
+12147,1200,"Nuts, pine nuts, dried",Pinus spp.
+12151,1200,"Nuts, pistachio nuts, raw",Pistacia vera
+12155,1200,"Nuts, walnuts, english",Juglans regia
+14003,1400,"Alcoholic beverage, beer, regular, all",
+14096,1400,"Alcoholic beverage, wine, table, red",
+14097,1400,"Alcoholic Beverage, wine, table, red, Cabernet Sauvignon",
+14099,1400,"Alcoholic Beverage, wine, table, red, Pinot Noir",
+14100,1400,"Alcoholic Beverage, wine, table, red, Syrah",
+14106,1400,"Alcoholic beverage, wine, table, white",
+14108,1400,"Alcoholic Beverage, wine, table, red, Sangiovese",
+14209,1400,"Coffee, brewed from grounds, prepared with tap water",
+14242,1400,"Cranberry juice cocktail, bottled",
+14278,1400,"Tea, green, brewed",
+14317,1400,"Malted drink mix, chocolate, powder",
+14355,1400,"Tea, black, brewed",
+14431,1400,"Cranberry juice cocktail, frozen concentrate, prepared with water",
+14602,1400,"Alcoholic Beverage, wine, table, red, Merlot",
+16001,1600,"Beans, adzuki, mature seeds, raw",Vigna angularis
+16014,1600,"Beans, black, mature seeds, raw",Phaseolus vulgaris
+16032,1600,"Beans, kidney, red, mature seeds, raw",Phaseolus vulgaris
+16037,1600,"Beans, navy, mature seeds, raw",Phaseolus vulgaris
+16042,1600,"Beans, pinto, mature seeds, raw",Phaseolus vulgaris
+16043,1600,"Beans, pinto, mature seeds, cooked, boiled, without salt",
+16049,1600,"Beans, white, mature seeds, raw",Phaseolus vulgaris
+16052,1600,"Broadbeans (fava beans), mature seeds, raw",Vicia faba
+16056,1600,"Chickpeas (garbanzo beans, bengal gram), mature seeds, raw",Cicer arietinum
+16062,1600,"Cowpeas, common (blackeyes, crowder, southern), mature seeds, raw",Vigna unguiculata subsp. unguiculata
+16069,1600,"Lentils, raw",Lens culinaris
+16085,1600,"Peas, green, split, mature seeds, raw",Pisum sativum
+16087,1600,"Peanuts, all types, raw",
+16089,1600,"Peanuts, all types, oil-roasted, with salt",
+16098,1600,"Peanut butter, smooth style, with salt",
+16108,1600,"Soybeans, mature seeds, raw",
+19078,1900,"Baking chocolate, unsweetened, squares",
+19081,1900,"Candies, sweet chocolate",
+19120,1900,"Candies, milk chocolate",
+19165,1900,"Cocoa, dry powder, unsweetened",
+19166,1900,"Cocoa, dry powder, unsweetened, processed with alkali",
+19905,1900,"Candies, chocolate, dark, NFS",
+20004,2000,"Barley, hulled",Hordeum vulgare L.
+20008,2000,Buckwheat,Fagopyrum esculentum Moench
+20011,2000,"Buckwheat flour, whole-groat",
+20031,2000,"Millet, raw",Panicum miliaceum L.
+20033,2000,"Oat bran, raw",
+20036,2000,"Rice, brown, long-grain, raw",Oryza sativa L.
+20038,2000,Oats,Avena sativa L.
+20044,2000,"Rice, white, long-grain, regular, raw, enriched",
+20064,2000,"Rye flour, medium",
+20067,2000,Sorghum grain,Sorghum spp.
+20077,2000,"Wheat bran, crude",
+20080,2000,"Wheat flour, whole-grain",
+20088,2000,"Wild rice, raw",Zizania spp.
+20130,2000,Barley flour or meal,
+35130,3500,"Mush, blue corn with ash (Navajo)",
+35131,3500,"Cornmeal, blue (Navajo)",
+35132,3500,"Melon, banana (Navajo)",
+35138,3500,"Squash, Indian, raw (Navajo)",
+35192,3500,"Agave, raw (Southwest)",
+35193,3500,"Agave, cooked (Southwest)",
+35194,3500,"Agave, dried (Southwest)",
+43007,0300,"Babyfood, fruit, tutti frutti, junior",
+43201,1900,Bee Pollen,
+43408,0300,"Babyfood, juice, pear",
+44074,0300,"Babyfood, grape juice, no sugar, canned",
+97002,1400,"Alcoholic beverage, wine, white, sherry",
+97003,0900,"Grapes, seeds, raw",Vitis vinifera
+97004,0900,"Grapes, skins, raw",
+97005,0900,"Medlar , raw",Mespilus germinica
+97007,0900,"Strawberry tree fruit [arbutus], raw ",Arbutus unedo
+97011,0900,"Marionberries, raw",
+97014,0900,Hops,
+97016,0900,"Juice, pear",
+97017,0300,"Babyfood, fruit, bananas",
+97018,0300,"Babyfood, fruit, apples, organic",
+97020,0300,"Babyfood, fruit, apple, strawberry, banana
+Apple, Strawberry,
+Babyfood, fruit, apple, strawberry, banana",
+97021,0300,"Babyfood, fruit, apricots with pears and apples",
+97022,0300,"Babyfood, fruit, banana plum and grape",
+97023,0300,"Babyfood, fruit, plums with apples",
+97024,0300,"Babyfood, fruit, banana strawberry",
+97025,0300,"Babyfood, dessert, blueberry buckle",
+97030,2000,"Sorghum bran, Sumac",
+97031,2000,Buckwheat hulls,
+97034,1900,Cacao beans ,Theobroma cacao
+97041,1100,"Lettuce, not specified as to type",
+97046,0900,"Plum, yellow, whole, raw ",Prunus spp.
+97049,0900,"Nectarines, white, whole, raw ",Prunus persica var. nucipersica
+97054,0900,"Peaches, white, whole, raw ",Prunus persica
+97063,2000,"Sorghum, hi-tannin, whole grain extrudate",
+97068,0900,"Apples, raw, golden delicious, without peel",Malus domestica
+97071,0900,"Apples, raw, Red Delicious, without peel",Malus domestica
+97074,0900,"Grapes, red, raw ",Vitis vinifera
+97075,0900,"Pears, raw, green cultivars, with peel",Pyrus communis
+97077,0900,"Plums, black diamond, with peel, raw ",Prunus spp.
+97081,1400,"Coffee, grounds",
+97085,0900,"Blueberries, wild, raw ",Vaccinium spp.
+97088,0900,"Persimmons, raw , purchased in Spain",Diospyros
+97089,2500,"Snacks, tortilla chips, low fat, made with olestra",
+99002,0900,"Apples, raw, skin only",Malus domestica
+99007,0900,Black Currant Juice ,
+99012,0900,"Chokeberry, raw ",Aronia spp.
+99021,0900,"Lingonberries [cowberries], raw ",Vaccinium vitis-idaea
+99037,0900,Sea buckthorn berries,
+99043,0900,Arctic bramble berries ,Rubus articus subsp. Articus
+99044,0900,"Currants, red, raw ",Ribes rubrum
+99047,0900,"Grapes, white or green, raw ",Vitis vinifera
+99050,0900,"Juice, grape, white",
+99055,1100,"Onions, red, raw ",Allium cepa
+99064,1900,"Jams and preserves, strawberry ",
+99065,0900,Bilberry soup ,
+99083,0900,Apple cider [European] ,
+99110,0900,"Cranberry juice, raw ",
+99326,0900,"Bog whortleberries, wild, frozen ",Vaccinium
+99335,0900,"Rowanberries, raw ",Sorbus
+99337,0900,"Cloudberries, raw ",Rubus chamaemorus
+99339,0900,"Crowberries, raw ",Empetrum nigrum
+99357,0900,"Bilberry, raw ",Vaccinium myrillus
+99399,1600,Carob fiber [Caromax],
+99403,1900,"Jams and preserves, raspberry ",
+99436,0900,"Juice, grape, red",
+99439,1400,"Alcoholic beverage, wine, table, rose",
+99460,2000,"Sorghum, grain, white",
+99616,0900,Service (Saskatoon) berries,
+99664,2000,Barley malt,
+99667,0900,"Blueberries, canned in water, solid and liquid",
+99668,2000,Buckwheat grits,
+99671,0900,"Raspberries, yellow, raw",
+99672,0900,"Peaches, canned, heavy syrup, drained liquid",
+99673,0900,"Oranges, blood, raw",
+99674,2000,"Rye, bran",
+99675,0900,Rose hips,
+99681,2000,"Wheat, not specified to type",
+99682,2000,"Rice, red, raw",
+99683,2000,"Wild rice mix of 3 blends (wild, white and Basmati), dry",
+99684,2000,"Wild rice, quick-cooking, dry",
+99685,2000,"Rice, black, raw",

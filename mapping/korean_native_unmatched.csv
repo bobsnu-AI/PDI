@@ -1,0 +1,117 @@
+﻿category,rda_idx,rda_code,group,name_kr,name_en,sci_name,in_knhanes
+떡류,22,A0070000000a,곡류,메밀묵,"Memilmuk, Buckwheat starch jelly",,Y
+떡류,23,A0070000005a,곡류,"메밀묵, 가루","Starch, Buckwheat, Powder",,N
+떡류,3271,A0090050009w,곡류,"멥쌀 과자, 떡, 팽화","Rice snack, Rice cake, Garaetteok, Puffed",,N
+떡류,311,A0280010009a,곡류,"수수떡, 수수경단","Sorghum rice cake, Susutteok, Ball shaped",,Y
+떡류,367,A0320000009a,곡류,옥수수묵,"Oksusumuk, Corn starch jelly",,N
+떡류,408,A0410000009a,곡류,찹쌀떡,"Glutinous rice cake, Chapssaltteok, With adzuki bean paste filling",,Y
+떡류,409,A0410010529a,곡류,"찹쌀떡, 경단 카스텔라","Glutinous rice cake, Gyeongdan, Sweet glutinous rice ball with castella powder",,Y
+떡류,410,A0410020009a,곡류,"찹쌀떡, 모둠 찰떡","Glutinous rice cake, Modum-chaltteok, Assorted",,Y
+떡류,411,A0410030009a,곡류,"찹쌀떡, 약식","Glutinous rice cake, Yaksik, Mixed with nut and dried fruit",,Y
+떡류,412,A0410040539a,곡류,"찹쌀떡, 인절미, 팥고물","Glutinous rice cake, Injeolmi, Cubed rice cake with adzuki bean flour",,Y
+떡류,413,A0410040549a,곡류,"찹쌀떡, 인절미, 콩고물","Glutinous rice cake, Injeolmi, Cubed, With soybean flour",,Y
+떡류,414,A0410050009a,곡류,"찹쌀떡, 찰시루떡","Glutinous rice cake, Chalsirutteok, with shreded red bean",,Y
+떡류,545,D0030000005a,두류,"녹두 빈대떡, 가루",Mungbean pancake mix(Nokdu-bindaetteok-garu),,Y
+떡류,546,D003000056Pa,두류,"녹두 빈대떡가루, 반죽","Mungbean pancake mix, Batter, Prepared",,N
+떡류,548,D0050000009a,두류,녹두묵,"Nokdumuk, Mungbean starch jelly",,Y
+떡류,1046,F1110000000a,채소,"수리취(떡취), 생것","Deltoid synurus, Raw",Synurus deltoides (Aiton) Nakai,N
+떡류,2798,L0170000001a,해조,"석묵, 말린것","Seaweed hypnaeoides, Dried",Campylaephora hypnaeoides,N
+나물류,709,F0080000000a,채소,"갯기름나물, 생것","Coastal hogfennel(Gaetgireumnamul), Leaf, Raw",Peucedanum japonicum Thunb.,Y
+나물류,710,F0080010000a,채소,"갯기름나물, 노지, 생것","Coastal hogfennel(Gaetgireumnamul), Leaf, Cultivated in open field, Raw",Peucedanum japonicum Thunb.,N
+나물류,711,F0080011130a,채소,"갯기름나물, 노지, 어린잎, 생것","Coastal hogfennel(Gaetgireumnamul), Young leaf, Cultivated in open field, Raw",Peucedanum japonicum Thunb.,N
+나물류,712,F0080020000a,채소,"갯기름나물, 하우스, 생것","Coastal hogfennel(Gaetgireumnamul), Leaf, Cultivated in green house, Raw",Peucedanum japonicum Thunb.,N
+나물류,713,F0080021130a,채소,"갯기름나물, 하우스, 어린잎, 생것","Coastal hogfennel(Gaetgireumnamul), Young leaf, Cultivated in green house, Raw",Peucedanum japonicum Thunb.,N
+나물류,714,F0080000009c,채소,"갯기름나물, 데친것","Coastal hogfennel(Gaetgireumnamul), Leaf, Blanched",Peucedanum japonicum Thunb.,Y
+나물류,715,F0080010009c,채소,"갯기름나물, 노지, 데친것","Coastal hogfennel(Gaetgireumnamul), Leaf, Cultivated in open field, Blanched",Peucedanum japonicum Thunb.,N
+나물류,716,F0080011139c,채소,"갯기름나물, 노지, 어린잎, 데친것","Coastal hogfennel(Gaetgireumnamul), Young leaf, Cultivated in open field, Blanched",Peucedanum japonicum Thunb.,N
+나물류,717,F0080020009c,채소,"갯기름나물, 하우스, 데친것","Coastal hogfennel(Gaetgireumnamul), Leaf, Cultivated in green house, Blanched",Peucedanum japonicum Thunb.,N
+나물류,718,F0080021139c,채소,"갯기름나물, 하우스, 어린잎, 데친것","Coastal hogfennel(Gaetgireumnamul), Young leaf, Cultivated in green house, Blanched",Peucedanum japonicum Thunb.,N
+나물류,719,F1060000000a,채소,"갯나물, 세발나물, 생것","Salt sandspurry(Sebalnamul), Raw",Spergularia marina (L.) Besser,Y
+나물류,720,F1060000009c,채소,"갯나물, 세발나물, 데친것","Salt sandspurry(Sebalnamul), Blanched",Spergularia marina (L.) Besser,Y
+나물류,721,F1790000000a,채소,"갯나물, 칠면초, 생것","East Asian seepweed, Raw",Suaeda japonica Makino,N
+나물류,722,F2230010000a,채소,"갯나물, 퉁퉁마디(함초), 노지, 생것","Marshfire glasswort, Cultivated in open field, Raw",Salicornia europaea L.,N
+나물류,723,F2230020000a,채소,"갯나물, 퉁퉁마디(함초), 하우스, 생것","Marshfire glasswort, Cultivated in green house, Raw",Salicornia europaea L.,N
+나물류,724,F2200000009a,채소,"갯나물, 퉁퉁마디(함초), 환","Marshfire glasswort, Pellet",,N
+나물류,816,F0380000000a,채소,"는쟁이냉이, 생것","Asian bittercress, Raw",Cardamine komarovii Nakai,N
+나물류,835,F0450000000a,채소,"돌나물, 생것","Stringy stonecrop(Dolnamul), Raw",Sedum sarmentosum Bunge,Y
+나물류,915,F077000000Ma,채소,미나리청,"Water dropwort, Preserved with sugar, Liquid",,N
+나물류,1009,F0990000001a,채소,"삼나물, 말린것","Goat's-beard, Dried",Aruncus dioicus (Walter) Fernald,N
+나물류,1081,F1210000000a,채소,"씀바귀, 생것","Sseumbagwi, Raw",Ixeridium dentatum (Thunb.) Tzvelev,Y
+나물류,1082,F1210000009c,채소,"씀바귀, 데친것","Sseumbagwi, Blanched",Ixeridium dentatum (Thunb.) Tzvelev,N
+나물류,1083,F121000B090a,채소,"씀바귀, 뿌리, 생것","Sseumbagwi, Root, Raw",Ixeridium dentatum (Thunb.) Tzvelev,N
+나물류,1088,F1230000000a,채소,"아욱, 생것","Curled mallow(Auk), Raw",Malva verticillata L.,Y
+나물류,1089,F1230000009c,채소,"아욱, 데친것","Curled mallow(Auk), Blanched",Malva verticillata L.,Y
+나물류,1151,F1560000000a,채소,"원추리, 생것","Fulvous day-lily, Raw",Hemerocallis fulva L.,N
+나물류,1152,F1560000009c,채소,"원추리, 데친것","Fulvous day-lily, Blanched",Hemerocallis fulva L.,N
+나물류,1168,F1680000001a,채소,"줄나물, 말린것","Nettle-leaf mint, Dried",Meehania urticifolia (Miq.) Makino,N
+나물류,1169,F1690000000a,채소,"진달래꽃, 생것","Korean rhododendron flower, Raw",Rhododendron mucronulatum Turcz.,N
+나물류,1179,F1740000000a,채소,"참죽나물, 순, 생것","Chinese cedar(Chamjuknamul), Leaf bud, Raw",Cedrela sinensis A. Juss.,N
+나물류,1180,F1740000009c,채소,"참죽나물, 순, 데친것","Chinese cedar(Chamjuknamul), Leaf bud, Blanched",Cedrela sinensis A. Juss.,N
+나물류,1182,F1740000003a,채소,"참죽나물, 순, 삶아서 말린것","Chinese cedar(Chamjuknamul), Leaf bud, Blanched and dried",Cedrela sinensis A. Juss.,N
+나물류,1183,F1740000003b,채소,"참죽나물, 순, 삶아서 말린것, 삶은것","Chinese cedar(Chamjuknamul), Leaf bud, Blanched and dried, Boiled",Cedrela sinensis A. Juss.,N
+나물류,1191,F1770010000a,채소,"취나물, 개미취, 생것","Tartarian aster, Raw",Aster tataricus Linne Fil.,N
+나물류,1192,F0230000000a,채소,"취나물, 곰취, 생것","Fischer’s ragwort(Gomchwi), Leaf, Raw",Ligularia fischeri (Ledeb.) Turcz.,Y
+나물류,1193,F0230000009c,채소,"취나물, 곰취, 데친것","Fischer’s ragwort(Gomchwi), Leaf, Blanched",Ligularia fischeri (Ledeb.) Turcz.,Y
+나물류,1194,F0230010001a,채소,"취나물, 곰취, 야생, 말린것","Fischer’s ragwort(Gomchwi), Leaf, Wild, Dried",Ligularia fischeri (Ledeb.) Turcz.,N
+나물류,1195,F0230020001a,채소,"취나물, 곰취, 재배, 말린것","Fischer’s ragwort(Gomchwi), Leaf, Cultivated, Dried",Ligularia fischeri (Ledeb.) Turcz.,Y
+나물류,1196,F1770020000a,채소,"취나물, 미역취, 생것","Asian goldenrod(Miyeokchwi), Raw",Solidago virgaurea subsp. asiatica Kitam. ex Hara,N
+나물류,3495,F1770020003a,채소,"취나물, 미역취, 삶아서 말린것","Asian goldenrod(Miyeokchwi), Boiled and dried",Solidago virgaurea subsp. asiatica Kitam. ex Hara,N
+나물류,3496,F1770020003b,채소,"취나물, 미역취, 삶아서 말린것, 삶은것","Asian goldenrod(Miyeokchwi), Boiled and dried, Boiled",Solidago virgaurea subsp. asiatica Kitam. ex Hara,N
+나물류,1197,F1770030000a,채소,"취나물, 참취, 생것","Rough aster(Chamchwi), Raw",Aster scaber Thunberg,Y
+나물류,1198,F1770030009c,채소,"취나물, 참취, 데친것","Rough aster(Chamchwi), Blanched",Aster scaber Thunberg,Y
+나물류,1199,F1770030001a,채소,"취나물, 참취, 말린것","Rough aster(Chamchwi), Dried",Aster scaber Thunberg,N
+나물류,1200,F1770030001b,채소,"취나물, 참취, 말린것, 삶은것","Rough aster(Chamchwi), Dried, Boiled",Aster scaber Thunberg,N
+나물류,1201,F1770030003a,채소,"취나물, 참취, 삶아서 말린것","Rough aster(Chamchwi), Boiled and dried",Aster scaber Thunberg,Y
+나물류,1202,F1770030003c,채소,"취나물, 참취, 삶아서 말린것, 데친것","Rough aster(Chamchwi), Boiled and dried, Blanched",Aster scaber Thunberg,Y
+나물류,1242,F1920000000a,채소,"파드득나물(삼엽채), 생것","East Asian wildparsley, Raw",Cryptotaenia japonica Hassk,N
+나물류,2774,L0040000000a,해조,"꼬시래기, 생것","Sea string, Raw",Gracilaria verrucosa,Y
+장류,768,F0200000009a,채소,고추장아찌,"Hot pepper, Pickled, Gochu-jangajji",,Y
+장류,3357,R0680020009a,향신료·조미료,"라면 건더기 스프, 짜장라면","Ramyeon, Flake, Jajangramyeon",,N
+장류,3359,R0130020009a,향신료·조미료,"라면 스프, 짜장라면","Ramyeon, Seasoning, Jajangramyeon",,N
+장류,3360,R0130022809a,향신료·조미료,"라면 스프, 짜장라면, 조미유","Ramyeon, Seasoning oil, Jajangramyeon",,N
+장류,3363,R0700000009a,향신료·조미료,수끼 소스,Suki sauce,,N
+장류,3364,R0700010009a,향신료·조미료,"수끼 소스, 된장","Suki sauce, Doenjang",,N
+장류,3365,R0700020009a,향신료·조미료,"수끼 소스, 토마토","Suki sauce, Tomato",,N
+장류,3086,R0280000005a,향신료·조미료,"짜장 소스, 가루","Black bean sauce, Powder",,Y
+장류,3087,R028000000Wa,향신료·조미료,"짜장 소스, 레토르트","Black bean sauce, Retort pouched",,Y
+장류,3088,R0580000009a,향신료·조미료,"짜장 소스, 춘장","Black bean sauce, Chunjang, Black bean paste",,Y
+장류,3092,R0060000009a,향신료·조미료,초고추장,"Chogochujang, Gochujang with vinegar and sugar",,Y
+차류,850,F048000B140a,채소,"둥굴레, 잎, 생것","Solomon´s seal, Leaf, Raw",Polygonatum odoratum var. pluriflorum Ohwi,N
+차류,851,F048000B141a,채소,"둥굴레, 잎, 말린것","Solomon´s seal, Leaf, Dried",Polygonatum odoratum var. pluriflorum Ohwi,N
+차류,3337,O001000000Na,음료(차),감잎차,"Persimmon leaf tea, Brewed",,N
+차류,2903,O0020000001a,음료(차),"결명자차, 말린것","Sickle senna(Senna tora) tea, Dried",,N
+차류,3338,O002000000Na,음료(차),결명자차,"Sickle senna(Senna tora) tea, Brewed",,N
+차류,2904,O0030000005a,음료(차),"계피차, 가루","Cinnamon tea, Powder",,N
+차류,2905,O0040000001a,음료(차),"구기자차, 말린것","Goji berry tea, Dried",,Y
+차류,3339,O004000000Na,음료(차),구기자차,"Goji berry tea, Brewed",,N
+차류,2906,O0050000001a,음료(차),"구절초차, 말린것","Gujeolcho tea, Dried",,N
+차류,2907,O0060000001a,음료(차),"국화차, 말린것","Chrysanthemum tea, Dried",,N
+차류,3340,O006000000Na,음료(차),국화차,"Chrysanthemum tea, Brewed",,N
+차류,2914,O0070040005a,음료(차),"녹차라테, 가루","Green tea latte, Powder",,Y
+차류,3418,O007004000Pa,음료(차),"녹차라테, 가루, 물에 탄것","Green tea latte, Powder, Prepared with water",,N
+차류,2915,O008000000Na,음료(차),다래나무순차,"Vine-pear leaf tea, Brewed",,N
+차류,2916,O010000000Na,음료(차),대추차,"Jujube tea, Prepared with water",,Y
+차류,2917,O011000000Na,음료(차),도라지차,"Balloon flower(Doraji) Tea, Brewed",,Y
+차류,2918,O0120000005a,음료(차),"두충차, 가루","Eucommia bark tea, Powder",,N
+차류,2919,O013000000Na,음료(차),둥굴레차,"Solomon´s seal tea, Teabag, Brewed",,Y
+차류,2920,O0350000009a,음료(차),민들레차,Dandelion tea,,N
+차류,2922,O0340000009a,음료(차),보이차,"Puer tea, Teabag, Brewed",,Y
+차류,2923,O015000000Na,음료(차),사과차,"Apple tea, Brewed",,N
+차류,2924,O0160000001a,음료(차),"상지차, 말린것","Mulberry branch tea, Dried",,N
+차류,2925,O0170000005a,음료(차),"생강차, 가루","Ginger tea, Powder",,Y
+차류,2927,O0180000005a,음료(차),"쌍화차, 가루","Ssanghwa tea, Powder",,Y
+차류,2928,O0190000001a,음료(차),"쑥차, 말린것","Mugwort tea, Dried",,N
+차류,2929,O020000000Na,음료(차),야콘차,"Yacon tea, Brewed",,Y
+차류,3341,O0370000009a,음료(차),옥수수수염차,"Corn silk tea, Brewed",,N
+차류,3342,O023000000Pa,음료(차),유자차,"Yuzu tea, Prepared with water",,N
+차류,2934,O023000235Pa,음료(차),"유자차, 고형물 포함","Yuzu tea, Prepared with water, With solid",,Y
+차류,2935,O0240000005a,음료(차),"율무차, 가루","Job's tears tea, Powder",,Y
+차류,2936,O0250001545a,음료(차),"인삼차, 과립차, 가루","Korean ginseng, Granular tea, Powder",,N
+차류,3419,O025000154Pa,음료(차),"인삼차, 과립차, 가루, 물에 탄것","Korean ginseng, Granular tea, Powder, Prepared with water",,N
+차류,2937,O0260000001a,음료(차),"치커리차, 말린것","Common chicory tea, Dried",,N
+차류,2938,O036000000Na,음료(차),카모마일차,"Chamomile, Tea, Brewed",,Y
+차류,2953,O0310000005a,음료(차),"홍삼차, 가루","Red ginseng tea, Powder",,Y
+김치류,879,F2060000009a,채소,마늘종 장아찌,"Garlic scape, Pickled, Maneuljong-jangajji",,Y
+김치류,1150,F155000000Ia,채소,울외장아찌,"Oriental pickling melon, Narazuke, Pickled with Sake lee",,Y
+김치류,1444,H031000000Ha,과일,"매실 절임, 당절임, 고형물","Japanese apricot, Preserved with sugar, Solid",,Y
+김치류,1445,H031000000Ia,과일,"매실 절임, 염절임, 고형물","Japanese apricot, Salted, Solid",,Y

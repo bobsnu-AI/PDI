@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────────────────────
+# 100MB 초과 — GitHub 이 푸시를 거부합니다. Release 에셋으로 올립니다.
+#   foodb_2020_4_7_csv.tar.gz      953 MB
+#   Content.csv                    744 MB
+#   20260828_가공식품DB_316734건.xlsx  192 MB
+#   CompoundOntologyTerm.csv       109 MB
+# 받는 법: Releases 탭 → 최신 태그 → 에셋 다운로드 → 원래 경로에 복원
+# ─────────────────────────────────────────────────────────────
+foodb/foodb_2020_4_7_csv.tar.gz
+foodb/foodb_2020_04_07_csv/Content.csv
+foodb/foodb_2020_04_07_csv/CompoundOntologyTerm.csv
+kr_mfds/20260828_가공식품DB_316734건.xlsx
+# 다음 달 파일명이 바뀌어도 걸리도록
+kr_mfds/*가공식품DB*.xlsx
+
+# ─────────────────────────────────────────────────────────────
+# 원본에서 만들어지는 파생물 (72MB). 명령 한 줄이면 재생성됩니다.
+# ─────────────────────────────────────────────────────────────
+# build_values.py 로 재생성 (약 40초)
+mapping/values/
+# summarize.py 로 재생성
+foodb/foodb_2020_04_07_csv/Compound_fixed_header.csv
+
+# 배포용 압축본
+/phyto_db.zip
+
+# 작업 부산물
+kr_mfds/_mfds_page.png
+**/__MACOSX/
+
+# OS / 편집기
+.DS_Store
+._*
+Thumbs.db
+desktop.ini
+__pycache__/
+*.pyc
+.ipynb_checkpoints/

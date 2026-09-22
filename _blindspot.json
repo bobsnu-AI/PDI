@@ -1,0 +1,74 @@
+{
+  "글루코시놀레이트": {
+    "foodb_foods_quant": 3,
+    "quant_compounds": 10,
+    "base_foods_mapped": 11,
+    "pct": 0.6,
+    "knhanes_mapped": 4,
+    "base_foods_detected_only": 1096
+  },
+  "이소티오시아네이트": {
+    "foodb_foods_quant": 3,
+    "quant_compounds": 4,
+    "base_foods_mapped": 2,
+    "pct": 0.1,
+    "knhanes_mapped": 1,
+    "base_foods_detected_only": 89
+  },
+  "오르가노설퍼": {
+    "foodb_foods_quant": 2,
+    "quant_compounds": 12,
+    "base_foods_mapped": 0,
+    "pct": 0.0,
+    "knhanes_mapped": 0,
+    "base_foods_detected_only": 1107
+  },
+  "캡사이시노이드": {
+    "foodb_foods_quant": 6,
+    "quant_compounds": 5,
+    "base_foods_mapped": 39,
+    "pct": 2.1,
+    "knhanes_mapped": 25,
+    "base_foods_detected_only": 5
+  },
+  "피토스테롤": {
+    "foodb_foods_quant": 73,
+    "quant_compounds": 8,
+    "base_foods_mapped": 220,
+    "pct": 11.7,
+    "knhanes_mapped": 114,
+    "base_foods_detected_only": 903
+  },
+  "γ-오리자놀": {
+    "foodb_foods_quant": 0,
+    "quant_compounds": 0,
+    "base_foods_mapped": 0,
+    "pct": 0.0,
+    "knhanes_mapped": 0,
+    "base_foods_detected_only": 298
+  },
+  "토코페롤류": {
+    "foodb_foods_quant": 622,
+    "quant_compounds": 3,
+    "base_foods_mapped": 1148,
+    "pct": 61.1,
+    "knhanes_mapped": 527,
+    "base_foods_detected_only": 92
+  },
+  "클로로필": {
+    "foodb_foods_quant": 4,
+    "quant_compounds": 3,
+    "base_foods_mapped": 13,
+    "pct": 0.7,
+    "knhanes_mapped": 8,
+    "base_foods_detected_only": 1094
+  },
+  "베타레인": {
+    "foodb_foods_quant": 0,
+    "quant_compounds": 0,
+    "base_foods_mapped": 0,
+    "pct": 0.0,
+    "knhanes_mapped": 0,
+    "base_foods_detected_only": 1107
+  }
+}

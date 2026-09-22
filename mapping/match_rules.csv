@@ -1,0 +1,59 @@
+kr_key,db_food_head,confidence,basis,note
+배추,napa cabbage,high,same species,"Brassica rapa subsp. pekinensis; PE/USDA-Flav/FooDB 모두 'Napa cabbage' 수록"
+배추,chinese cabbage,high,same species,FooDB 'Chinese cabbage'
+김치,kimchi,high,same food,SR Legacy 'Cabbage, kimchi' (카로티노이드만)
+얼갈이배추,napa cabbage,medium,same species different maturity,어린 배추
+쌈추,napa cabbage,medium,cultivar of same species,배추 계통 쌈용 품종
+귤,tangerine,high,same genus/food,Citrus unshiu ~ tangerine(C. tanger.); USDA/PE 'tangerine'
+귤,mandarin orange,high,same food,FooDB 'Mandarin orange'
+한라봉,tangerine,medium,citrus hybrid,만감류 대체
+천혜향,tangerine,medium,citrus hybrid,만감류 대체
+레드향,tangerine,medium,citrus hybrid,만감류 대체
+황금향,tangerine,medium,citrus hybrid,만감류 대체
+유자,yuzu,high,same food,USDA-Flav 'Yuzu'
+무,radish,high,same species,Raphanus sativus
+무,daikon radish,high,same species,FooDB 'Daikon radish'
+열무,radish,medium,young radish same species,어린 무
+총각무,radish,medium,same species cultivar,알타리무
+단무지,radish,low,processed from same species,염지 가공품 - 함량 변화 큼
+고추냉이,wasabi,high,same food,FooDB/SR 'Wasabi'
+고추냉이,horseradish,medium,related genus substitute,Eutrema ~ Armoracia
+들깨,perilla,high,same species,Perilla frutescens; USDA-Flav 'Perilla'
+들깻잎,perilla,high,same species leaf,Perilla frutescens leaf
+쑥,mugwort,high,same genus,Artemisia spp.; FooDB 'Mugwort'
+인삼,ginseng,high,same species,Panax ginseng; FooDB 'Ginseng'
+수삼,ginseng,high,same species fresh,Panax ginseng 생것
+홍삼,ginseng,medium,steamed-dried same species,가공으로 사포닌 프로파일 변함
+대추,jujube,high,same species,Ziziphus jujuba
+구기자,goji berry,high,same species,Lycium chinense ~ L. barbarum
+도토리,acorn,high,same food,FooDB 'Acorn'
+도토리묵,acorn,low,starch jelly from acorn,전분 추출물 - 폴리페놀 대부분 손실
+연근,lotus root,high,same food,USDA-Flav 'Lotus root'
+우엉,burdock,high,same species,Arctium lappa
+강황,turmeric,high,same species,Curcuma longa
+미역,wakame,high,same species,Undaria pinnatifida; FooDB 'Wakame'
+김,laver,high,same genus,Porphyra/Pyropia; FooDB 'Laver'
+다시마,kelp,high,same family,Laminaria/Saccharina; FooDB 'Kelp'
+느타리버섯,oyster mushroom,high,same species,Pleurotus ostreatus
+표고버섯,shiitake,high,same species,Lentinula edodes
+팽이버섯,enokitake,high,same species,Flammulina velutipes
+양송이버섯,common mushroom,high,same species,Agaricus bisporus
+녹차,tea,high,same species,Camellia sinensis
+홍차,tea,high,same species fermented,Camellia sinensis 발효
+우롱차,tea,high,same species semi-fermented,Camellia sinensis 반발효
+보리차,barley,medium,roasted barley infusion,볶은 보리 침출액 - 함량 희석
+된장,soy paste,high,same food,PE 'Soy paste, doenjang'
+된장,miso,medium,analogous fermented soy paste,USDA-Isoflav/FooDB 'Miso'
+쌈장,soy paste,medium,doenjang-based blend,된장 기반 혼합장
+간장,soy sauce,high,same food,PE/USDA 'Soy sauce'
+청국장,natto,medium,analogous whole-soybean ferment,USDA-Isoflav/FooDB 'Natto' - 균주 다름
+메주,soy paste,medium,doenjang precursor,된장 중간체
+곤약,konjac,medium,same species,Amorphophallus konjac
+쑥갓,crown daisy,high,same species,Chrysanthemum coronarium; USDA-Flav 'Crown daisy'
+고사리,fiddlehead ferns,low,analogous edible fern frond,Pteridium ~ Matteuccia - 종 다름, 대체 근거 약함
+뽕잎,mulberry,medium,same species leaf,Morus alba
+오디,black mulberry,high,same genus fruit,Morus spp.
+쪽파,welsh onion,high,same species,Allium fistulosum
+대파,welsh onion,high,same species,Allium fistulosum
+부추,chinese chives,high,same species,Allium tuberosum
+달래,allium,low,genus-level only,Allium monanthum - FooDB 'Allium' 속 수준

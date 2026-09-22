@@ -1,0 +1,508 @@
+{
+  "rda_fct": {
+    "file": "kr_rda\\식품성분표(10개정판).xlsx",
+    "sheet": "국가표준식품성분 Database 10.4",
+    "version": "10.4",
+    "foods": 3366,
+    "columns_found": 9,
+    "rows": 7508,
+    "foods_in_shard": 2378,
+    "compounds": 9,
+    "seconds": 2.2,
+    "built_at": "2026-09-22 18:20:08",
+    "files": {
+      "kr_rda\\식품성분표(10개정판).xlsx": {
+        "sha": "04c9061776b926c8",
+        "bytes": 13348408,
+        "mtime": "2026-09-18 01:30"
+      }
+    },
+    "status": "ok",
+    "fct_foods_csv": 3366
+  },
+  "rda_flavonoid": {
+    "file": "kr_rda\\플라보노이드 Data Base 1.0.xlsx",
+    "sheets": 11,
+    "basis": "DW",
+    "rows": 3161,
+    "foods_in_shard": 240,
+    "compounds": 474,
+    "seconds": 0.4,
+    "built_at": "2026-09-22 18:20:08",
+    "files": {
+      "kr_rda\\플라보노이드 Data Base 1.0.xlsx": {
+        "sha": "9af3e53ccde6f24c",
+        "bytes": 195973,
+        "mtime": "2026-09-18 01:31"
+      }
+    },
+    "status": "ok"
+  },
+  "rda_phenolic_acid": {
+    "file": "kr_rda\\공공데이터_페놀산 DB.xlsx",
+    "sheets": 7,
+    "basis": "DW",
+    "rows": 2752,
+    "foods_in_shard": 251,
+    "compounds": 164,
+    "seconds": 0.4,
+    "built_at": "2026-09-22 18:20:08",
+    "files": {
+      "kr_rda\\공공데이터_페놀산 DB.xlsx": {
+        "sha": "7516435b256fff3c",
+        "bytes": 136157,
+        "mtime": "2026-09-18 01:31"
+      }
+    },
+    "status": "ok"
+  },
+  "rda_saponin": {
+    "file": "kr_rda\\RDA 기능성분 DB 3.0 사포닌 편.xlsx",
+    "sheets": 26,
+    "basis": "DW",
+    "rows": 2807,
+    "foods_in_shard": 157,
+    "compounds": 538,
+    "seconds": 0.7,
+    "built_at": "2026-09-22 18:20:09",
+    "files": {
+      "kr_rda\\RDA 기능성분 DB 3.0 사포닌 편.xlsx": {
+        "sha": "958d80c45a7b37b2",
+        "bytes": 191316,
+        "mtime": "2026-09-18 01:31"
+      }
+    },
+    "status": "ok"
+  },
+  "phenol_explorer": {
+    "file": "phenol_explorer\\composition-data.xlsx",
+    "pe_foods": 459,
+    "rows": 4562,
+    "foods_in_shard": 454,
+    "compounds": 475,
+    "seconds": 1.4,
+    "built_at": "2026-09-22 18:20:10",
+    "files": {
+      "phenol_explorer\\composition-data.xlsx": {
+        "sha": "fedbaa6bd151593b",
+        "bytes": 476653,
+        "mtime": "2016-12-11 11:27"
+      }
+    },
+    "status": "ok"
+  },
+  "usda_isoflavone": {
+    "dir": "usda/isoflavone_csv",
+    "nutrients": 7,
+    "foods": 560,
+    "rows": 1247,
+    "foods_in_shard": 371,
+    "compounds": 7,
+    "seconds": 0.0,
+    "built_at": "2026-09-22 18:20:10",
+    "files": {
+      "usda/isoflavone_csv/DATA_SRC.csv": {
+        "sha": "1b1293cac26085a0",
+        "bytes": 20753,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/isoflavone_csv/DATSRCLN.csv": {
+        "sha": "806f9d0c602006a8",
+        "bytes": 50638,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/isoflavone_csv/FOOD_DES.csv": {
+        "sha": "4ab7e438c1d4bb51",
+        "bytes": 29102,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/isoflavone_csv/ISFL_DAT.csv": {
+        "sha": "134d2db25addd15f",
+        "bytes": 109896,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/isoflavone_csv/NUTR_DEF.csv": {
+        "sha": "462703567799f98f",
+        "bytes": 162,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/isoflavone_csv/SYBN_DTL.csv": {
+        "sha": "3188ae35d60c9aec",
+        "bytes": 297471,
+        "mtime": "2026-09-18 01:09"
+      }
+    },
+    "status": "ok"
+  },
+  "usda_flavonoid": {
+    "dir": "usda/flavonoid_csv",
+    "nutrients": 26,
+    "foods": 512,
+    "rows": 1804,
+    "foods_in_shard": 466,
+    "compounds": 25,
+    "seconds": 0.0,
+    "built_at": "2026-09-22 18:20:10",
+    "files": {
+      "usda/flavonoid_csv/DATA_SRC.csv": {
+        "sha": "7684548cc81a252b",
+        "bytes": 63899,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/flavonoid_csv/DATSRCLN.csv": {
+        "sha": "0dfc2cd736258e78",
+        "bytes": 97453,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/flavonoid_csv/FD_GROUP.csv": {
+        "sha": "cd66a688e9476bab",
+        "bytes": 340,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/flavonoid_csv/FLAV_DAT.csv": {
+        "sha": "7da29643b8c78164",
+        "bytes": 114953,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/flavonoid_csv/FLAV_IND.csv": {
+        "sha": "5f67c93640a945aa",
+        "bytes": 4408753,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/flavonoid_csv/FOOD_DES.csv": {
+        "sha": "655f798e3ac5e4c5",
+        "bytes": 26465,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/flavonoid_csv/Food_Des_CR.csv": {
+        "sha": "19374d41caa861be",
+        "bytes": 325,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/flavonoid_csv/NUTR_DEF.csv": {
+        "sha": "adfb299791ae39ca",
+        "bytes": 1093,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/flavonoid_csv/Nut_Val_CR.csv": {
+        "sha": "cc83d1d83e44cab6",
+        "bytes": 5446,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/flavonoid_csv/SRCLink.csv": {
+        "sha": "2ab670a8a6f2320a",
+        "bytes": 979,
+        "mtime": "2026-09-18 01:09"
+      }
+    },
+    "status": "ok"
+  },
+  "usda_proanthocyanidin": {
+    "dir": "usda/proanthocyanidin_csv",
+    "nutrients": 5,
+    "foods": 283,
+    "rows": 563,
+    "foods_in_shard": 158,
+    "compounds": 5,
+    "seconds": 0.0,
+    "built_at": "2026-09-22 18:20:11",
+    "files": {
+      "usda/proanthocyanidin_csv/DATA_SRC.csv": {
+        "sha": "475d222ba1573845",
+        "bytes": 14641,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/proanthocyanidin_csv/DATSRCLN.csv": {
+        "sha": "6d479aba1dc2979a",
+        "bytes": 27579,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/proanthocyanidin_csv/FD_GROUP.csv": {
+        "sha": "d66f1c845641b474",
+        "bytes": 336,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/proanthocyanidin_csv/FOOD_DES.csv": {
+        "sha": "0f7f1735426b7144",
+        "bytes": 15013,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/proanthocyanidin_csv/NUTR_DEF.csv": {
+        "sha": "5100904c9b3e6e80",
+        "bytes": 311,
+        "mtime": "2026-09-18 01:09"
+      },
+      "usda/proanthocyanidin_csv/PA_DAT.csv": {
+        "sha": "8a24d866c6f2ecf6",
+        "bytes": 36371,
+        "mtime": "2026-09-18 01:09"
+      }
+    },
+    "status": "ok"
+  },
+  "usda_sr_carotenoid": {
+    "dir": "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04",
+    "nutrients": 5,
+    "rows": 6271,
+    "foods_in_shard": 2718,
+    "compounds": 5,
+    "seconds": 2.5,
+    "built_at": "2026-09-22 18:20:13",
+    "files": {
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/Download & API Field Descriptions-2019-10-11-16-22.xlsx": {
+        "sha": "eaca3dfb5a81db4e",
+        "bytes": 447102,
+        "mtime": "2019-10-12 08:11"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/all_downloaded_table_record_counts.csv": {
+        "sha": "7d6bf68bfec00dc3",
+        "bytes": 291,
+        "mtime": "2019-10-12 08:11"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/food.csv": {
+        "sha": "e83acaa1f299158e",
+        "bytes": 793104,
+        "mtime": "2019-10-12 08:09"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/food_attribute.csv": {
+        "sha": "30ee61cdd1e7681f",
+        "bytes": 63688,
+        "mtime": "2019-10-12 08:11"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/food_attribute_type.csv": {
+        "sha": "4e84e23b815b6ae8",
+        "bytes": 331,
+        "mtime": "2022-10-27 04:22"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/food_calorie_conversion_factor.csv": {
+        "sha": "c4fc4e3cd344be97",
+        "bytes": 129904,
+        "mtime": "2019-10-12 08:11"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/food_category.csv": {
+        "sha": "131db9f3c4aab239",
+        "bytes": 997,
+        "mtime": "2022-10-27 04:22"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/food_nutrient.csv": {
+        "sha": "d725f3aa8483639c",
+        "bytes": 36366059,
+        "mtime": "2023-10-20 00:33"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/food_nutrient_conversion_factor.csv": {
+        "sha": "1c4bec7f97aaebbf",
+        "bytes": 183104,
+        "mtime": "2019-10-12 08:11"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/food_nutrient_derivation.csv": {
+        "sha": "294079519f1bf41a",
+        "bytes": 6853,
+        "mtime": "2020-04-30 06:56"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/food_nutrient_source.csv": {
+        "sha": "46105f09fee2a51c",
+        "bytes": 602,
+        "mtime": "2020-04-30 06:56"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/food_portion.csv": {
+        "sha": "dcd46a15d8ca0022",
+        "bytes": 918790,
+        "mtime": "2019-10-12 08:10"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/food_protein_conversion_factor.csv": {
+        "sha": "ef8110c9c4e995f8",
+        "bytes": 90043,
+        "mtime": "2019-10-12 08:11"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/food_update_log_entry.csv": {
+        "sha": "95aa916112721102",
+        "bytes": 623888,
+        "mtime": "2019-10-12 08:11"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/measure_unit.csv": {
+        "sha": "16aa4876f4238128",
+        "bytes": 1955,
+        "mtime": "2022-10-27 04:23"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/nutrient.csv": {
+        "sha": "55ffebbd0b41e1fc",
+        "bytes": 21464,
+        "mtime": "2022-10-27 20:01"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/retention_factor.csv": {
+        "sha": "a4378b6e2d64e857",
+        "bytes": 13304,
+        "mtime": "2022-10-27 04:23"
+      },
+      "usda\\sr_legacy\\FoodData_Central_sr_legacy_food_csv_2018-04/sr_legacy_food.csv": {
+        "sha": "43ce0891736de886",
+        "bytes": 130404,
+        "mtime": "2019-10-12 08:11"
+      }
+    },
+    "status": "ok"
+  },
+  "foodb": {
+    "dir": "foodb\\foodb_2020_04_07_csv",
+    "foods": 992,
+    "compounds": 1779,
+    "units_seen": 32,
+    "rows": 336975,
+    "foods_in_shard": 832,
+    "seconds": 35.7,
+    "built_at": "2026-09-22 18:18:58",
+    "files": {
+      "foodb\\foodb_2020_04_07_csv/AccessionNumber.csv": {
+        "sha": "4ab9888b3c0912d0",
+        "bytes": 99514,
+        "mtime": "2020-04-08 04:32"
+      },
+      "foodb\\foodb_2020_04_07_csv/Compound.csv": {
+        "sha": "0f22001284f9790a",
+        "bytes": 51314037,
+        "mtime": "2020-04-15 01:00"
+      },
+      "foodb\\foodb_2020_04_07_csv/CompoundAlternateParent.csv": {
+        "sha": "d862c70630f07c26",
+        "bytes": 4099389,
+        "mtime": "2020-04-08 04:33"
+      },
+      "foodb\\foodb_2020_04_07_csv/CompoundExternalDescriptor.csv": {
+        "sha": "dc569a8c50732386",
+        "bytes": 409629,
+        "mtime": "2020-04-08 04:33"
+      },
+      "foodb\\foodb_2020_04_07_csv/CompoundOntologyTerm.csv": {
+        "sha": "cd6de773df604cbf",
+        "bytes": 114471566,
+        "mtime": "2020-04-08 04:57"
+      },
+      "foodb\\foodb_2020_04_07_csv/CompoundSubstituent.csv": {
+        "sha": "08d65471e91b58e9",
+        "bytes": 7592480,
+        "mtime": "2020-04-08 04:59"
+      },
+      "foodb\\foodb_2020_04_07_csv/CompoundSynonym.csv": {
+        "sha": "56929203da5ecb63",
+        "bytes": 18108089,
+        "mtime": "2020-04-08 05:01"
+      },
+      "foodb\\foodb_2020_04_07_csv/Compound_fixed_header.csv": {
+        "sha": "cdc51c320263e215",
+        "bytes": 51384493,
+        "mtime": "2026-09-18 01:13"
+      },
+      "foodb\\foodb_2020_04_07_csv/CompoundsEnzyme.csv": {
+        "sha": "7a7f2364dd327baf",
+        "bytes": 7464333,
+        "mtime": "2020-04-08 07:34"
+      },
+      "foodb\\foodb_2020_04_07_csv/CompoundsFlavor.csv": {
+        "sha": "30b9782e03d9987c",
+        "bytes": 2849284,
+        "mtime": "2020-04-08 06:24"
+      },
+      "foodb\\foodb_2020_04_07_csv/CompoundsHealthEffect.csv": {
+        "sha": "b859b3bba761dd87",
+        "bytes": 1339879,
+        "mtime": "2020-04-08 06:24"
+      },
+      "foodb\\foodb_2020_04_07_csv/CompoundsPathway.csv": {
+        "sha": "33f95463cb74338f",
+        "bytes": 101106,
+        "mtime": "2020-04-08 06:24"
+      },
+      "foodb\\foodb_2020_04_07_csv/Content.csv": {
+        "sha": "c92fec6c026fb269",
+        "bytes": 779793109,
+        "mtime": "2020-04-08 12:15"
+      },
+      "foodb\\foodb_2020_04_07_csv/Enzyme.csv": {
+        "sha": "624659518443dae3",
+        "bytes": 226242,
+        "mtime": "2020-04-08 12:15"
+      },
+      "foodb\\foodb_2020_04_07_csv/EnzymeSynonym.csv": {
+        "sha": "f701b3244baddbf3",
+        "bytes": 50,
+        "mtime": "2020-04-08 12:15"
+      },
+      "foodb\\foodb_2020_04_07_csv/Flavor.csv": {
+        "sha": "dbb69e1cdca65f15",
+        "bytes": 61490,
+        "mtime": "2020-04-08 12:15"
+      },
+      "foodb\\foodb_2020_04_07_csv/Food.csv": {
+        "sha": "22c0862ffea078a7",
+        "bytes": 885026,
+        "mtime": "2020-04-08 12:15"
+      },
+      "foodb\\foodb_2020_04_07_csv/FoodTaxonomy.csv": {
+        "sha": "18957c02af6125ca",
+        "bytes": 72782,
+        "mtime": "2020-04-08 12:15"
+      },
+      "foodb\\foodb_2020_04_07_csv/HealthEffect.csv": {
+        "sha": "399c6938257f01a1",
+        "bytes": 271040,
+        "mtime": "2020-04-08 12:15"
+      },
+      "foodb\\foodb_2020_04_07_csv/MapItemsPathway.csv": {
+        "sha": "a074a76e2a13cbc6",
+        "bytes": 62,
+        "mtime": "2020-04-08 12:15"
+      },
+      "foodb\\foodb_2020_04_07_csv/NcbiTaxonomyMap.csv": {
+        "sha": "506ff6d2b75f1f66",
+        "bytes": 5850,
+        "mtime": "2020-04-08 12:15"
+      },
+      "foodb\\foodb_2020_04_07_csv/Nutrient.csv": {
+        "sha": "174ae892827b0fa2",
+        "bytes": 4851,
+        "mtime": "2020-04-08 12:15"
+      },
+      "foodb\\foodb_2020_04_07_csv/OntologySynonym.csv": {
+        "sha": "4c505f052caf4b4b",
+        "bytes": 137610,
+        "mtime": "2020-04-08 12:15"
+      },
+      "foodb\\foodb_2020_04_07_csv/OntologyTerm.csv": {
+        "sha": "c0cfce1b8574f151",
+        "bytes": 896550,
+        "mtime": "2020-04-08 12:16"
+      },
+      "foodb\\foodb_2020_04_07_csv/Pathway.csv": {
+        "sha": "2486cf3ccffe5e4a",
+        "bytes": 9137,
+        "mtime": "2020-04-08 12:16"
+      },
+      "foodb\\foodb_2020_04_07_csv/PdbIdentifier.csv": {
+        "sha": "4192523a1347c02c",
+        "bytes": 44,
+        "mtime": "2020-04-08 12:16"
+      },
+      "foodb\\foodb_2020_04_07_csv/Pfam.csv": {
+        "sha": "5b223c8feb33b9a2",
+        "bytes": 41,
+        "mtime": "2020-04-08 12:16"
+      },
+      "foodb\\foodb_2020_04_07_csv/PfamMembership.csv": {
+        "sha": "930afbea78481e27",
+        "bytes": 43,
+        "mtime": "2020-04-08 12:16"
+      },
+      "foodb\\foodb_2020_04_07_csv/Reference.csv": {
+        "sha": "1206b97630e20424",
+        "bytes": 8533879,
+        "mtime": "2020-04-08 12:16"
+      },
+      "foodb\\foodb_2020_04_07_csv/Sequence.csv": {
+        "sha": "d87758c0a2939b54",
+        "bytes": 77,
+        "mtime": "2020-04-08 12:16"
+      }
+    },
+    "status": "ok"
+  }
+}
