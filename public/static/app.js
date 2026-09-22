@@ -36,6 +36,90 @@ const PHYTOCHEMICAL_GROUPS = {
   tocopherols:    { name: '토코페롤류',        benefits: ['항산화', '세포보호', '면역'],          color: '#CA8A04', icon: '🌿' },
 };
 
+// ── 파이토케미컬 일일 기준량 (DRV) ─────────────
+// 출처: 우리 DB(recipes.js 14,714개 레시피) 하루 3끼 시뮬레이션 2,000회 → p75
+// 데이터 없는 계열(glucosinolates·gingerols·thioallyls·stilbenes)은
+// 점수 계산 대상에서 제외하고 DB값 보유 계열만 사용
+const PHYTO_DRV = {
+  phenolicAcids:  38,   // p75 37.8 mg/일
+  catechins:      16,   // p75 16.0 mg/일
+  flavonols:      89,   // p75 88.7 mg/일
+  isoflavones:    26,   // p75 25.5 mg/일
+  saponins:       75,   // p75 74.8 mg/일
+  carotenoids:     2,   // p75  1.9 mg/일
+  anthocyanins:    6,   // p75  6.3 mg/일
+  lignans:        15,   // p75 15.1 mg/일
+  flavones:       26,   // p75 26.0 mg/일
+  tocopherols:     6,   // p75  6.3 mg/일
+};
+// DRV 보유 계열 목록 (점수 계산 대상)
+const PHYTO_SCORED_KEYS = Object.keys(PHYTO_DRV);  // 10개 계열
+
+// ──────────────────────────────────────────────
+// calculatePhytoScore(phytoMap, selectedGoals)
+//   phytoMap : { key: totalMg } — calculatePDI() 반환값
+//   selectedGoals : Set<goalId>
+// 반환: {
+//   total,          // 0~100
+//   diversity,      // 0~40  — 커버 계열 수 / 10 × 40
+//   sufficiency,    // 0~30  — DRV 달성률 평균 × 30
+//   focus,          // 0~30  — 목적 계열 달성률 평균 × 30 (없으면 전체 평균)
+//   focusLabel,     // 표시용 라벨
+//   perKey,         // { key: { mg, drv, ratio } }
+//   goalKeys,       // 목적 계열 배열
+// }
+// ──────────────────────────────────────────────
+function calculatePhytoScore(phytoMap, selectedGoals) {
+  // ── 계열별 달성률 ──
+  const perKey = {};
+  for (const key of PHYTO_SCORED_KEYS) {
+    const mg  = phytoMap[key] || 0;
+    const drv = PHYTO_DRV[key];
+    perKey[key] = { mg, drv, ratio: Math.min(mg / drv, 1.0) };
+  }
+
+  // ── 다양성 (0~40) ──
+  const coveredCount = PHYTO_SCORED_KEYS.filter(k => perKey[k].mg > 0).length;
+  const diversity = Math.round((coveredCount / PHYTO_SCORED_KEYS.length) * 40);
+
+  // ── 충분량 (0~30) ──
+  const avgRatio = PHYTO_SCORED_KEYS.reduce((s, k) => s + perKey[k].ratio, 0)
+                   / PHYTO_SCORED_KEYS.length;
+  const sufficiency = Math.round(avgRatio * 30);
+
+  // ── 목적 집중도 (0~30) ──
+  // 목적 계열: 선택된 건강목적의 phytos 중 DRV 있는 것만
+  const goalKeys = [...new Set(
+    Array.from(selectedGoals)
+      .flatMap(gid => (HEALTH_GOALS.find(h => h.id === gid) || {}).phytos || [])
+      .filter(k => PHYTO_DRV[k])
+  )];
+
+  let focusRatio, focusLabel;
+  if (goalKeys.length > 0) {
+    focusRatio = goalKeys.reduce((s, k) => s + perKey[k].ratio, 0) / goalKeys.length;
+    const goalNames = Array.from(selectedGoals)
+      .map(gid => (HEALTH_GOALS.find(h => h.id === gid) || {}).name)
+      .filter(Boolean).join('·');
+    focusLabel = goalNames;
+  } else {
+    focusRatio = avgRatio;   // 목적 미선택 → 전체 평균
+    focusLabel = '전체 평균';
+  }
+  const focus = Math.round(focusRatio * 30);
+
+  return {
+    total:      diversity + sufficiency + focus,
+    diversity,
+    sufficiency,
+    focus,
+    focusLabel,
+    perKey,
+    goalKeys,
+    coveredCount,
+  };
+}
+
 // ── 건강 목적 ────────────────────────────────
 const HEALTH_GOALS = [
   { id: 'diet',          name: '다이어트',   icon: '⚖️', phytos: ['glucosinolates', 'catechins', 'phenolicAcids'] },
@@ -473,6 +557,7 @@ function calculateAndShow() {
     return;
   }
   pdiResult = calculatePDI();
+  pdiResult.phytoScore = calculatePhytoScore(pdiResult.phytoMap, selectedGoals);
   goToStep(4);
   displayResults();
 }
@@ -511,6 +596,9 @@ function displayResults() {
 
   // ─ Products ─
   renderProductRecommendations(r);
+
+  // ─ Phyto Score ─
+  renderPhytoScore(r.phytoScore);
 
   // ─ Suggestions ─
   document.getElementById('diet-suggestions').innerHTML = r.suggestions.map((s, i) =>
@@ -924,6 +1012,107 @@ function renderProductRecommendations(r) {
         }).join('')
       + '</div></div>';
   }).join('');
+}
+
+// ── 파이토 점수 렌더링 ────────────────────────
+function renderPhytoScore(ps) {
+  const el = document.getElementById('phyto-score-section');
+  if (!el) return;
+
+  const total = ps.total;
+
+  // 총점 등급
+  let grade, gradeColor;
+  if      (total >= 80) { grade = '🌟 우수';   gradeColor = '#10B981'; }
+  else if (total >= 60) { grade = '👍 양호';   gradeColor = '#3B82F6'; }
+  else if (total >= 40) { grade = '📈 보통';   gradeColor = '#F59E0B'; }
+  else                  { grade = '⚠️ 부족';   gradeColor = '#EF4444'; }
+
+  // 막대 하나 생성 헬퍼
+  function bar(value, max, color) {
+    const pct = Math.round((value / max) * 100);
+    return '<div class="flex items-center gap-3">'
+      + '<div class="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">'
+      + '<div class="h-3 rounded-full transition-all duration-700" style="width:' + pct + '%;background:' + color + '"></div>'
+      + '</div>'
+      + '<span class="text-xs font-bold text-gray-700 w-14 text-right">' + value + ' / ' + max + '</span>'
+      + '</div>';
+  }
+
+  // 계열별 달성률 바 (상위 5개 + 하위 표시)
+  const keyRows = PHYTO_SCORED_KEYS.map(k => ({
+    k,
+    ...ps.perKey[k],
+    g: PHYTOCHEMICAL_GROUPS[k],
+  })).sort((a, b) => b.ratio - a.ratio);
+
+  const keyBars = keyRows.map(row => {
+    const pct = Math.round(row.ratio * 100);
+    const isGoal = ps.goalKeys.includes(row.k);
+    return '<div class="flex items-center gap-2 py-1">'
+      + '<span class="text-base w-6 text-center">' + (row.g ? row.g.icon : '') + '</span>'
+      + '<span class="text-xs text-gray-600 w-20 truncate' + (isGoal ? ' font-bold text-indigo-700' : '') + '">'
+      + (row.g ? row.g.name : row.k)
+      + (isGoal ? ' 🎯' : '')
+      + '</span>'
+      + '<div class="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">'
+      + '<div class="h-2 rounded-full transition-all duration-700" style="width:' + pct + '%;background:' + (row.g ? row.g.color : '#6B7280') + '"></div>'
+      + '</div>'
+      + '<span class="text-xs text-gray-500 w-12 text-right">'
+      + (row.mg < 0.1 ? '0' : row.mg.toFixed(1)) + 'mg'
+      + '</span>'
+      + '<span class="text-xs font-bold w-10 text-right" style="color:' + (row.g ? row.g.color : '#6B7280') + '">'
+      + pct + '%'
+      + '</span>'
+      + '</div>';
+  }).join('');
+
+  el.innerHTML =
+    '<div class="flex flex-wrap items-center justify-between gap-4 mb-6">'
+    + '<div>'
+    + '<h3 class="text-xl font-bold text-gray-900">🌿 파이토케미컬 점수</h3>'
+    + '<p class="text-gray-500 text-sm mt-1">우리 DB 기반 일일 기준량(p75) 대비 달성도</p>'
+    + '</div>'
+    // 총점 뱃지
+    + '<div class="flex items-center gap-3">'
+    + '<div class="text-center">'
+    + '<div class="text-5xl font-black" style="color:' + gradeColor + '">' + total + '</div>'
+    + '<div class="text-xs text-gray-400">/ 100점</div>'
+    + '</div>'
+    + '<div class="text-left">'
+    + '<div class="inline-flex items-center px-3 py-1.5 rounded-full text-white text-sm font-bold" style="background:' + gradeColor + '">' + grade + '</div>'
+    + '<div class="text-xs text-gray-400 mt-1">' + ps.coveredCount + '/' + PHYTO_SCORED_KEYS.length + '개 계열 검출</div>'
+    + '</div>'
+    + '</div>'
+    + '</div>'
+
+    // 3개 하위 점수
+    + '<div class="grid grid-cols-3 gap-4 mb-6">'
+    // 다양성
+    + '<div class="bg-blue-50 rounded-2xl p-4">'
+    + '<div class="flex items-center gap-2 mb-2"><span class="text-lg">🌈</span><span class="text-sm font-bold text-blue-800">다양성</span></div>'
+    + bar(ps.diversity, 40, '#3B82F6')
+    + '<p class="text-xs text-blue-600 mt-2">' + ps.coveredCount + '개 계열 섭취</p>'
+    + '</div>'
+    // 충분량
+    + '<div class="bg-emerald-50 rounded-2xl p-4">'
+    + '<div class="flex items-center gap-2 mb-2"><span class="text-lg">⚖️</span><span class="text-sm font-bold text-emerald-800">충분량</span></div>'
+    + bar(ps.sufficiency, 30, '#10B981')
+    + '<p class="text-xs text-emerald-600 mt-2">DRV 평균 달성률 ' + Math.round((ps.sufficiency/30)*100) + '%</p>'
+    + '</div>'
+    // 목적 집중도
+    + '<div class="bg-indigo-50 rounded-2xl p-4">'
+    + '<div class="flex items-center gap-2 mb-2"><span class="text-lg">🎯</span><span class="text-sm font-bold text-indigo-800">목적 집중도</span></div>'
+    + bar(ps.focus, 30, '#6366F1')
+    + '<p class="text-xs text-indigo-600 mt-2">' + ps.focusLabel + '</p>'
+    + '</div>'
+    + '</div>'
+
+    // 계열별 달성률
+    + '<div class="bg-gray-50 rounded-2xl p-5">'
+    + '<div class="text-sm font-bold text-gray-700 mb-3">계열별 DRV 달성률 <span class="font-normal text-gray-400 text-xs ml-1">🎯 = 선택한 목적 계열</span></div>'
+    + '<div class="grid md:grid-cols-2 gap-x-6">' + keyBars + '</div>'
+    + '</div>';
 }
 
 // ── 건강 목적 렌더링 ─────────────────────────
