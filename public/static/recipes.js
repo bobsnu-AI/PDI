@@ -21243,6 +21243,37 @@ const RECIPES = {
 
 const RECIPE_NAMES = Object.keys(RECIPES);
 
+// 단품으로 추가 가능한 식재료 목록
+// (조미료·refined·oils·spices 제외 — 실제로 단품 섭취하는 카테고리만)
+const SINGLE_FOOD_CATS = new Set(['fruits','vegetables','grains','legumes','nuts','dairy','tea','protein']);
+const INGREDIENT_NAMES = Object.keys(INGREDIENTS).filter(k => SINGLE_FOOD_CATS.has(INGREDIENTS[k].cat));
+
+// 단품 식재료를 음식으로 추가할 때 사용하는 기본 1인분 그램
+const SINGLE_SERVING_G = {
+  fruits: 150, vegetables: 70, grains: 210, legumes: 80,
+  nuts: 30,    dairy: 200,     tea: 240,    protein: 100,
+};
+
+function analyzeIngredient(ingName) {
+  const ing = INGREDIENTS[ingName];
+  if (!ing) return null;
+  const grams   = SINGLE_SERVING_G[ing.cat] || 100;
+  const kcal    = Math.round((ing.kcal / 100) * grams);
+  return {
+    name: ingName,
+    totalCal: kcal,
+    isSingleFood: true,          // 단품 구분 플래그
+    ingredients: [{
+      name: ingName,
+      grams,
+      kcal,
+      cat:    ing.cat,
+      prf:    ing.prf,
+      phytos: ing.phytos,
+    }],
+  };
+}
+
 function analyzeRecipe(recipeName) {
   const recipe = RECIPES[recipeName];
   if (!recipe) return null;

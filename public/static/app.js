@@ -236,11 +236,18 @@ function initAutocomplete() {
     dropdown.innerHTML = '';
     if (!val) { dropdown.classList.add('hidden'); return; }
 
-    const matches = RECIPE_NAMES.filter(n => n.includes(val)).slice(0, 10);
-    if (!matches.length) { dropdown.classList.add('hidden'); return; }
+    // 레시피 매칭 (최대 7개)
+    const recipeMatches = RECIPE_NAMES.filter(n => n.includes(val)).slice(0, 7);
+    // 단품 식재료 매칭 (최대 5개, 레시피와 이름 중복 제외)
+    const recipeSet = new Set(recipeMatches);
+    const singleMatches = INGREDIENT_NAMES.filter(n => n.includes(val) && !recipeSet.has(n)).slice(0, 5);
+
+    if (!recipeMatches.length && !singleMatches.length) { dropdown.classList.add('hidden'); return; }
 
     dropdown.classList.remove('hidden');
-    matches.forEach(name => {
+
+    // 레시피 항목
+    recipeMatches.forEach(name => {
       const recipe = RECIPES[name];
       const ingCount = Object.keys(recipe.ings).length;
       const li = document.createElement('li');
@@ -248,14 +255,39 @@ function initAutocomplete() {
       li.innerHTML =
         '<div>'
         + '<span class="font-medium text-gray-900">' + name + '</span>'
-        + '<span class="ml-2 text-xs text-gray-400">재료 ' + ingCount + '종 · ' + recipe.cal + ' kcal</span>'
+        + '<span class="ml-2 text-xs text-gray-400">재료 ' + ingCount + '종 · ' + recipe.cal + 'kcal</span>'
         + '</div>'
         + '<i class="fas fa-plus text-emerald-500 opacity-0 group-hover:opacity-100 text-sm"></i>';
-      li.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        input.value = name;
-        dropdown.classList.add('hidden');
-      });
+      li.addEventListener('mousedown', (e) => { e.preventDefault(); input.value = name; dropdown.classList.add('hidden'); });
+      dropdown.appendChild(li);
+    });
+
+    // 구분선 (둘 다 있을 때)
+    if (recipeMatches.length && singleMatches.length) {
+      const div = document.createElement('li');
+      div.className = 'px-4 py-1 text-xs text-gray-400 bg-gray-50 border-t border-gray-100';
+      div.textContent = '단품 식품';
+      div.style.pointerEvents = 'none';
+      dropdown.appendChild(div);
+    }
+
+    // 단품 식재료 항목
+    singleMatches.forEach(name => {
+      const ing  = INGREDIENTS[name];
+      const cat  = FOOD_CATEGORIES[ing.cat] || {};
+      const g    = SINGLE_SERVING_G[ing.cat] || 100;
+      const kcal = Math.round((ing.kcal / 100) * g);
+      const li = document.createElement('li');
+      li.className = 'px-4 py-2.5 hover:bg-blue-50 cursor-pointer flex items-center justify-between group';
+      li.innerHTML =
+        '<div class="flex items-center gap-2">'
+        + '<span>' + (cat.icon || '🔸') + '</span>'
+        + '<span class="font-medium text-gray-900">' + name + '</span>'
+        + '<span class="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600">단품</span>'
+        + '<span class="ml-1 text-xs text-gray-400">' + g + 'g · ' + kcal + 'kcal</span>'
+        + '</div>'
+        + '<i class="fas fa-plus text-blue-400 opacity-0 group-hover:opacity-100 text-sm"></i>';
+      li.addEventListener('mousedown', (e) => { e.preventDefault(); input.value = name; dropdown.classList.add('hidden'); });
       dropdown.appendChild(li);
     });
   });
@@ -279,13 +311,20 @@ function addMeal() {
     return;
   }
 
-  // 레시피 DB에서 정확 매칭
-  const recipe = RECIPES[rawName];
-  if (!recipe) {
-    // 유사 검색
-    const close = RECIPE_NAMES.filter(n => n.includes(rawName));
+  // ① 레시피 DB 매칭
+  // ② 단품 식재료 매칭
+  let analysis = null;
+  if (RECIPES[rawName]) {
+    analysis = analyzeRecipe(rawName);
+  } else if (INGREDIENTS[rawName] && SINGLE_FOOD_CATS.has(INGREDIENTS[rawName].cat)) {
+    analysis = analyzeIngredient(rawName);
+  } else {
+    // 유사 검색 힌트
+    const closeR = RECIPE_NAMES.filter(n => n.includes(rawName)).slice(0, 3);
+    const closeI = INGREDIENT_NAMES.filter(n => n.includes(rawName)).slice(0, 3);
+    const close  = [...closeR, ...closeI].slice(0, 3);
     if (close.length) {
-      showInputError('"' + rawName + '"을 찾을 수 없습니다. 혹시 ' + close.slice(0, 3).join(', ') + ' 이신가요?');
+      showInputError('"' + rawName + '"을 찾을 수 없습니다. 혹시 ' + close.join(', ') + ' 이신가요?');
     } else {
       showInputError('"' + rawName + '"은 현재 지원되지 않는 음식입니다. 자동완성 목록에서 선택해주세요.');
     }
@@ -293,7 +332,6 @@ function addMeal() {
   }
 
   clearInputError();
-  const analysis = analyzeRecipe(rawName);
   addedMeals.push({ name: rawName, meal: mealType, analysis });
   input.value = '';
   renderMealList();
@@ -336,14 +374,24 @@ function renderMealList() {
 
 function renderMealCard(item) {
   const { name, analysis, idx } = item;
+  const isSingle = analysis.isSingleFood;
+
   // 식재료 상위 4개만 표시
   const topIngs = analysis.ingredients
     .sort((a, b) => b.kcal - a.kcal)
     .slice(0, 4);
 
-  const prfIngs = analysis.ingredients.filter(i => i.prf);
-  const prfKcal = prfIngs.reduce((s, i) => s + i.kcal, 0);
+  const prfIngs  = analysis.ingredients.filter(i => i.prf);
+  const prfKcal  = prfIngs.reduce((s, i) => s + i.kcal, 0);
   const prfRatio = analysis.totalCal > 0 ? Math.round((prfKcal / analysis.totalCal) * 100) : 0;
+
+  // 단품일 때 식품군 아이콘 표시
+  const singleIng  = isSingle ? analysis.ingredients[0] : null;
+  const singleCat  = singleIng ? (FOOD_CATEGORIES[singleIng.cat] || {}) : null;
+  const singleBadge = isSingle
+    ? '<span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-medium">'
+      + (singleCat ? singleCat.icon + ' ' : '') + '단품</span>'
+    : '';
 
   return '<div class="bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm">'
     + '<div class="flex items-start justify-between">'
@@ -351,12 +399,13 @@ function renderMealCard(item) {
     + '<div class="flex items-center gap-2 mb-2">'
     + '<span class="font-bold text-gray-900">' + name + '</span>'
     + '<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">' + analysis.totalCal + ' kcal</span>'
+    + singleBadge
     + '<span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">PRF ' + prfRatio + '%</span>'
     + '</div>'
     // 식재료 태그
     + '<div class="flex flex-wrap gap-1">'
     + topIngs.map(i => {
-        const cat = FOOD_CATEGORIES[i.cat] || {};
+        const cat   = FOOD_CATEGORIES[i.cat] || {};
         const badge = i.prf ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-50 text-gray-500 border border-gray-200';
         return '<span class="text-xs px-2 py-0.5 rounded-full ' + badge + '">'
           + (cat.icon || '') + ' ' + i.name + ' ' + i.grams + 'g</span>';
