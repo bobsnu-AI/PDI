@@ -36,7 +36,18 @@ const PHYTOCHEMICAL_GROUPS = {
   tocopherols:    { name: '토코페롤류',        benefits: ['항산화', '세포보호', '면역'],          color: '#CA8A04', icon: '🌿' },
 };
 
-// ── 파이토케미컬 일일 기준량 (DRV) ─────────────
+// benefits 키워드 → HEALTH_GOALS 아이콘 매핑
+const BENEFIT_ICON = {
+  '여성건강':   '👩',  '골건강':     '🦴',  '콜레스테롤': '🩺',
+  '항산화':     '✨',  'LDL 억제':   '❤️',  '시력':       '👁️',
+  '항염':       '🛡️',  '체지방':     '⚖️',  '저GI':       '🩸',
+  '황반보호':   '👁️',  '눈건강':     '👁️',  '심혈관':     '❤️',
+  '뇌건강':     '🧠',  '해독효소':   '🌿',  '항암':       '🛡️',
+  '소화':       '🌿',  '관절':       '🛡️',  '항혈전':     '❤️',
+  '면역':       '🛡️',  '세포보호':   '✨',  '혈당조절':   '🩸',
+};
+
+
 // 출처: 우리 DB(recipes.js 14,714개 레시피) 하루 3끼 시뮬레이션 2,000회 → p75
 // 데이터 없는 계열(glucosinolates·gingerols·thioallyls·stilbenes)은
 // 점수 계산 대상에서 제외하고 DB값 보유 계열만 사용
@@ -712,11 +723,22 @@ function renderIngredientBreakdown(r) {
     + presentPhytoKeys.map(key => {
         const g = PHYTOCHEMICAL_GROUPS[key];
         if (!g) return '';
-        return '<div id="node-phyto-' + key + '" data-col="phyto" data-id="' + key + '"'
+        // benefits 태그: BENEFIT_ICON으로 아이콘+이름 표시
+        const benefitTags = (g.benefits || []).map(b => {
+          const icon = BENEFIT_ICON[b] || '✦';
+          return '<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium"'
+            + ' style="background:' + g.color + '22;color:' + g.color + ';border:1px solid ' + g.color + '44">'
+            + icon + ' ' + b
+            + '</span>';
+        }).join('');
+        return '<div style="display:flex;flex-direction:column;gap:3px">'
+          + '<div id="node-phyto-' + key + '" data-col="phyto" data-id="' + key + '"'
           + ' class="sankey-node flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer select-none transition-all border-2 text-white text-xs font-semibold whitespace-nowrap"'
           + ' style="background:' + g.color + ';border-color:' + g.color + ';">'
           + '<span class="text-sm leading-none">' + g.icon + '</span>'
           + '<span>' + g.name + '</span>'
+          + '</div>'
+          + '<div style="display:flex;flex-wrap:wrap;gap:3px;padding-left:4px">' + benefitTags + '</div>'
           + '</div>';
       }).join('')
     + '</div>'
