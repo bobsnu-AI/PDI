@@ -674,6 +674,16 @@ function renderIngredientBreakdown(r) {
     ingToPhyto[i.name] = Object.keys((typeof i.phytos === 'object' && !Array.isArray(i.phytos)) ? i.phytos : {});
   });
 
+  // phyto → functions (benefit 키워드)
+  // 현재 식단에 등장한 파이토케미컬의 benefits만 모음
+  const phytoToFunctions = {}; // phytoKey → [benefitStr]
+  presentPhytoKeys.forEach(key => {
+    const g = PHYTOCHEMICAL_GROUPS[key];
+    if (g && g.benefits) phytoToFunctions[key] = g.benefits;
+  });
+  // 등장한 기능성 분야 목록 (중복 제거, 순서 유지)
+  const presentFuncKeys = [...new Set(presentPhytoKeys.flatMap(k => phytoToFunctions[k] || []))];
+
   // ── 컨테이너 HTML 생성 ──
   container.innerHTML =
     '<div class="text-xs text-amber-600 mb-4 flex items-center gap-2">'
@@ -681,8 +691,8 @@ function renderIngredientBreakdown(r) {
     + '<span>노드에 마우스를 올리면 경로가 강조됩니다 · 파이토케미컬 수치는 실측 mg/100g 기반</span>'
     + '</div>'
     + '<div id="sankey-wrap" style="position:relative;overflow:visible">'
-    // 3열 그리드
-    + '<div id="sankey-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;align-items:start;position:relative">'
+    // 4열 그리드
+    + '<div id="sankey-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;align-items:start;position:relative">'
 
     // ── 열1: 음식 ──
     + '<div id="col-meal" style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;padding-right:40px">'
@@ -718,27 +728,33 @@ function renderIngredientBreakdown(r) {
     + '</div>'
 
     // ── 열3: 파이토케미컬 ──
-    + '<div id="col-phyto" style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding-left:40px">'
+    + '<div id="col-phyto" style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding:0 30px">'
     + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">🧬 파이토케미컬 <span class="font-normal">(추정)</span></div>'
     + presentPhytoKeys.map(key => {
         const g = PHYTOCHEMICAL_GROUPS[key];
         if (!g) return '';
-        // benefits 태그: BENEFIT_ICON으로 아이콘+이름 표시
-        const benefitTags = (g.benefits || []).map(b => {
-          const icon = BENEFIT_ICON[b] || '✦';
-          return '<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium"'
-            + ' style="background:' + g.color + '22;color:' + g.color + ';border:1px solid ' + g.color + '44">'
-            + icon + ' ' + b
-            + '</span>';
-        }).join('');
-        return '<div style="display:flex;flex-direction:column;gap:3px">'
-          + '<div id="node-phyto-' + key + '" data-col="phyto" data-id="' + key + '"'
+        return '<div id="node-phyto-' + key + '" data-col="phyto" data-id="' + key + '"'
           + ' class="sankey-node flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer select-none transition-all border-2 text-white text-xs font-semibold whitespace-nowrap"'
           + ' style="background:' + g.color + ';border-color:' + g.color + ';">'
           + '<span class="text-sm leading-none">' + g.icon + '</span>'
           + '<span>' + g.name + '</span>'
-          + '</div>'
-          + '<div style="display:flex;flex-wrap:wrap;gap:3px;padding-left:4px">' + benefitTags + '</div>'
+          + '</div>';
+      }).join('')
+    + '</div>'
+
+    // ── 열4: 기능성 분야 ──
+    + '<div id="col-func" style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding-left:30px">'
+    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">💡 기능성 분야</div>'
+    + presentFuncKeys.map(b => {
+        const icon = BENEFIT_ICON[b] || '✦';
+        // 이 기능성과 연결된 파이토케미컬의 색상(첫 번째) 사용
+        const linkedPhyto = presentPhytoKeys.find(k => (phytoToFunctions[k] || []).includes(b));
+        const color = linkedPhyto ? PHYTOCHEMICAL_GROUPS[linkedPhyto].color : '#6B7280';
+        return '<div id="node-func-' + encodeURIComponent(b) + '" data-col="func" data-id="' + b + '"'
+          + ' class="sankey-node flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer select-none transition-all border-2 text-xs font-semibold whitespace-nowrap"'
+          + ' style="background:' + color + '18;border-color:' + color + '55;color:' + color + ';">'
+          + '<span class="text-sm leading-none">' + icon + '</span>'
+          + '<span class="font-bold">' + b + '</span>'
           + '</div>';
       }).join('')
     + '</div>'
@@ -749,12 +765,12 @@ function renderIngredientBreakdown(r) {
   // ── SVG + 인터랙션 — DOM 완전 안정 후 그리기 ──
   // phytoScore / categoryChart 렌더 후 레이아웃이 확정되어야 좌표가 정확함
   setTimeout(() => {
-    drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto });
+    drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto, phytoToFunctions, presentFuncKeys });
   }, 350);
 }
 
 // ── 생키 SVG 그리기 ──
-function drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto }) {
+function drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto, phytoToFunctions, presentFuncKeys }) {
   const wrap = document.getElementById('sankey-wrap');
   if (!wrap) return;
 
@@ -806,11 +822,19 @@ function drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto }) 
       edgesB.push({ ingName: ing.name, phytoKey });
     });
   });
+  // C: phyto → function
+  const edgesC = [];
+  presentPhytoKeys.forEach(phytoKey => {
+    (phytoToFunctions[phytoKey] || []).forEach(funcName => {
+      edgesC.push({ phytoKey, funcName });
+    });
+  });
 
   function getNode(col, id) {
     if (col === 'meal') return document.getElementById('node-meal-' + id);
     if (col === 'ing')  return document.getElementById('node-ing-' + String(id).replace(/\s/g,'_'));
     if (col === 'phyto')return document.getElementById('node-phyto-' + id);
+    if (col === 'func') return document.getElementById('node-func-' + encodeURIComponent(id));
     return null;
   }
 
@@ -819,16 +843,15 @@ function drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto }) 
     return 'M'+p1.x+' '+p1.y+' C'+cx+' '+p1.y+','+cx+' '+p2.y+','+p2.x+' '+p2.y;
   }
 
-  function drawAll(highlightMeal, highlightIng, highlightPhyto) {
+  function drawAll(highlightMeal, highlightIng, highlightPhyto, highlightFunc) {
     svg.innerHTML = '';
+    const allNull = highlightMeal === null && highlightIng === null && highlightPhyto === null && highlightFunc === null;
 
     edgesA.forEach(({ mealIdx, ingName }) => {
       const mEl = getNode('meal', mealIdx);
       const iEl = getNode('ing', ingName);
       if (!mEl || !iEl) return;
-      const active = highlightMeal === null && highlightIng === null && highlightPhyto === null
-        || highlightMeal === mealIdx
-        || highlightIng  === ingName;
+      const active = allNull || highlightMeal === mealIdx || highlightIng === ingName;
       const p1 = right(mEl), p2 = left(iEl);
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', pathD(p1, p2));
@@ -844,9 +867,7 @@ function drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto }) 
       const iEl = getNode('ing', ingName);
       const pEl = getNode('phyto', phytoKey);
       if (!iEl || !pEl) return;
-      const active = highlightMeal === null && highlightIng === null && highlightPhyto === null
-        || highlightIng   === ingName
-        || highlightPhyto === phytoKey;
+      const active = allNull || highlightIng === ingName || highlightPhyto === phytoKey;
       const g   = PHYTOCHEMICAL_GROUPS[phytoKey];
       const col = g ? g.color : '#9CA3AF';
       const p1 = right(iEl), p2 = left(pEl);
@@ -859,6 +880,24 @@ function drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto }) 
       if (!active) path.setAttribute('stroke-dasharray', '4 3');
       svg.appendChild(path);
     });
+
+    edgesC.forEach(({ phytoKey, funcName }) => {
+      const pEl = getNode('phyto', phytoKey);
+      const fEl = getNode('func',  funcName);
+      if (!pEl || !fEl) return;
+      const active = allNull || highlightPhyto === phytoKey || highlightFunc === funcName;
+      const g   = PHYTOCHEMICAL_GROUPS[phytoKey];
+      const col = g ? g.color : '#9CA3AF';
+      const p1 = right(pEl), p2 = left(fEl);
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pathD(p1, p2));
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', active ? col : '#E5E7EB');
+      path.setAttribute('stroke-width', active ? '2' : '1');
+      path.setAttribute('opacity', active ? '0.7' : '0.15');
+      if (!active) path.setAttribute('stroke-dasharray', '3 3');
+      svg.appendChild(path);
+    });
   }
 
   // SVG height를 실제 콘텐츠 높이에 맞게 재설정 (wrap이 내용에 따라 늘어남)
@@ -868,34 +907,54 @@ function drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto }) 
       svg.setAttribute('height', newH);
       svg.style.height = newH + 'px';
     }
-    drawAll(null, null, null);
+    drawAll(null, null, null, null);
   });
 
   // 호버 인터랙션
   const allNodes = wrap.querySelectorAll('.sankey-node');
 
   function highlight(col, id) {
-    // 관련 노드 ID 계산
     const relMeals  = new Set();
     const relIngs   = new Set();
     const relPhytos = new Set();
+    const relFuncs  = new Set();
 
     if (col === 'meal') {
       relMeals.add(id);
       (mealToIng[id] || new Set()).forEach(n => {
         relIngs.add(n);
-        (ingToPhyto[n] || []).forEach(p => relPhytos.add(p));
+        (ingToPhyto[n] || []).forEach(p => {
+          relPhytos.add(p);
+          (phytoToFunctions[p] || []).forEach(f => relFuncs.add(f));
+        });
       });
     } else if (col === 'ing') {
       relIngs.add(id);
       meals.forEach((m, mi) => { if ((mealToIng[mi]||new Set()).has(id)) relMeals.add(mi); });
-      (ingToPhyto[id] || []).forEach(p => relPhytos.add(p));
+      (ingToPhyto[id] || []).forEach(p => {
+        relPhytos.add(p);
+        (phytoToFunctions[p] || []).forEach(f => relFuncs.add(f));
+      });
     } else if (col === 'phyto') {
       relPhytos.add(id);
+      (phytoToFunctions[id] || []).forEach(f => relFuncs.add(f));
       allIng.forEach(ing => {
         if ((ingToPhyto[ing.name]||[]).includes(id)) {
           relIngs.add(ing.name);
           meals.forEach((m, mi) => { if ((mealToIng[mi]||new Set()).has(ing.name)) relMeals.add(mi); });
+        }
+      });
+    } else if (col === 'func') {
+      relFuncs.add(id);
+      presentPhytoKeys.forEach(pk => {
+        if ((phytoToFunctions[pk]||[]).includes(id)) {
+          relPhytos.add(pk);
+          allIng.forEach(ing => {
+            if ((ingToPhyto[ing.name]||[]).includes(pk)) {
+              relIngs.add(ing.name);
+              meals.forEach((m, mi) => { if ((mealToIng[mi]||new Set()).has(ing.name)) relMeals.add(mi); });
+            }
+          });
         }
       });
     }
@@ -908,15 +967,12 @@ function drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto }) 
       if (nc === 'meal')  hit = relMeals.has(Number(ni)) || relMeals.has(ni);
       if (nc === 'ing')   hit = relIngs.has(ni);
       if (nc === 'phyto') hit = relPhytos.has(ni);
+      if (nc === 'func')  hit = relFuncs.has(ni);
       n.style.opacity = hit ? '1' : '0.2';
       n.style.transform = hit ? 'scale(1.05)' : '';
     });
 
-    // 엣지 강조
-    const hm = col === 'meal'  ? id   : (relMeals.size  === 1 ? [...relMeals][0]  : null);
-    const hi = col === 'ing'   ? id   : null;
-    const hp = col === 'phyto' ? id   : null;
-    // 직접 drawAll 로 전달
+    // 엣지 강조 (drawAll 재사용)
     svg.innerHTML = '';
     edgesA.forEach(({ mealIdx, ingName }) => {
       const mEl = getNode('meal', mealIdx);
@@ -950,15 +1006,37 @@ function drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto }) 
       if (!active) path.setAttribute('stroke-dasharray', '4 3');
       svg.appendChild(path);
     });
+    edgesC.forEach(({ phytoKey, funcName }) => {
+      const pEl = getNode('phyto', phytoKey);
+      const fEl = getNode('func',  funcName);
+      if (!pEl || !fEl) return;
+      const active = relPhytos.has(phytoKey) && relFuncs.has(funcName);
+      const g   = PHYTOCHEMICAL_GROUPS[phytoKey];
+      const col2 = g ? g.color : '#9CA3AF';
+      const p1 = right(pEl), p2 = left(fEl);
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pathD(p1, p2));
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', active ? col2 : '#E5E7EB');
+      path.setAttribute('stroke-width', active ? '2' : '1');
+      path.setAttribute('opacity', active ? '0.85' : '0.1');
+      if (!active) path.setAttribute('stroke-dasharray', '3 3');
+      svg.appendChild(path);
+    });
   }
 
   function unhighlight() {
     allNodes.forEach(n => { n.style.opacity = '1'; n.style.transform = ''; });
-    drawAll(null, null, null);
+    drawAll(null, null, null, null);
   }
 
   allNodes.forEach(n => {
-    n.addEventListener('mouseenter', () => highlight(n.getAttribute('data-col'), n.getAttribute('data-id') == parseInt(n.getAttribute('data-id')) ? Number(n.getAttribute('data-id')) : n.getAttribute('data-id')));
+    n.addEventListener('mouseenter', () => {
+      const col = n.getAttribute('data-col');
+      const raw = n.getAttribute('data-id');
+      const id  = col === 'meal' ? Number(raw) : raw;
+      highlight(col, id);
+    });
     n.addEventListener('mouseleave', unhighlight);
   });
 }
