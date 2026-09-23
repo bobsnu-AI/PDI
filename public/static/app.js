@@ -747,20 +747,26 @@ function drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto }) 
   svg.classList.add('sankey-svg');
   svg.setAttribute('width',  wRect.width);
   svg.setAttribute('height', wRect.height);
-  svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;overflow:visible;z-index:1';
+  // overflow:hidden — wrap 바깥으로 선이 튀어나가지 않게 차단
+  svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;overflow:hidden;z-index:1';
   wrap.appendChild(svg);
 
+  // getBoundingClientRect는 뷰포트 좌표 — 매 drawAll 호출 시 wrap 위치를 새로 계산
+  function getWrapRect() { return wrap.getBoundingClientRect(); }
   function mid(el) {
+    const wr = getWrapRect();
     const r = el.getBoundingClientRect();
-    return { x: r.left - wRect.left + r.width / 2, y: r.top - wRect.top + r.height / 2 };
+    return { x: r.left - wr.left + r.width / 2, y: r.top - wr.top + r.height / 2 };
   }
   function right(el) {
+    const wr = getWrapRect();
     const r = el.getBoundingClientRect();
-    return { x: r.right - wRect.left, y: r.top - wRect.top + r.height / 2 };
+    return { x: r.right - wr.left, y: r.top - wr.top + r.height / 2 };
   }
   function left(el) {
+    const wr = getWrapRect();
     const r = el.getBoundingClientRect();
-    return { x: r.left - wRect.left, y: r.top - wRect.top + r.height / 2 };
+    return { x: r.left - wr.left, y: r.top - wr.top + r.height / 2 };
   }
 
   // 엣지 목록 생성
@@ -833,7 +839,15 @@ function drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto }) 
     });
   }
 
-  drawAll(null, null, null);
+  // SVG height를 실제 콘텐츠 높이에 맞게 재설정 (wrap이 내용에 따라 늘어남)
+  requestAnimationFrame(() => {
+    const newH = wrap.getBoundingClientRect().height;
+    if (newH > 0) {
+      svg.setAttribute('height', newH);
+      svg.style.height = newH + 'px';
+    }
+    drawAll(null, null, null);
+  });
 
   // 호버 인터랙션
   const allNodes = wrap.querySelectorAll('.sankey-node');
