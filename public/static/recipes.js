@@ -7,7 +7,19 @@
 // ============================================
 
 const INGREDIENTS = {
+  // ── 밥스누 제품 (cat:'bobsnu', prf:true) ──
+  // kcal: 1회 제공량 기준 / phytos: 약콩(흑대두) 파이토케미컬 실측 기반 추정값
+  '약콩두유':       { cat:'bobsnu', kcal:80,  prf:true, phytos:{isoflavones:25.0, anthocyanins:8.5,  saponins:45.0, phenolicAcids:12.0} },
+  '파이토100':      { cat:'bobsnu', kcal:20,  prf:true, phytos:{phenolicAcids:38.0, lignans:15.0, catechins:16.0, carotenoids:2.0, flavonols:30.0} },
+  '파이토100 시즌2':{ cat:'bobsnu', kcal:20,  prf:true, phytos:{stilbenes:8.0, anthocyanins:10.0, catechins:18.0, flavonols:25.0} },
+  '파이토블랙':     { cat:'bobsnu', kcal:25,  prf:true, phytos:{anthocyanins:18.0, stilbenes:6.0, phenolicAcids:20.0} },
+  '약콩 프로틴바':  { cat:'bobsnu', kcal:180, prf:true, phytos:{isoflavones:20.0, phenolicAcids:15.0, saponins:40.0} },
+  '약콩차':         { cat:'bobsnu', kcal:5,   prf:true, phytos:{catechins:22.0, isoflavones:12.0, flavonols:8.0} },
+  '다이어트 두유':  { cat:'bobsnu', kcal:70,  prf:true, phytos:{glucosinolates:15.0, isoflavones:18.0, catechins:10.0} },
+  '약콩100':        { cat:'bobsnu', kcal:15,  prf:true, phytos:{isoflavones:35.0, anthocyanins:12.0, saponins:60.0} },
+  // ── 일반 식재료 ──
   '백미': { cat:'grains', kcal:366.0, prf:true, phytos:{flavones:3.038, phenolicAcids:1.08, tocopherols:0.65, isoflavones:0.065} },
+
   '강낭콩(생것)': { cat:'legumes', kcal:172.0, prf:true, phytos:{saponins:252.5151, flavonols:3.31, tocopherols:0.86, phenolicAcids:0.6414, flavones:0.13, carotenoids:0.053} },
   '검정콩': { cat:'legumes', kcal:407.0, prf:true, phytos:{tocopherols:0.87, carotenoids:0.005} },
   '소금': { cat:'refined', kcal:20.0, prf:false, phytos:{} },
@@ -21245,31 +21257,39 @@ const RECIPE_NAMES = Object.keys(RECIPES);
 
 // 단품으로 추가 가능한 식재료 목록
 // (조미료·refined·oils·spices 제외 — 실제로 단품 섭취하는 카테고리만)
-const SINGLE_FOOD_CATS = new Set(['fruits','vegetables','grains','legumes','nuts','dairy','tea','protein']);
+const SINGLE_FOOD_CATS = new Set(['fruits','vegetables','grains','legumes','nuts','dairy','tea','protein','bobsnu']);
 const INGREDIENT_NAMES = Object.keys(INGREDIENTS).filter(k => SINGLE_FOOD_CATS.has(INGREDIENTS[k].cat));
 
 // 단품 식재료를 음식으로 추가할 때 사용하는 기본 1인분 그램
 const SINGLE_SERVING_G = {
   fruits: 150, vegetables: 70, grains: 210, legumes: 80,
-  nuts: 30,    dairy: 200,     tea: 240,    protein: 100,
+  nuts: 30,    dairy: 200,    tea: 240,    protein: 100,
+  bobsnu: 1,   // 밥스누 제품은 kcal이 이미 1회 제공량 기준 — grams=1로 원본 kcal 유지
 };
 
 function analyzeIngredient(ingName) {
   const ing = INGREDIENTS[ingName];
   if (!ing) return null;
-  const grams   = SINGLE_SERVING_G[ing.cat] || 100;
-  const kcal    = Math.round((ing.kcal / 100) * grams);
+  // 밥스누 제품: kcal이 이미 1회 제공량 기준값 → grams 변환 없이 그대로 사용
+  const isBobsnu = ing.cat === 'bobsnu';
+  const grams    = isBobsnu ? 1 : (SINGLE_SERVING_G[ing.cat] || 100);
+  const kcal     = isBobsnu ? ing.kcal : Math.round((ing.kcal / 100) * grams);
+  // 파이토케미컬도 밥스누는 1회 제공량 기준값 그대로
+  const phytos   = (typeof ing.phytos === 'object' && !Array.isArray(ing.phytos))
+    ? (isBobsnu ? ing.phytos
+        : Object.fromEntries(Object.entries(ing.phytos).map(([k,v]) => [k, Math.round(v * grams / 100 * 1000) / 1000])))
+    : {};
   return {
     name: ingName,
     totalCal: kcal,
-    isSingleFood: true,          // 단품 구분 플래그
+    isSingleFood: true,
     ingredients: [{
-      name: ingName,
-      grams,
+      name:   ingName,
+      grams:  isBobsnu ? '1회' : grams,
       kcal,
       cat:    ing.cat,
       prf:    ing.prf,
-      phytos: ing.phytos,
+      phytos,
     }],
   };
 }
