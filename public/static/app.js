@@ -173,6 +173,7 @@ let gender = 'female';
 // INIT
 // ══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+  renderActivityOptions();
   renderHealthGoals();
   renderProductGrid();
   renderMealList();
@@ -194,6 +195,60 @@ function setGender(g) {
   document.getElementById('gender-female').classList.toggle('border-emerald-500', g === 'female');
   document.getElementById('gender-female').classList.toggle('bg-emerald-50', g === 'female');
   document.getElementById('gender-female').classList.toggle('border-gray-200', g !== 'female');
+}
+
+// ══════════════════════════════════════════════
+// PROFILE  (나이·신장·체중·활동량 → PFS 식단 점수)
+// ══════════════════════════════════════════════
+function renderActivityOptions() {
+  const sel = document.getElementById('profile-activity');
+  if (!sel) return;
+  sel.innerHTML = Object.entries(PFS_ACTIVITY_LEVELS).map(([id, a]) =>
+    '<option value="' + id + '"' + (id === 'low' ? ' selected' : '') + '>' + a.name + ' · ' + a.desc + '</option>'
+  ).join('');
+}
+
+// 입력값 읽기 — 빈 칸은 null
+function readProfile() {
+  const num = id => {
+    const v = document.getElementById(id).value.trim();
+    return v === '' ? null : Number(v);
+  };
+  return {
+    gender,
+    age:        num('profile-age'),
+    height:     num('profile-height'),
+    weight:     num('profile-weight'),
+    prevWeight: num('profile-prev-weight'),
+    activity:   document.getElementById('profile-activity').value,
+  };
+}
+
+// 신체 정보는 선택 입력 — 모두 비우면 PFS 점수만 생략, 일부만 입력하거나 범위를 벗어나면 차단
+function validateProfile(p) {
+  const required = [['age', '나이', 3, 120], ['height', '신장', 80, 230], ['weight', '체중', 10, 300]];
+  const filled = required.filter(([k]) => p[k] !== null);
+  if (filled.length && filled.length < required.length) {
+    return 'PFS 식단 점수를 계산하려면 나이·신장·체중을 모두 입력해주세요.';
+  }
+  for (const [k, label, min, max] of [...required, ['prevWeight', '이전 체중', 10, 300]]) {
+    if (p[k] !== null && !(p[k] >= min && p[k] <= max)) {
+      return label + '은(는) ' + min + '–' + max + ' 범위로 입력해주세요.';
+    }
+  }
+  return null;
+}
+
+function submitProfile() {
+  const err = validateProfile(readProfile());
+  const el = document.getElementById('profile-error');
+  if (err) {
+    el.querySelector('span').textContent = err;
+    el.classList.remove('hidden');
+    return;
+  }
+  el.classList.add('hidden');
+  goToStep(2);
 }
 
 function goToStep(n) {
@@ -652,6 +707,8 @@ function calculateAndShow() {
   }
   pdiResult = calculatePDI();
   pdiResult.phytoScore = calculatePhytoScore(pdiResult.phytoMap, selectedGoals);
+  const profile = readProfile();
+  pdiResult.pfs = validateProfile(profile) ? null : calculateDietPFS(addedMeals, profile);
   goToStep(4);
   displayResults();
 }
@@ -693,6 +750,10 @@ function displayResults() {
 
   // ─ Phyto Score ─
   renderPhytoScore(r.phytoScore);
+
+  // ─ PFS 식단 점수 & 3개 점수 요약 ─
+  renderPFSScore(r.pfs);
+  renderScoreSummary(r);
 
   // ─ Suggestions ─
   document.getElementById('diet-suggestions').innerHTML = r.suggestions.map((s, i) =>
@@ -1405,6 +1466,187 @@ function renderPhytoScore(ps) {
     + '<div class="text-sm font-bold text-gray-700 mb-3">계열별 DRV 달성률 <span class="font-normal text-gray-400 text-xs ml-1">🎯 = 선택한 목적 계열</span></div>'
     + '<div class="grid md:grid-cols-2 gap-x-6">' + keyBars + '</div>'
     + '</div>';
+}
+
+// ── 점수 요약 (PDI · 파이토 · PFS 나란히) ────────
+function renderScoreSummary(r) {
+  const el = document.getElementById('score-summary');
+  if (!el) return;
+
+  function tile(bg, label, valueHtml, subHtml) {
+    return '<div class="rounded-2xl p-5 ' + bg + '">'
+      + '<div class="text-xs font-bold text-gray-500 mb-1">' + label + '</div>'
+      + '<div class="flex items-baseline gap-1.5">' + valueHtml + '</div>'
+      + '<div class="text-xs text-gray-500 mt-1">' + subHtml + '</div>'
+      + '</div>';
+  }
+
+  const ps = r.phytoScore;
+  let pfsTile;
+  if (r.pfs) {
+    const t = PFS_TREND_LABELS[r.pfs.trend];
+    pfsTile = tile('bg-sky-50', '🥗 PFS 식단 점수',
+      '<span class="text-3xl font-black" style="color:' + t.color + '">' + r.pfs.daily.total.toFixed(2) + '</span>'
+      + '<span class="text-xs font-bold px-2 py-0.5 rounded-full text-white" style="background:' + t.color + '">' + t.name + '</span>',
+      'Basic ' + r.pfs.daily.basic.toFixed(2) + ' / 4.0 · ' + t.formula);
+  } else {
+    pfsTile = tile('bg-sky-50', '🥗 PFS 식단 점수',
+      '<span class="text-lg font-bold text-gray-400">프로필 미입력</span>',
+      '<button onclick="goToStep(1)" class="text-sky-700 font-medium underline">나이·신장·체중 입력하기</button>');
+  }
+
+  el.innerHTML =
+    tile('bg-emerald-50', '📊 PDI 점수',
+      '<span class="text-3xl font-black" style="color:' + r.gradeColor + '">' + r.pdiScore.toFixed(1) + '%</span>',
+      'PRF 칼로리 비율 · 목표 40%')
+    + tile('bg-purple-50', '🌿 파이토케미컬 점수',
+      '<span class="text-3xl font-black text-purple-700">' + ps.total + '</span><span class="text-sm text-gray-400">/ 100</span>',
+      ps.coveredCount + '/' + PHYTO_SCORED_KEYS.length + '개 계열 검출')
+    + pfsTile;
+}
+
+// ── PFS 식단 점수 렌더링 ──────────────────────
+const PFS_NUTRIENT_ROWS = [
+  { key: 'carb',    name: '탄수화물',   unit: 'g',  kind: 'band' },
+  { key: 'protein', name: '단백질',     unit: 'g',  kind: 'band' },
+  { key: 'fat',     name: '지방',       unit: 'g',  kind: 'band' },
+  { key: 'fiber',   name: '식이섬유',   unit: 'g',  kind: 'min' },
+  { key: 'chol',    name: '콜레스테롤', unit: 'mg', kind: 'max' },
+  { key: 'sugar',   name: '당류',       unit: 'g',  kind: 'max' },
+  { key: 'satfat',  name: '포화지방',   unit: 'g',  kind: 'max' },
+  { key: 'trans',   name: '트랜스지방', unit: 'g',  kind: 'max' },
+  { key: 'sodium',  name: '나트륨',     unit: 'mg', kind: 'max' },
+];
+
+function fmtNum(v, digits) {
+  return Number(v).toLocaleString('ko-KR', { maximumFractionDigits: digits, minimumFractionDigits: digits });
+}
+
+function renderPFSScore(pfs) {
+  const el = document.getElementById('pfs-score-section');
+  if (!el) return;
+
+  if (!pfs) {
+    el.innerHTML =
+      '<h3 class="text-xl font-bold text-gray-900 mb-2">🥗 PFS 식단 영양 점수</h3>'
+      + '<div class="bg-sky-50 rounded-2xl p-6 text-center">'
+      + '<p class="text-sky-800 text-sm mb-3">나이·신장·체중을 입력하면 에너지필요추정량(EER) 기반 식단 영양 점수를 계산합니다.</p>'
+      + '<button onclick="goToStep(1)" class="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition">'
+      + '<i class="fas fa-user-edit mr-1.5"></i>프로필 입력하기</button>'
+      + '</div>';
+    return;
+  }
+
+  const d = pfs.daily;
+  const n = d.nutrients;
+  const t = PFS_TREND_LABELS[pfs.trend];
+  const pctEER = Math.round((n.energy / pfs.eer) * 100);
+
+  // 부분점수 막대: 가운데 0 기준, 양수(초록) 오른쪽 / 음수(빨강) 왼쪽, |1| 에서 포화
+  function subBar(v) {
+    const w = Math.min(Math.abs(v), 1) * 50;
+    const pos = v >= 0;
+    return '<div class="relative h-2.5 bg-gray-100 rounded-full overflow-hidden">'
+      + '<div class="absolute top-0 bottom-0 w-px bg-gray-300" style="left:50%"></div>'
+      + '<div class="absolute top-0 bottom-0 ' + (pos ? 'bg-emerald-500' : 'bg-red-400') + '" style="'
+      + (pos ? 'left:50%' : 'right:50%') + ';width:' + w + '%"></div>'
+      + '</div>';
+  }
+
+  function target(row) {
+    const r = pfs.ranges[row.key];
+    const u = row.unit;
+    if (row.kind === 'band') return fmtNum(r[0], 0) + '–' + fmtNum(r[1], 0) + u;
+    if (row.kind === 'min')  return fmtNum(r, 0) + u + ' 이상';
+    return fmtNum(r, row.key === 'trans' ? 1 : 0) + u + ' 미만';
+  }
+
+  const nutRows = PFS_NUTRIENT_ROWS.map(row => {
+    const v = d.sub[row.key];
+    return '<tr class="border-b border-gray-50 last:border-0">'
+      + '<td class="py-2 pr-3 text-sm text-gray-800 font-medium whitespace-nowrap">' + row.name + '</td>'
+      + '<td class="py-2 pr-3 text-sm text-gray-900 text-right whitespace-nowrap">' + fmtNum(n[row.key], row.key === 'trans' ? 2 : 1) + row.unit + '</td>'
+      + '<td class="py-2 pr-3 text-xs text-gray-400 whitespace-nowrap">' + target(row) + '</td>'
+      + '<td class="py-2 pr-3 w-full min-w-[80px]">' + subBar(v) + '</td>'
+      + '<td class="py-2 text-sm font-bold text-right whitespace-nowrap ' + (v >= 0 ? 'text-emerald-700' : 'text-red-500') + '">'
+      + (v >= 0 ? '+' : '') + v.toFixed(2) + '</td>'
+      + '</tr>';
+  }).join('');
+
+  const mealLabels = { breakfast: '아침', lunch: '점심', dinner: '저녁', snack: '간식' };
+  const dishRows = pfs.dishes.map(dish => {
+    const role = PFS_MEAL_ROLES[dish.role];
+    return '<tr class="border-b border-gray-50 last:border-0">'
+      + '<td class="py-2 pr-3 text-sm text-gray-900 font-medium whitespace-nowrap">' + dish.name
+      + '<span class="ml-1.5 text-xs text-gray-400 font-normal">' + (mealLabels[dish.meal] || dish.meal) + '</span></td>'
+      + '<td class="py-2 pr-3 text-xs whitespace-nowrap"><span class="px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">'
+      + role.name + ' ×' + role.per + '</span></td>'
+      + '<td class="py-2 pr-3 text-sm text-gray-600 text-right whitespace-nowrap">' + Math.round(dish.nutrients.energy) + 'kcal</td>'
+      + '<td class="py-2 pr-3 text-sm text-right whitespace-nowrap ' + (dish.basic >= 0 ? 'text-emerald-700' : 'text-red-500') + '">' + dish.basic.toFixed(2) + '</td>'
+      + '<td class="py-2 pr-3 text-sm text-gray-600 text-right whitespace-nowrap">' + dish.ed.toFixed(0) + '</td>'
+      + '<td class="py-2 pr-3 text-sm text-gray-600 text-right whitespace-nowrap">' + dish.si.toFixed(1) + '</td>'
+      + '<td class="py-2 text-sm font-bold text-right whitespace-nowrap" style="color:' + t.color + '">' + dish.total.toFixed(2) + '</td>'
+      + '</tr>';
+  }).join('');
+
+  function stat(label, value, sub, cls) {
+    return '<div class="rounded-2xl p-4 ' + cls + '">'
+      + '<div class="text-xs text-gray-500 mb-1">' + label + '</div>'
+      + '<div class="text-2xl font-black text-gray-900">' + value + '</div>'
+      + '<div class="text-xs text-gray-400 mt-0.5">' + sub + '</div>'
+      + '</div>';
+  }
+
+  el.innerHTML =
+    '<div class="flex flex-wrap items-start justify-between gap-4 mb-6">'
+    + '<div>'
+    + '<h3 class="text-xl font-bold text-gray-900">🥗 PFS 식단 영양 점수</h3>'
+    + '<p class="text-gray-500 text-sm mt-1">에너지필요추정량(EER) 기준 9개 영양소 적정성 + 에너지 밀도·포만 지수 · PDI·파이토 점수와 별도 산출</p>'
+    + '</div>'
+    + '<div class="flex items-center gap-3">'
+    + '<div class="text-center">'
+    + '<div class="text-5xl font-black" style="color:' + t.color + '">' + d.total.toFixed(2) + '</div>'
+    + '<div class="text-xs text-gray-400">total_score</div>'
+    + '</div>'
+    + '<div class="text-left">'
+    + '<div class="inline-flex items-center px-3 py-1.5 rounded-full text-white text-sm font-bold" style="background:' + t.color + '">' + t.name + '</div>'
+    + '<div class="text-xs text-gray-400 mt-1">= ' + t.formula + '</div>'
+    + '</div>'
+    + '</div>'
+    + '</div>'
+
+    // 요약 통계
+    + '<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">'
+    + stat('Basic 점수', d.basic.toFixed(2), '영양소 적정성 · 최대 4.0', 'bg-emerald-50')
+    + stat('ED 점수', d.ed.toFixed(0), '에너지 밀도 kcal/100g', 'bg-amber-50')
+    + stat('SI 점수', d.si.toFixed(1), '포만 지수', 'bg-indigo-50')
+    + stat('에너지필요추정량', fmtNum(pfs.eer, 0) + '<span class="text-sm font-medium text-gray-500">kcal</span>', 'KDRI 2020 공식', 'bg-gray-50')
+    + stat('섭취 에너지', Math.round(n.energy) + '<span class="text-sm font-medium text-gray-500">kcal</span>', 'EER 대비 ' + pctEER + '%', 'bg-gray-50')
+    + '</div>'
+
+    // 영양소별 부분점수
+    + '<div class="grid lg:grid-cols-2 gap-6">'
+    + '<div class="bg-gray-50 rounded-2xl p-5 min-w-0">'
+    + '<div class="text-sm font-bold text-gray-700 mb-3">영양소별 부분점수 <span class="font-normal text-gray-400 text-xs ml-1">1일 기준 · 적정 범위 +1, 초과·부족 시 감점</span></div>'
+    + '<div class="overflow-x-auto"><table class="w-full"><tbody>' + nutRows + '</tbody></table></div>'
+    + '</div>'
+
+    // 음식별 점수
+    + '<div class="bg-gray-50 rounded-2xl p-5 min-w-0">'
+    + '<div class="text-sm font-bold text-gray-700 mb-3">음식별 PFS 점수 <span class="font-normal text-gray-400 text-xs ml-1">기준치 × 분류 비율(본식 0.3·반찬 0.2·간식 0.1)</span></div>'
+    + '<div class="overflow-x-auto"><table class="w-full">'
+    + '<thead><tr class="text-xs text-gray-400 border-b border-gray-200">'
+    + '<th class="py-1.5 pr-3 text-left font-medium">음식</th><th class="py-1.5 pr-3 text-left font-medium">분류</th>'
+    + '<th class="py-1.5 pr-3 text-right font-medium">에너지</th><th class="py-1.5 pr-3 text-right font-medium">Basic</th>'
+    + '<th class="py-1.5 pr-3 text-right font-medium">ED</th><th class="py-1.5 pr-3 text-right font-medium">SI</th>'
+    + '<th class="py-1.5 text-right font-medium">총점</th></tr></thead>'
+    + '<tbody>' + dishRows + '</tbody></table></div>'
+    + '</div>'
+    + '</div>'
+
+    + '<p class="text-xs text-amber-600 mt-4"><i class="fas fa-info-circle mr-1"></i>'
+    + '영양성분은 식재료별 칼로리와 식재료명·식품군 기반 추정치이며, 중량은 조리 전 식재료 기준입니다. '
+    + '체중 추세: 이전 체중보다 감소 → 감량기, 증가 → 증가기, 동일·미입력 → 유지기.</p>';
 }
 
 // ── 건강 목적 렌더링 ─────────────────────────
