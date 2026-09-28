@@ -1177,6 +1177,57 @@ function renderCategoryChart(catMap) {
   }).join('');
 }
 
+// ══════════════════════════════════════════════
+// 점수 개선 시뮬레이션
+// 밥스누 제품 1회분을 현재 식단에 가산했을 때
+// PDI 점수·파이토 점수가 얼마나 오르는지 계산
+// ══════════════════════════════════════════════
+function simulateAddFood(prodName) {
+  // 현재 pdiResult 없으면 계산 불가
+  if (!pdiResult) return null;
+
+  // INGREDIENTS에서 제품 데이터 가져오기
+  const ing = INGREDIENTS[prodName];
+  if (!ing || ing.cat !== 'bobsnu') return null;
+
+  // ─ 현재 기준값 ─
+  const curPDI   = pdiResult.pdiScore;
+  const curPhyto = pdiResult.phytoScore ? pdiResult.phytoScore.total : 0;
+  const curTotal = pdiResult.totalCalories;
+  const curPRF   = pdiResult.prfCalories;
+
+  // ─ 1회 가산 ─
+  // 밥스누 제품은 kcal가 이미 1회 제공량 기준
+  const addKcal  = ing.kcal || 0;
+  const addPhytos = ing.phytos || {};
+
+  // 가상 PDI 계산
+  // 밥스누 제품은 prf:true → PRF kcal에 포함
+  const newTotal  = curTotal + addKcal;
+  const newPRF    = curPRF + (ing.prf ? addKcal : 0);
+  const newPDI    = newTotal > 0 ? (newPRF / newTotal) * 100 : 0;
+  const deltaPDI  = newPDI - curPDI;
+
+  // 가상 파이토 점수 계산
+  const newPhytoMap = { ...pdiResult.phytoMap };
+  for (const [key, mg] of Object.entries(addPhytos)) {
+    newPhytoMap[key] = (newPhytoMap[key] || 0) + (mg || 0);
+  }
+  const newPhytoScore = calculatePhytoScore(newPhytoMap, selectedGoals);
+  const deltaPhyto    = newPhytoScore.total - curPhyto;
+
+  // 추가되는 파이토케미컬 계열 (기존에 없던 신규 계열)
+  const newKeys = Object.keys(addPhytos).filter(k => !(pdiResult.phytoMap[k] > 0) && addPhytos[k] > 0);
+
+  return {
+    deltaPDI:   +deltaPDI.toFixed(1),
+    deltaPhyto: +deltaPhyto.toFixed(0),
+    newPDI:     +newPDI.toFixed(1),
+    newPhyto:   newPhytoScore.total,
+    newKeys,    // 신규 추가 파이토 계열
+  };
+}
+
 // ─ 제품 추천 ─
 function renderProductRecommendations(r) {
   const goalPhytos = new Set(
@@ -1190,11 +1241,52 @@ function renderProductRecommendations(r) {
       if (defSet.has(p))     score += 3;
       if (goalPhytos.has(p)) score += 2;
     }
-    return { ...prod, score };
+    // 시뮬레이션 결과 첨부
+    const sim = simulateAddFood(prod.name);
+    return { ...prod, score, sim };
   }).sort((a, b) => b.score - a.score).slice(0, 6);
 
   document.getElementById('product-recommendations').innerHTML = scored.map(p => {
     const isTop = p.score > 4;
+    const sim   = p.sim;
+
+    // ── 델타 배지 HTML ──
+    let deltaHtml = '';
+    if (sim) {
+      // PDI 델타 (소수점 1자리)
+      const pdiSign  = sim.deltaPDI  >= 0 ? '+' : '';
+      const phySign  = sim.deltaPhyto >= 0 ? '+' : '';
+      const pdiColor = sim.deltaPDI  > 0 ? '#10B981' : (sim.deltaPDI < 0 ? '#EF4444' : '#9CA3AF');
+      const phyColor = sim.deltaPhyto > 0 ? '#8B5CF6' : (sim.deltaPhyto < 0 ? '#EF4444' : '#9CA3AF');
+
+      // 신규 계열 추가 여부
+      const newKeyTags = sim.newKeys.map(k => {
+        const g = PHYTOCHEMICAL_GROUPS[k];
+        return g ? '<span class="text-xs px-1.5 py-0.5 rounded text-white font-medium" style="background:' + g.color + '">' + g.icon + ' ' + g.name + ' 신규</span>' : '';
+      }).join('');
+
+      deltaHtml =
+        '<div class="mt-3 pt-3 border-t border-gray-100">'
+        + '<div class="text-xs font-bold text-gray-500 mb-1.5">📊 먹으면 예상 점수 변화</div>'
+        + '<div class="flex flex-wrap gap-2">'
+        // PDI 변화
+        + '<div class="flex items-center gap-1 px-2.5 py-1 rounded-full text-white text-xs font-bold" style="background:' + pdiColor + '">'
+        + '<span>PDI</span>'
+        + '<span>' + pdiSign + sim.deltaPDI + '%p</span>'
+        + '<span class="opacity-75 font-normal">→ ' + sim.newPDI + '%</span>'
+        + '</div>'
+        // 파이토 변화
+        + '<div class="flex items-center gap-1 px-2.5 py-1 rounded-full text-white text-xs font-bold" style="background:' + phyColor + '">'
+        + '<span>🌿파이토</span>'
+        + '<span>' + phySign + sim.deltaPhyto + '점</span>'
+        + '<span class="opacity-75 font-normal">→ ' + sim.newPhyto + '점</span>'
+        + '</div>'
+        + '</div>'
+        // 신규 파이토 계열 태그
+        + (newKeyTags ? '<div class="flex flex-wrap gap-1 mt-1.5">' + newKeyTags + '</div>' : '')
+        + '</div>';
+    }
+
     return '<div class="border-2 rounded-2xl p-5 bg-white hover:shadow-md transition-shadow" style="border-color:' + (isTop ? p.color : '#E5E7EB') + '">'
       + (isTop ? '<div class="text-xs font-bold mb-2" style="color:' + p.color + '"><i class="fas fa-star mr-1"></i>맞춤 추천</div>' : '')
       + '<div class="flex items-start gap-3 mb-3"><span class="text-3xl">' + p.icon + '</span>'
@@ -1208,7 +1300,9 @@ function renderProductRecommendations(r) {
           const g = PHYTOCHEMICAL_GROUPS[ph];
           return '<span class="text-xs px-2 py-0.5 rounded-full text-white font-medium" style="background:' + (g ? g.color : '#6B7280') + '">' + (g ? g.name : ph) + '</span>';
         }).join('')
-      + '</div></div>';
+      + '</div>'
+      + deltaHtml
+      + '</div>';
   }).join('');
 }
 
