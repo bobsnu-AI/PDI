@@ -17,6 +17,15 @@
 - 목표치: 40% (Gamba et al. 2023, CoLaus 코호트 n=3,879 근거)
 - 차류 특별 가점, 알코올 제외 처리
 
+### PFS 식단 영양 점수 (PDI·파이토 점수와 별도)
+- `diet_food_scoring.py`의 `PFS_function`을 JS로 포팅 (`public/static/pfs.js`)
+- 입력: 성별·나이·신장·체중·이전 체중(선택)·활동량 → KDRI 2020 에너지필요추정량(EER)
+- Basic_score: 9개 영양소(탄수화물·단백질·지방·식이섬유 가점 / 콜레스테롤·당류·포화지방·트랜스지방·나트륨 감점), 최대 4.0
+- ED_score(에너지 밀도), SI_score(포만 지수)
+- 체중 추세별 총점: 감량기 Basic+ED · 증가기 Basic+ED+SI · 유지기 Basic
+- 1일 식단 전체(기준치 ×1.0) + 음식별(본식 ×0.3·반찬 ×0.2·간식 ×0.1) 점수
+- 식재료 DB에 kcal만 있어 영양성분은 식재료명 규칙·식품군 프로필로 추정 (`INGREDIENTS[x].nut`에 실측값 추가 시 우선 사용)
+
 ### 파이토케미컬 분석
 12개 계열 분석:
 - 이소플라본, 안토시아닌, 카테킨, 카로티노이드
@@ -74,6 +83,8 @@ webapp/
 ├── public/
 │   ├── index.html         # 메인 HTML 템플릿
 │   └── static/
+│       ├── recipes.js     # 레시피·식재료 DB
+│       ├── pfs.js         # PFS 식단 점수 엔진
 │       └── app.js         # 프론트엔드 JavaScript
 ├── ecosystem.config.cjs   # PM2 설정
 ├── wrangler.jsonc         # Cloudflare 설정
