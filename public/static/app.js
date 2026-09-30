@@ -132,52 +132,131 @@ function calculatePhytoScore(phytoMap, selectedGoals) {
   };
 }
 
-// ── 건강 목적 ────────────────────────────────
+// ── 관리 목표 ────────────────────────────────
+// 체중 관리가 핵심(항상 포함), 추가 건강 관리는 4가지만 선택 제공
 const HEALTH_GOALS = [
-  { id: 'diet',          name: '다이어트',   icon: '⚖️', phytos: ['glucosinolates', 'catechins', 'phenolicAcids'] },
-  { id: 'blood_sugar',   name: '혈당 관리',  icon: '🩸', phytos: ['phenolicAcids', 'isoflavones', 'lignans'] },
-  { id: 'cardiovascular',name: '혈관·심장',  icon: '❤️', phytos: ['catechins', 'anthocyanins', 'stilbenes'] },
-  { id: 'brain',         name: '뇌건강',     icon: '🧠', phytos: ['stilbenes', 'anthocyanins', 'catechins'] },
-  { id: 'muscle',        name: '근육·시니어',icon: '💪', phytos: ['isoflavones', 'saponins'] },
-  { id: 'antioxidant',   name: '항산화',     icon: '✨', phytos: ['carotenoids', 'anthocyanins', 'flavonols'] },
-  { id: 'womens',        name: '여성건강',   icon: '👩', phytos: ['isoflavones', 'lignans'] },
-  { id: 'gut',           name: '장건강',     icon: '🌿', phytos: ['phenolicAcids', 'saponins', 'gingerols'] },
-  { id: 'eye',           name: '눈건강',     icon: '👁️', phytos: ['carotenoids', 'anthocyanins'] },
-  { id: 'antiinflam',    name: '항염·면역',  icon: '🛡️', phytos: ['gingerols', 'thioallyls', 'catechins'] },
+  { id: 'weight',      name: '체중 관리', icon: '⚖️', base: true, phytos: ['glucosinolates', 'catechins', 'phenolicAcids'],
+    tip: '식사량보다 구성이 중요해요. 통곡물·채소·콩으로 포만감을 높이고 가공식품·단 음료를 줄이세요.' },
+  { id: 'gut',         name: '장 건강',   icon: '🌿', phytos: ['phenolicAcids', 'saponins', 'gingerols'],
+    tip: '식이섬유(잡곡·채소·해조류)와 된장·김치 같은 발효식품을 매일 챙기세요.' },
+  { id: 'blood_sugar', name: '혈당 관리', icon: '🩸', phytos: ['phenolicAcids', 'isoflavones', 'lignans'],
+    tip: '흰쌀 대신 잡곡밥, 채소·단백질 반찬을 먼저 먹고 밥은 나중에 드세요.' },
+  { id: 'bone',        name: '뼈 건강',   icon: '🦴', phytos: ['isoflavones', 'lignans', 'flavonols'],
+    tip: '두부·두유 등 콩 식품과 멸치·우유·녹색 채소로 칼슘을 보충하고 햇볕을 쬐세요.' },
+  { id: 'fatigue',     name: '피로 회복', icon: '🔋', phytos: ['saponins', 'anthocyanins', 'catechins'],
+    tip: '아침 식사를 거르지 말고 단백질을 끼니마다 나눠 드세요. 충분한 수면이 기본입니다.' },
 ];
 
 // ── 밥스누 제품 ─────────────────────────────
+// allergens: 알레르기 유발 원료 (약콩 = 대두). 파이토100 계열은 원료 정보 확인 필요
 const BOBSNU_PRODUCTS = [
-  { id: 'yakong_soymilk', name: '약콩두유',        desc: '약콩(흑두) 기반 이소플라본·안토시아닌',      icon: '🫘', phytos: ['isoflavones', 'anthocyanins', 'saponins'],            targets: ['여성건강', '골건강', '콜레스테롤'], color: '#8B5CF6' },
-  { id: 'phyto100',       name: '파이토100',        desc: '100종 파이토케미컬 통합 블렌드',             icon: '💊', phytos: ['phenolicAcids', 'lignans', 'catechins', 'carotenoids'], targets: ['혈당', '항산화', '종합건강'],       color: '#059669' },
-  { id: 'phyto100_s2',    name: '파이토100 시즌2',  desc: '혈관·뇌건강 특화 피세아탄놀',               icon: '🧠', phytos: ['stilbenes', 'anthocyanins', 'catechins'],               targets: ['혈관', '뇌건강', '항산화'],         color: '#2563EB' },
-  { id: 'phyto_black',    name: '파이토블랙',        desc: '검은색 식품 파이토케미컬 집중 공급',        icon: '🫐', phytos: ['anthocyanins', 'stilbenes'],                            targets: ['항산화', '혈관'],                  color: '#4F46E5' },
-  { id: 'protein_bar',    name: '약콩 프로틴바',     desc: '약콩 단백질 + 이소플라본',                  icon: '💪', phytos: ['isoflavones', 'phenolicAcids', 'saponins'],             targets: ['근육', '시니어', '단백질'],         color: '#EA580C' },
-  { id: 'yakong_tea',     name: '약콩차',            desc: '약콩 기반 카테킨·이소플라본 차',            icon: '🍵', phytos: ['catechins', 'isoflavones'],                             targets: ['체지방', '항산화'],                color: '#0D9488' },
-  { id: 'diet_soymilk',   name: '다이어트 두유',     desc: '설포라핀(글루코시놀레이트) 특화',           icon: '🥦', phytos: ['glucosinolates', 'isoflavones'],                        targets: ['다이어트', '체지방'],              color: '#16A34A' },
-  { id: 'yakong100',      name: '약콩100',           desc: '약콩 100% 순수 파이토케미컬 농축',          icon: '⭐', phytos: ['isoflavones', 'anthocyanins', 'saponins'],             targets: ['시니어', '여성건강'],              color: '#CA8A04' },
+  { id: 'yakong_soymilk', name: '약콩두유',        desc: '약콩(흑두) 기반 이소플라본·안토시아닌',      icon: '🫘', phytos: ['isoflavones', 'anthocyanins', 'saponins'],            targets: ['여성건강', '골건강', '콜레스테롤'], color: '#8B5CF6', allergens: ['soy'] },
+  { id: 'phyto100',       name: '파이토100',        desc: '100종 파이토케미컬 통합 블렌드',             icon: '💊', phytos: ['phenolicAcids', 'lignans', 'catechins', 'carotenoids'], targets: ['혈당', '항산화', '종합건강'],       color: '#059669', allergens: [] },
+  { id: 'phyto100_s2',    name: '파이토100 시즌2',  desc: '혈관·뇌건강 특화 피세아탄놀',               icon: '🧠', phytos: ['stilbenes', 'anthocyanins', 'catechins'],               targets: ['혈관', '뇌건강', '항산화'],         color: '#2563EB', allergens: [] },
+  { id: 'phyto_black',    name: '파이토블랙',        desc: '검은색 식품 파이토케미컬 집중 공급',        icon: '🫐', phytos: ['anthocyanins', 'stilbenes'],                            targets: ['항산화', '혈관'],                  color: '#4F46E5', allergens: [] },
+  { id: 'protein_bar',    name: '약콩 프로틴바',     desc: '약콩 단백질 + 이소플라본',                  icon: '💪', phytos: ['isoflavones', 'phenolicAcids', 'saponins'],             targets: ['근육', '시니어', '단백질'],         color: '#EA580C', allergens: ['soy'] },
+  { id: 'yakong_tea',     name: '약콩차',            desc: '약콩 기반 카테킨·이소플라본 차',            icon: '🍵', phytos: ['catechins', 'isoflavones'],                             targets: ['체지방', '항산화'],                color: '#0D9488', allergens: ['soy'] },
+  { id: 'diet_soymilk',   name: '다이어트 두유',     desc: '설포라핀(글루코시놀레이트) 특화',           icon: '🥦', phytos: ['glucosinolates', 'isoflavones'],                        targets: ['다이어트', '체지방'],              color: '#16A34A', allergens: ['soy'] },
+  { id: 'yakong100',      name: '약콩100',           desc: '약콩 100% 순수 파이토케미컬 농축',          icon: '⭐', phytos: ['isoflavones', 'anthocyanins', 'saponins'],             targets: ['시니어', '여성건강'],              color: '#CA8A04', allergens: ['soy'] },
 ];
+
+// ── 체중 관리 기본 루틴 ─────────────────────────
+const WEIGHT_ROUTINE = [
+  { slot: '아침', icon: '🌅', products: ['파이토100', '약콩두유'],        meal: '' },
+  { slot: '점심', icon: '☀️', products: ['약콩차'],                      meal: '평소 식단' },
+  { slot: '저녁', icon: '🌙', products: ['약콩 프로틴바', '약콩두유'],    meal: '가벼운 식사 (과일·채소 샐러드 등)' },
+];
+
+// ── 제품 세트 할인율 (가안 · 확정 전) ──────────────
+//   기본 구성 그대로 구매 시 세트 할인, 구성을 바꾸면 커스텀 할인
+const PRODUCT_SET_DISCOUNT = { optimal: 20, recommended: 15, custom: 10 };
+
+// ── 알레르기 (식품 등 표시기준 알레르기 유발물질, 아황산류 제외) ──
+// re: 식재료명 매칭 규칙
+const ALLERGENS = [
+  { id: 'egg',       name: '달걀',     re: /달걀|계란|메추리알|난황|난백|마요네즈/ },
+  { id: 'milk',      name: '우유',     re: /우유|치즈|(?<!땅콩)버터|요구르트|요거트|생크림|휘핑|연유|분유/ },
+  { id: 'buckwheat', name: '메밀',     re: /메밀/ },
+  { id: 'peanut',    name: '땅콩',     re: /땅콩/ },
+  { id: 'soy',       name: '대두',     re: /대두|(?<!강낭|완두|병아리|렌틸|땅|녹|작두)콩|두부|두유|된장|간장|고추장|청국장|쌈장|춘장|유부|미소|쯔유/ },
+  { id: 'wheat',     name: '밀',       re: /밀가루|통밀|밀\(|소면|국수|라면|우동|칼국수|스파게티|파스타|마카로니|빵|또띠아|부침가루|튀김가루|만두|간장|쯔유|시리얼/ },
+  { id: 'mackerel',  name: '고등어',   re: /고등어/ },
+  { id: 'crab',      name: '게',       re: /꽃게|대게|킹크랩|게살|게맛살|크랩|^게$|^게\(/ },
+  { id: 'shrimp',    name: '새우',     re: /새우/ },
+  { id: 'pork',      name: '돼지고기', re: /돼지|삼겹|베이컨|햄(?!프)|소시지|족발|스팸/ },
+  { id: 'peach',     name: '복숭아',   re: /복숭아/ },
+  { id: 'tomato',    name: '토마토',   re: /토마토|케첩|케찹/ },
+  { id: 'walnut',    name: '호두',     re: /호두/ },
+  { id: 'chicken',   name: '닭고기',   re: /닭|치킨/ },
+  { id: 'beef',      name: '쇠고기',   re: /쇠고기|소고기|한우|차돌박이|사골/ },
+  { id: 'squid',     name: '오징어',   re: /오징어/ },
+  { id: 'shellfish', name: '조개류',   re: /조개|바지락|홍합|굴(?!비)|전복|꼬막|가리비|소라|골뱅이|재첩|관자/ },
+  { id: 'pine',      name: '잣',       re: /잣/ },
+];
+
+// ── 식습관 설문 (가안 · 서울대 식이평가 설문 구조 반영 전) ──
+// 응답은 대표 음식으로 환산하여 '예측 식단'을 만들고, 식사 기록과 같은 엔진으로 점수를 계산
+const SURVEY_QUESTIONS = [
+  { id: 'rice',   q: '평소 드시는 밥은 어떤 종류인가요?',              options: [['흰쌀밥 위주', 'white'], ['흰쌀·잡곡 반반', 'mixed'], ['잡곡·현미밥 위주', 'grain']] },
+  { id: 'meals',  q: '하루에 식사는 몇 끼 하시나요?',                  options: [['1끼', 1], ['2끼', 2], ['3끼', 3]] },
+  { id: 'veg',    q: '채소 반찬(나물·샐러드·채소국)은 하루 몇 접시?',   options: [['거의 안 먹음', 0], ['1–2접시', 2], ['3접시 이상', 4]] },
+  { id: 'kimchi', q: '김치는 하루 몇 번 드시나요?',                    options: [['거의 안 먹음', 0], ['1번', 1], ['2번 이상', 2]] },
+  { id: 'fruit',  q: '과일은 얼마나 드시나요?',                        options: [['거의 안 먹음', 0], ['하루 1번', 1], ['하루 2번 이상', 2]] },
+  { id: 'soy',    q: '콩·두부·된장 음식은 얼마나 드시나요?',            options: [['주 1회 미만', 0], ['주 2–4회', 0.5], ['거의 매일', 1]] },
+  { id: 'nuts',   q: '견과류는 얼마나 드시나요?',                      options: [['거의 안 먹음', 0], ['주 2–3회', 0.4], ['거의 매일', 1]] },
+  { id: 'meat',   q: '고기·생선·달걀 반찬은 하루 몇 번?',               options: [['0–1번', 0.5], ['2번 정도', 1.5], ['3번 이상', 3]] },
+  { id: 'tea',    q: '녹차 등 무가당 차는 하루 몇 잔?',                 options: [['안 마심', 0], ['1잔', 1], ['2잔 이상', 2]] },
+  { id: 'snack',  q: '과자·단 음료·라면 같은 가공식품은?',              options: [['거의 안 먹음', 0], ['하루 1번', 1], ['하루 2번 이상', 2]] },
+];
+
+// 설문 → 대표 음식 매핑
+const SURVEY_FOODS = {
+  veg:   ['시금치나물', '콩나물무침', '오이무침', '무생채'],
+  fruit: ['사과', '귤'],
+  meat:  ['제육볶음', '고등어구이', '계란말이', '불고기'],
+  // 레시피 DB에 없는 대표 음식은 식재료 조합으로 정의
+  custom: {
+    '녹차 한 잔':    { '녹차잎': 2 },
+    '과자·단 음료':  { '백설탕': 20, '식빵': 40 },
+  },
+};
+
+// 식사 기록 빠른 추가 칩
+const QUICK_FOODS = ['잡곡밥', '쌀밥', '된장찌개', '김치찌개', '배추김치', '시금치나물', '계란말이', '사과', '약콩두유'];
 
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
 let currentStep = 1;
-// 추가된 식사: [{ name:'비빔밥', meal:'아침', analysis:{...} }, ...]
+// 식사 기록: [{ name:'비빔밥', meal:'lunch', portion:1, analysis:{...} }, ...]
 let addedMeals = [];
-const selectedGoals = new Set();
+// 설문 응답: { questionId: value }
+const surveyAnswers = {};
+let inputMode = 'survey';                       // 'survey' | 'log'
+const selectedGoals = new Set(['weight']);      // 체중 관리는 항상 포함
+const selectedAllergies = new Set();
 let pdiResult = null;
 let chartInstance = null;
 let gender = 'female';
+// 제품 세트 구성 (결과 화면에서 커스터마이징)
+const productSets = { optimal: null, recommended: null };
 
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   renderActivityOptions();
+  renderAllergyChips();
+  renderSurvey();
+  renderQuickChips();
+  setInputMode('survey');
   renderHealthGoals();
   renderProductGrid();
   renderMealList();
   initAutocomplete();
+  // 상세 분석은 펼칠 때 그림 (접힌 상태에서는 크기가 0이라 차트·생키를 그릴 수 없음)
+  const detail = document.getElementById('detail-analysis');
+  if (detail) detail.addEventListener('toggle', () => { if (detail.open && pdiResult) renderDetailAnalysis(pdiResult); });
 });
 
 // ══════════════════════════════════════════════
@@ -195,10 +274,11 @@ function setGender(g) {
   document.getElementById('gender-female').classList.toggle('border-emerald-500', g === 'female');
   document.getElementById('gender-female').classList.toggle('bg-emerald-50', g === 'female');
   document.getElementById('gender-female').classList.toggle('border-gray-200', g !== 'female');
+  updateProfilePreview();
 }
 
 // ══════════════════════════════════════════════
-// PROFILE  (나이·신장·체중·활동량 → PFS 식단 점수)
+// PROFILE  (성별·나이·키·체중·허리둘레·활동량·알레르기 → 기준 칼로리)
 // ══════════════════════════════════════════════
 function renderActivityOptions() {
   const sel = document.getElementById('profile-activity');
@@ -206,6 +286,25 @@ function renderActivityOptions() {
   sel.innerHTML = Object.entries(PFS_ACTIVITY_LEVELS).map(([id, a]) =>
     '<option value="' + id + '"' + (id === 'low' ? ' selected' : '') + '>' + a.name + ' · ' + a.desc + '</option>'
   ).join('');
+}
+
+function renderAllergyChips() {
+  const el = document.getElementById('allergy-chips');
+  if (!el) return;
+  el.innerHTML = ALLERGENS.map(a => {
+    const on = selectedAllergies.has(a.id);
+    return '<button type="button" onclick="toggleAllergy(\'' + a.id + '\')" aria-pressed="' + on + '"'
+      + ' class="px-3 py-1.5 rounded-full text-sm border-2 transition '
+      + (on ? 'border-red-400 bg-red-50 text-red-700 font-bold' : 'border-gray-200 text-gray-600 hover:border-gray-300') + '">'
+      + (on ? '<i class="fas fa-check mr-1 text-xs"></i>' : '') + a.name + '</button>';
+  }).join('');
+}
+
+function toggleAllergy(id) {
+  if (selectedAllergies.has(id)) selectedAllergies.delete(id);
+  else selectedAllergies.add(id);
+  renderAllergyChips();
+  renderMealList();
 }
 
 // 입력값 읽기 — 빈 칸은 null
@@ -219,24 +318,58 @@ function readProfile() {
     age:        num('profile-age'),
     height:     num('profile-height'),
     weight:     num('profile-weight'),
+    waist:      num('profile-waist'),
     prevWeight: num('profile-prev-weight'),
     activity:   document.getElementById('profile-activity').value,
+    allergies:  new Set(selectedAllergies),
   };
 }
 
-// 신체 정보는 선택 입력 — 모두 비우면 PFS 점수만 생략, 일부만 입력하거나 범위를 벗어나면 차단
+// 나이·키·체중은 기준 칼로리 산출에 필수
 function validateProfile(p) {
-  const required = [['age', '나이', 3, 120], ['height', '신장', 80, 230], ['weight', '체중', 10, 300]];
-  const filled = required.filter(([k]) => p[k] !== null);
-  if (filled.length && filled.length < required.length) {
-    return 'PFS 식단 점수를 계산하려면 나이·신장·체중을 모두 입력해주세요.';
-  }
-  for (const [k, label, min, max] of [...required, ['prevWeight', '이전 체중', 10, 300]]) {
+  const fields = [
+    ['age', '나이', 3, 120, true], ['height', '키', 80, 230, true], ['weight', '체중', 10, 300, true],
+    ['waist', '허리둘레', 40, 200, false], ['prevWeight', '이전 체중', 10, 300, false],
+  ];
+  const missing = fields.filter(f => f[4] && p[f[0]] === null).map(f => f[1]);
+  if (missing.length) return '필수 항목(' + missing.join('·') + ')을 입력해주세요. 기준 칼로리 계산에 필요합니다.';
+  for (const [k, label, min, max] of fields) {
     if (p[k] !== null && !(p[k] >= min && p[k] <= max)) {
       return label + '은(는) ' + min + '–' + max + ' 범위로 입력해주세요.';
     }
   }
   return null;
+}
+
+// BMI (대한비만학회 기준) · 복부비만 (남 90cm, 여 85cm 이상)
+function bodyIndices(p) {
+  const out = {};
+  if (p.height > 0 && p.weight > 0) {
+    out.bmi = p.weight / ((p.height / 100) ** 2);
+    if (out.bmi < 18.5)      out.bmiLabel = '저체중';
+    else if (out.bmi < 23)   out.bmiLabel = '정상';
+    else if (out.bmi < 25)   out.bmiLabel = '비만 전단계';
+    else                     out.bmiLabel = '비만';
+  }
+  if (p.waist > 0) out.abdominal = p.waist >= (p.gender === 'male' ? 90 : 85);
+  return out;
+}
+
+function updateProfilePreview() {
+  const el = document.getElementById('profile-preview');
+  if (!el) return;
+  const p = readProfile();
+  const eer = validateProfile(p) ? null : calculateEER(p);
+  if (eer) document.getElementById('profile-error').classList.add('hidden');
+  if (!eer) {
+    el.innerHTML = '<span class="text-emerald-600">나이·키·체중을 입력하면 기준 칼로리가 표시됩니다</span>';
+    return;
+  }
+  const b = bodyIndices(p);
+  el.innerHTML =
+    '<span>기준 칼로리 <b class="text-lg">' + eer.toLocaleString() + '</b> kcal/일</span>'
+    + '<span class="text-emerald-700">BMI ' + b.bmi.toFixed(1) + ' (' + b.bmiLabel + ')</span>'
+    + (b.abdominal === undefined ? '' : '<span class="' + (b.abdominal ? 'text-red-600 font-bold' : 'text-emerald-700') + '">허리둘레 ' + (b.abdominal ? '복부비만' : '정상') + '</span>');
 }
 
 function submitProfile() {
@@ -383,41 +516,202 @@ function initAutocomplete() {
 }
 
 // ══════════════════════════════════════════════
-// MEAL MANAGEMENT  (식사 추가/삭제)
+// 분석 유틸  (인분 조정 · 식재료 조합 · 알레르기)
 // ══════════════════════════════════════════════
-function addMeal() {
+// 음식명 → 분석 (레시피 우선, 없으면 단품 식재료)
+function analyzeFood(name) {
+  if (RECIPES[name]) return analyzeRecipe(name);
+  if (INGREDIENTS[name] && SINGLE_FOOD_CATS.has(INGREDIENTS[name].cat)) return analyzeIngredient(name);
+  return null;
+}
+
+// 식재료 조합으로 분석 객체 생성 (레시피 DB에 없는 대표 음식용)
+function buildCustomAnalysis(name, ings) {
+  const ingredients = [];
+  let total = 0;
+  for (const [ingName, grams] of Object.entries(ings)) {
+    const ing = INGREDIENTS[ingName];
+    if (!ing) continue;
+    const kcal = ing.kcal * grams / 100;
+    total += kcal;
+    ingredients.push({ name: ingName, grams, kcal: Math.round(kcal), cat: ing.cat, prf: ing.prf, phytos: ing.phytos });
+  }
+  return { name, totalCal: Math.round(total), ingredients };
+}
+
+// 인분 배수 적용 (칼로리·중량·파이토케미컬 선형 비례)
+function scaleAnalysis(analysis, factor) {
+  if (factor === 1) return analysis;
+  const scalePhytos = ph => (typeof ph === 'object' && !Array.isArray(ph))
+    ? Object.fromEntries(Object.entries(ph).map(([k, v]) => [k, v * factor])) : ph;
+  return {
+    ...analysis,
+    totalCal: Math.round(analysis.totalCal * factor),
+    ingredients: analysis.ingredients.map(i => ({
+      ...i,
+      grams:    typeof i.grams === 'number' ? i.grams * factor : factor + '회',
+      servings: typeof i.grams === 'number' ? undefined : factor,
+      kcal:     Math.round(i.kcal * factor),
+      phytos:   scalePhytos(i.phytos),
+    })),
+  };
+}
+
+// 음식에 포함된 알레르기 유발 식품 (선택한 항목만)
+function findAllergens(name, analysis, allergySet) {
+  if (!allergySet || !allergySet.size) return [];
+  const names = [name, ...analysis.ingredients.map(i => i.name)];
+  return ALLERGENS.filter(a => allergySet.has(a.id) && names.some(n => a.re.test(n))).map(a => a.name);
+}
+
+function productAllergens(prod, allergySet) {
+  return (prod.allergens || []).filter(id => allergySet.has(id))
+    .map(id => (ALLERGENS.find(a => a.id === id) || {}).name);
+}
+
+// ══════════════════════════════════════════════
+// STEP 2 · 입력 모드 (설문 / 식사 기록)
+// ══════════════════════════════════════════════
+function setInputMode(mode) {
+  inputMode = mode;
+  for (const m of ['survey', 'log']) {
+    const on = m === mode;
+    document.getElementById('panel-' + m).classList.toggle('hidden', !on);
+    document.getElementById('tab-' + m).className = 'flex-1 py-2.5 rounded-xl text-sm font-bold transition '
+      + (on ? 'bg-white text-emerald-800 shadow' : 'text-gray-500 hover:text-gray-700');
+  }
+}
+
+function submitDietInput() {
+  const el = document.getElementById('step2-error');
+  if (!addedMeals.length && !isSurveyComplete()) {
+    const answered = Object.keys(surveyAnswers).length;
+    el.querySelector('span').textContent = answered
+      ? '설문 ' + (SURVEY_QUESTIONS.length - answered) + '개 문항이 남았어요. 모두 답하거나 식사를 1개 이상 기록해주세요.'
+      : '식습관 설문에 답하거나 오늘 식사를 1개 이상 기록해주세요.';
+    el.classList.remove('hidden');
+    return;
+  }
+  el.classList.add('hidden');
+  goToStep(3);
+}
+
+// ── 설문 ─────────────────────────────────────
+function renderSurvey() {
+  const el = document.getElementById('survey-questions');
+  if (!el) return;
+  el.innerHTML = SURVEY_QUESTIONS.map((q, qi) => {
+    const answered = q.id in surveyAnswers;
+    return '<div class="rounded-2xl border ' + (answered ? 'border-emerald-200 bg-emerald-50/40' : 'border-gray-100 bg-gray-50') + ' p-4">'
+      + '<div class="text-sm font-bold text-gray-800 mb-2.5"><span class="text-emerald-700 mr-1">Q' + (qi + 1) + '.</span>' + q.q + '</div>'
+      + '<div class="flex flex-wrap gap-2">'
+      + q.options.map(([label, v], oi) => {
+          const on = answered && surveyAnswers[q.id] === v;
+          return '<button type="button" onclick="answerSurvey(\'' + q.id + '\',' + oi + ')" aria-pressed="' + on + '"'
+            + ' class="px-4 py-2 rounded-xl text-sm border-2 transition '
+            + (on ? 'border-emerald-600 bg-emerald-600 text-white font-bold' : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300') + '">'
+            + label + '</button>';
+        }).join('')
+      + '</div></div>';
+  }).join('')
+  + '<div class="text-right text-xs text-gray-500">응답 ' + Object.keys(surveyAnswers).length + ' / ' + SURVEY_QUESTIONS.length + '</div>';
+}
+
+function answerSurvey(qid, optIdx) {
+  const q = SURVEY_QUESTIONS.find(x => x.id === qid);
+  surveyAnswers[qid] = q.options[optIdx][1];
+  renderSurvey();
+  if (isSurveyComplete()) document.getElementById('step2-error').classList.add('hidden');
+}
+
+function isSurveyComplete() {
+  return SURVEY_QUESTIONS.every(q => q.id in surveyAnswers);
+}
+
+// 1일 섭취량을 1인분 단위로 나눔 (예: 1.5 → [1, 0.5])
+function splitPortions(total) {
+  const out = [];
+  for (let left = total; left > 0.001; left -= 1) out.push(Math.min(1, +left.toFixed(2)));
+  return out;
+}
+
+// 설문 응답 → 대표 음식으로 구성한 예측 1일 식단
+function buildSurveyDiet(ans) {
+  const diet = [];
+  const push = (name, meal, portion, analysis) => {
+    analysis = analysis || analyzeFood(name);
+    if (!analysis || !(portion > 0)) return;
+    diet.push({ name, meal, portion, analysis: scaleAnalysis(analysis, portion), source: 'survey' });
+  };
+  const custom = name => buildCustomAnalysis(name, SURVEY_FOODS.custom[name]);
+  const slots = ['breakfast', 'lunch', 'dinner'].slice(3 - ans.meals);
+  const slotAt = i => slots[i % slots.length];
+
+  // 밥
+  for (const slot of slots) {
+    if (ans.rice === 'white')      push('쌀밥', slot, 1);
+    else if (ans.rice === 'grain') push('잡곡밥', slot, 1);
+    else { push('쌀밥', slot, 0.5); push('잡곡밥', slot, 0.5); }
+  }
+  // 반찬
+  splitPortions(ans.veg).forEach((p, i)    => push(SURVEY_FOODS.veg[i % SURVEY_FOODS.veg.length], slotAt(i), p));
+  splitPortions(ans.kimchi).forEach((p, i) => push('배추김치', slotAt(i), p));
+  splitPortions(ans.soy).forEach((p, i)    => push('된장찌개', slotAt(i + 1), p));
+  splitPortions(ans.meat).forEach((p, i)   => push(SURVEY_FOODS.meat[i % SURVEY_FOODS.meat.length], slotAt(i + 1), p));
+  // 간식류
+  splitPortions(ans.fruit).forEach((p, i)  => push(SURVEY_FOODS.fruit[i % SURVEY_FOODS.fruit.length], 'snack', p));
+  splitPortions(ans.nuts).forEach(p        => push('아몬드', 'snack', p));
+  splitPortions(ans.tea).forEach(p         => push('녹차 한 잔', 'snack', p, custom('녹차 한 잔')));
+  splitPortions(ans.snack).forEach((p, i)  => i % 2 === 0
+    ? push('과자·단 음료', 'snack', p, custom('과자·단 음료'))
+    : push('라면', 'snack', p));
+  return diet;
+}
+
+// ══════════════════════════════════════════════
+// STEP 2 · 식사 기록
+// ══════════════════════════════════════════════
+const MEAL_SLOTS = [
+  { id: 'breakfast', name: '아침', icon: '🌅' },
+  { id: 'lunch',     name: '점심', icon: '☀️' },
+  { id: 'dinner',    name: '저녁', icon: '🌙' },
+  { id: 'snack',     name: '간식', icon: '🍪' },
+];
+
+function renderQuickChips() {
+  const el = document.getElementById('quick-chips');
+  if (!el) return;
+  el.innerHTML = QUICK_FOODS.filter(n => analyzeFood(n)).map(n =>
+    '<button type="button" onclick="addMeal(\'' + n + '\')" class="text-xs text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-full transition">+ ' + n + '</button>'
+  ).join('');
+}
+
+function addMeal(nameOverride) {
   const input    = document.getElementById('meal-input');
   const mealType = document.getElementById('meal-type').value;
-  const rawName  = input.value.trim();
+  const portion  = Number(document.getElementById('meal-portion').value) || 1;
+  const rawName  = (nameOverride || input.value).trim();
 
   if (!rawName) {
     showInputError('음식 이름을 입력해주세요.');
     return;
   }
 
-  // ① 레시피 DB 매칭
-  // ② 단품 식재료 매칭
-  let analysis = null;
-  if (RECIPES[rawName]) {
-    analysis = analyzeRecipe(rawName);
-  } else if (INGREDIENTS[rawName] && SINGLE_FOOD_CATS.has(INGREDIENTS[rawName].cat)) {
-    analysis = analyzeIngredient(rawName);
-  } else {
-    // 유사 검색 힌트
+  const analysis = analyzeFood(rawName);
+  if (!analysis) {
     const closeR = RECIPE_NAMES.filter(n => n.includes(rawName)).slice(0, 3);
     const closeI = INGREDIENT_NAMES.filter(n => n.includes(rawName)).slice(0, 3);
     const close  = [...closeR, ...closeI].slice(0, 3);
-    if (close.length) {
-      showInputError('"' + rawName + '"을 찾을 수 없습니다. 혹시 ' + close.join(', ') + ' 이신가요?');
-    } else {
-      showInputError('"' + rawName + '"은 현재 지원되지 않는 음식입니다. 자동완성 목록에서 선택해주세요.');
-    }
+    showInputError(close.length
+      ? '"' + rawName + '"을 찾을 수 없습니다. 혹시 ' + close.join(', ') + ' 이신가요?'
+      : '"' + rawName + '"은 현재 지원되지 않는 음식입니다. 자동완성 목록에서 선택해주세요.');
     return;
   }
 
   clearInputError();
-  addedMeals.push({ name: rawName, meal: mealType, analysis });
-  input.value = '';
+  document.getElementById('step2-error').classList.add('hidden');
+  addedMeals.push({ name: rawName, meal: mealType, portion, analysis: scaleAnalysis(analysis, portion) });
+  if (!nameOverride) input.value = '';
   renderMealList();
 }
 
@@ -426,100 +720,54 @@ function removeMeal(idx) {
   renderMealList();
 }
 
+// 끼니 카드의 '+ 추가' → 해당 끼니로 입력창 이동
+function focusMealSlot(slot) {
+  document.getElementById('meal-type').value = slot;
+  const input = document.getElementById('meal-input');
+  input.focus();
+  input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function portionLabel(p) {
+  return { 0.5: '½인분', 1: '1인분', 1.5: '1½인분', 2: '2인분' }[p] || (p + '인분');
+}
+
+// 식재료 구성은 보여주지 않고 음식명·양·칼로리만 간단히 (분석 피드백은 결과 화면에서)
 function renderMealList() {
   const container = document.getElementById('meal-list');
-  const emptyMsg  = document.getElementById('meal-empty');
-  const mealCount = document.getElementById('meal-count');
+  if (!container) return;
+  const total = addedMeals.reduce((s, m) => s + m.analysis.totalCal, 0);
+  document.getElementById('meal-count').textContent = '(' + addedMeals.length + '개)';
+  document.getElementById('meal-total-kcal').textContent = addedMeals.length ? '총 ' + Math.round(total).toLocaleString() + ' kcal' : '';
 
-  mealCount.textContent = '(' + addedMeals.length + '개)';
-
-  if (!addedMeals.length) {
-    container.innerHTML = '';
-    emptyMsg.classList.remove('hidden');
-    return;
-  }
-  emptyMsg.classList.add('hidden');
-
-  // 식사 시간별 그룹
-  const mealLabels = { breakfast: '아침 🌅', lunch: '점심 ☀️', dinner: '저녁 🌙', snack: '간식 🍪' };
-  const grouped = {};
-  addedMeals.forEach((item, idx) => {
-    if (!grouped[item.meal]) grouped[item.meal] = [];
-    grouped[item.meal].push({ ...item, idx });
-  });
-
-  container.innerHTML = Object.entries(grouped).map(([mealKey, items]) =>
-    '<div class="mb-4">'
-    + '<div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-1">' + (mealLabels[mealKey] || mealKey) + '</div>'
-    + items.map(item => renderMealCard(item)).join('')
-    + '</div>'
-  ).join('');
-}
-
-function renderMealCard(item) {
-  const { name, analysis, idx } = item;
-  const isSingle  = analysis.isSingleFood;
-  const isBobsnu  = isSingle && analysis.ingredients[0]?.cat === 'bobsnu';
-  const prod       = isBobsnu ? BOBSNU_PRODUCTS.find(p => p.name === name) : null;
-
-  // 식재료 상위 4개만 표시
-  const topIngs = analysis.ingredients
-    .sort((a, b) => b.kcal - a.kcal)
-    .slice(0, 4);
-
-  const prfIngs  = analysis.ingredients.filter(i => i.prf);
-  const prfKcal  = prfIngs.reduce((s, i) => s + i.kcal, 0);
-  const prfRatio = analysis.totalCal > 0 ? Math.round((prfKcal / analysis.totalCal) * 100) : 0;
-
-  // 배지
-  const singleIng  = isSingle ? analysis.ingredients[0] : null;
-  const singleCat  = singleIng ? (FOOD_CATEGORIES[singleIng.cat] || {}) : null;
-  const badge = isBobsnu
-    ? '<span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold">'
-      + (prod ? prod.icon + ' ' : '⭐ ') + '밥스누</span>'
-    : isSingle
-      ? '<span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-medium">'
-        + (singleCat ? singleCat.icon + ' ' : '') + '단품</span>'
-      : '';
-
-  return '<div class="bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm">'
-    + '<div class="flex items-start justify-between">'
-    + '<div class="flex-1">'
-    + '<div class="flex items-center gap-2 mb-2">'
-    + '<span class="font-bold text-gray-900">' + name + '</span>'
-    + '<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">' + analysis.totalCal + ' kcal</span>'
-    + badge
-    + '<span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">PRF ' + prfRatio + '%</span>'
-    + '</div>'
-    // 식재료 태그
-    + '<div class="flex flex-wrap gap-1">'
-    + topIngs.map(i => {
-        const cat   = FOOD_CATEGORIES[i.cat] || {};
-        const badge = i.prf ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-50 text-gray-500 border border-gray-200';
-        return '<span class="text-xs px-2 py-0.5 rounded-full ' + badge + '">'
-          + (cat.icon || '') + ' ' + i.name + ' ' + i.grams + 'g</span>';
-      }).join('')
-    + (analysis.ingredients.length > 4
-        ? '<span class="text-xs px-2 py-0.5 rounded-full bg-gray-50 text-gray-400">+' + (analysis.ingredients.length - 4) + '가지</span>'
-        : '')
-    + '</div>'
-    + '</div>'
-    + '<button onclick="removeMeal(' + idx + ')" class="ml-3 text-gray-300 hover:text-red-400 transition flex-shrink-0 mt-0.5">'
-    + '<i class="fas fa-times-circle text-lg"></i></button>'
-    + '</div>'
-    // 파이토케미컬 미리보기
-    + renderPhytoMiniBar(analysis)
-    + '</div>';
-}
-
-function renderPhytoMiniBar(analysis) {
-  const phytoSet = new Set(analysis.ingredients.flatMap(i => Object.keys((typeof i.phytos === 'object' && !Array.isArray(i.phytos)) ? i.phytos : {})));
-  if (!phytoSet.size) return '';
-  const chips = Array.from(phytoSet).map(key => {
-    const g = PHYTOCHEMICAL_GROUPS[key];
-    return g ? '<span class="text-xs px-1.5 py-0.5 rounded text-white/90 font-medium" style="background:' + g.color + '">' + g.icon + ' ' + g.name + '</span>' : '';
+  container.innerHTML = MEAL_SLOTS.map(slot => {
+    const items = addedMeals.map((m, idx) => ({ ...m, idx })).filter(m => m.meal === slot.id);
+    const kcal = items.reduce((s, m) => s + m.analysis.totalCal, 0);
+    return '<div class="border border-gray-100 rounded-2xl p-4 bg-white shadow-sm">'
+      + '<div class="flex items-center justify-between mb-2">'
+      + '<span class="font-bold text-gray-800 text-sm">' + slot.icon + ' ' + slot.name + '</span>'
+      + '<span class="text-xs text-gray-400">' + (items.length ? Math.round(kcal) + ' kcal' : '') + '</span>'
+      + '</div>'
+      + (items.length
+          ? '<ul class="divide-y divide-gray-50">' + items.map(renderMealItem).join('') + '</ul>'
+          : '<p class="text-xs text-gray-400 py-2">기록 없음</p>')
+      + '<button type="button" onclick="focusMealSlot(\'' + slot.id + '\')" class="mt-2 text-xs text-emerald-700 font-medium hover:underline"><i class="fas fa-plus mr-1"></i>' + slot.name + ' 추가</button>'
+      + '</div>';
   }).join('');
-  return '<div class="mt-2 pt-2 border-t border-gray-50 flex flex-wrap gap-1">' + chips + '</div>';
+}
+
+function renderMealItem(item) {
+  const allergy = findAllergens(item.name, item.analysis, selectedAllergies);
+  return '<li class="flex items-center justify-between gap-2 py-1.5">'
+    + '<div class="min-w-0">'
+    + '<span class="text-sm text-gray-900">' + item.name + '</span>'
+    + (item.portion !== 1 ? '<span class="ml-1 text-xs text-gray-400">' + portionLabel(item.portion) + '</span>' : '')
+    + (allergy.length ? '<span class="ml-1.5 text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-bold" title="알레르기 주의">⚠ ' + allergy.join('·') + '</span>' : '')
+    + '</div>'
+    + '<div class="flex items-center gap-2 flex-shrink-0">'
+    + '<span class="text-xs text-gray-500">' + item.analysis.totalCal + ' kcal</span>'
+    + '<button type="button" onclick="removeMeal(' + item.idx + ')" class="text-gray-300 hover:text-red-400 transition" aria-label="' + item.name + ' 삭제"><i class="fas fa-times-circle"></i></button>'
+    + '</div></li>';
 }
 
 // 입력 오류 메시지
@@ -533,12 +781,6 @@ function showInputError(msg) {
 function clearInputError() {
   const el = document.getElementById('meal-input-error');
   if (el) el.classList.add('hidden');
-}
-
-// 빠른 추가 (힌트 버튼)
-function quickAdd(name) {
-  const input = document.getElementById('meal-input');
-  if (input) { input.value = name; input.focus(); }
 }
 
 // ══════════════════════════════════════════════
@@ -562,13 +804,13 @@ function quickAdd(name) {
 //   기반의 '존재 여부(binary)' 추정이며,
 //   정량 함량(mg/100g) 데이터가 아닙니다.
 // ══════════════════════════════════════════════
-function calculatePDI() {
+function calculatePDI(meals) {
   let totalCalories = 0, prfCalories = 0;
   const categoryMap = {};
   const phytoMap    = {};
   const allIngredients = [];
 
-  for (const mealEntry of addedMeals) {
+  for (const mealEntry of meals) {
     const { analysis } = mealEntry;
     totalCalories += analysis.totalCal;
 
@@ -700,17 +942,49 @@ function calculatePDI() {
 // ══════════════════════════════════════════════
 // DISPLAY RESULTS
 // ══════════════════════════════════════════════
+// 식사 기록이 있으면 기록 기반(정확), 없으면 설문 기반 예측 식단으로 계산
 function calculateAndShow() {
-  if (!addedMeals.length) {
-    alert('식사를 1개 이상 추가한 뒤 분석을 진행해주세요.');
-    return;
-  }
-  pdiResult = calculatePDI();
-  pdiResult.phytoScore = calculatePhytoScore(pdiResult.phytoMap, selectedGoals);
   const profile = readProfile();
-  pdiResult.pfs = validateProfile(profile) ? null : calculateDietPFS(addedMeals, profile);
+  const profileErr = validateProfile(profile);
+  if (profileErr) { alert(profileErr); goToStep(1); return; }
+
+  const surveyDiet = isSurveyComplete() ? buildSurveyDiet(surveyAnswers) : null;
+  const basis = addedMeals.length ? 'log' : (surveyDiet ? 'survey' : null);
+  if (!basis) { alert('식습관 설문에 답하거나 식사를 1개 이상 기록해주세요.'); goToStep(2); return; }
+
+  const meals = basis === 'log' ? addedMeals : surveyDiet;
+  pdiResult = calculatePDI(meals);
+  pdiResult.meals = meals;
+  pdiResult.basis = basis;
+  pdiResult.surveyPDI = (basis === 'log' && surveyDiet) ? calculatePDI(surveyDiet).pdiScore : null;
+  pdiResult.profile = profile;
+  pdiResult.body = bodyIndices(profile);
+  pdiResult.phytoScore = calculatePhytoScore(pdiResult.phytoMap, selectedGoals);
+  pdiResult.pfs = calculateDietPFS(meals, profile);
+  pdiResult.intake = foodGroupIntake(meals);
+  pdiResult.allergyHits = meals
+    .map(m => ({ name: m.name, allergens: findAllergens(m.name, m.analysis, profile.allergies) }))
+    .filter(x => x.allergens.length);
+  productSets.optimal = null;       // 결과가 바뀌면 세트 구성 초기화
+  productSets.recommended = null;
   goToStep(4);
   displayResults();
+}
+
+// 통곡물 kcal 비율, 채소·과일 섭취량(g) — 주의사항 판단용
+const WHOLE_GRAIN_RE = /현미|흑미|보리|귀리|오트|잡곡|수수|기장|율무|메밀|통밀|퀴노아|차조|^조$|^조\(/;
+function foodGroupIntake(meals) {
+  let total = 0, wholeGrainKcal = 0, vegG = 0, fruitG = 0;
+  for (const m of meals) {
+    total += m.analysis.totalCal;
+    for (const i of m.analysis.ingredients) {
+      const g = typeof i.grams === 'number' ? i.grams : 0;
+      if (i.cat === 'grains' && WHOLE_GRAIN_RE.test(i.name)) wholeGrainKcal += i.kcal;
+      if (i.cat === 'vegetables') vegG += g;
+      if (i.cat === 'fruits') fruitG += g;
+    }
+  }
+  return { wholeGrainPct: total > 0 ? wholeGrainKcal / total * 100 : 0, vegG, fruitG };
 }
 
 function displayResults() {
@@ -727,40 +1001,34 @@ function displayResults() {
   badge.textContent = r.gradeLabel;
   badge.style.backgroundColor = r.gradeColor;
 
+  const basisBadge = document.getElementById('pdi-basis-badge');
+  basisBadge.textContent = r.basis === 'log' ? '식사 기록 기반' : '예측치';
+  basisBadge.className = 'align-middle ml-1 text-xs font-bold px-2 py-0.5 rounded-full '
+    + (r.basis === 'log' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700');
+  document.getElementById('pdi-basis-note').textContent = r.basis === 'log'
+    ? '오늘 기록한 식사로 계산했습니다' + (r.surveyPDI !== null ? ' · 설문 예측 PDI ' + r.surveyPDI.toFixed(1) + '%' : '')
+    : '식습관 설문을 대표 음식으로 환산한 예측치입니다 · 식사를 기록하면 더 정확해집니다';
+
   // ─ Summary Stats ─
   document.getElementById('total-cal').textContent     = Math.round(r.totalCalories) + ' kcal';
   document.getElementById('prf-cal').textContent       = Math.round(r.prfCalories) + ' kcal';
-  document.getElementById('diversity-score').textContent = r.diversityScore + '/12';
+  document.getElementById('diversity-score').textContent = r.phytoScore.coveredCount + '/' + PHYTO_SCORED_KEYS.length;
   document.getElementById('food-cat-count').textContent  = Object.keys(r.categoryMap).length + '가지';
 
-  // ─ Warnings ─
-  if (r.warnings.length) {
-    document.getElementById('warnings-section').classList.remove('hidden');
-    document.getElementById('warnings-list').innerHTML = r.warnings.map(w => '<li>' + w + '</li>').join('');
-  }
-
-  // ─ Ingredient Breakdown Table ─
-  renderIngredientBreakdown(r);
-
-  // ─ Chart ─
-  setTimeout(() => renderCategoryChart(r.categoryMap), 150);
-
-  // ─ Products ─
+  renderKeySummary(r);
+  renderGuide(r);
   renderProductRecommendations(r);
-
-  // ─ Phyto Score ─
+  renderPFSScore(r.pfs);
   renderPhytoScore(r.phytoScore);
 
-  // ─ PFS 식단 점수 & 3개 점수 요약 ─
-  renderPFSScore(r.pfs);
-  renderScoreSummary(r);
+  // 상세 분석은 펼쳐져 있을 때만 그림
+  const detail = document.getElementById('detail-analysis');
+  if (detail && detail.open) renderDetailAnalysis(r);
+}
 
-  // ─ Suggestions ─
-  document.getElementById('diet-suggestions').innerHTML = r.suggestions.map((s, i) =>
-    '<div class="flex items-start gap-3 p-4 bg-emerald-50 rounded-xl">'
-    + '<div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">' + (i + 1) + '</div>'
-    + '<p class="text-gray-700 text-sm">' + s + '</p></div>'
-  ).join('');
+function renderDetailAnalysis(r) {
+  renderIngredientBreakdown(r);
+  setTimeout(() => renderCategoryChart(r.categoryMap), 150);
 }
 
 // ══════════════════════════════════════════════
@@ -790,8 +1058,8 @@ function renderIngredientBreakdown(r) {
   const allIng = getMergedIngredients(r);
 
   // ── 데이터 준비 ──
-  // Col 1: 음식(레시피) — addedMeals 에서
-  const meals = addedMeals; // [{ name, meal, analysis }]
+  // Col 1: 음식 — 계산에 사용된 식단 (식사 기록 또는 설문 예측 식단)
+  const meals = r.meals; // [{ name, meal, analysis }]
 
   // Col 2: 식재료+식품군 (중복 제거됨)
   // Col 3: 파이토케미컬
@@ -842,14 +1110,15 @@ function renderIngredientBreakdown(r) {
     + '<div id="col-meal" style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;padding-right:40px">'
     + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2" style="align-self:flex-end">🍽 음식</div>'
     + meals.map((m, mi) => {
-        const mealLabel = { '아침':'🌅','점심':'☀️','저녁':'🌙','간식':'🍪' }[m.meal] || '🍽';
+        const slot = MEAL_SLOTS.find(x => x.id === m.meal) || { icon: '🍽', name: m.meal };
+        const mealLabel = slot.icon;
         return '<div id="node-meal-' + mi + '" data-col="meal" data-id="' + mi + '"'
           + ' class="sankey-node flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 cursor-pointer select-none transition-all border-blue-300 bg-blue-50 text-blue-800 text-xs font-semibold whitespace-nowrap"'
           + ' style="max-width:140px">'
           + '<span class="text-base leading-none">' + mealLabel + '</span>'
           + '<div style="overflow:hidden">'
           + '<div class="truncate font-bold" style="max-width:100px">' + m.name + '</div>'
-          + '<div class="text-blue-400 font-normal">' + m.meal + ' · ' + Math.round((m.analysis||{}).totalCal||0) + 'kcal</div>'
+          + '<div class="text-blue-400 font-normal">' + slot.name + ' · ' + Math.round((m.analysis||{}).totalCal||0) + 'kcal</div>'
           + '</div>'
           + '</div>';
       }).join('')
@@ -1289,82 +1558,132 @@ function simulateAddFood(prodName) {
   };
 }
 
-// ─ 제품 추천 ─
-function renderProductRecommendations(r) {
+// ─ 제품 추천: 최적 추천 세트 · 권장 세트 · 추가 구성품 ─
+// 부족 파이토케미컬 +3, 선택 목표 파이토케미컬 +2
+function productScore(prod, r) {
   const goalPhytos = new Set(
     Array.from(selectedGoals).flatMap(gid => (HEALTH_GOALS.find(h => h.id === gid) || {}).phytos || [])
   );
   const defSet = new Set(r.deficient);
+  return prod.phytos.reduce((s, p) => s + (defSet.has(p) ? 3 : 0) + (goalPhytos.has(p) ? 2 : 0), 0);
+}
 
-  const scored = BOBSNU_PRODUCTS.map(prod => {
-    let score = 0;
-    for (const p of prod.phytos) {
-      if (defSet.has(p))     score += 3;
-      if (goalPhytos.has(p)) score += 2;
-    }
-    // 시뮬레이션 결과 첨부
-    const sim = simulateAddFood(prod.name);
-    return { ...prod, score, sim };
-  }).sort((a, b) => b.score - a.score).slice(0, 6);
+// 기본 구성: 권장 = 체중 관리 루틴 제품, 최적 = 루틴 + 식단·목표 맞춤 상위 2개 (알레르기 제품 제외)
+function defaultProductSets(r) {
+  const available = BOBSNU_PRODUCTS.filter(p => !productAllergens(p, r.profile.allergies).length);
+  const availNames = new Set(available.map(p => p.name));
+  const routine = [...new Set(WEIGHT_ROUTINE.flatMap(x => x.products))].filter(n => availNames.has(n));
+  const extras = available
+    .filter(p => !routine.includes(p.name))
+    .map(p => ({ name: p.name, s: productScore(p, r) }))
+    .filter(x => x.s > 0)
+    .sort((a, b) => b.s - a.s)
+    .slice(0, 2)
+    .map(x => x.name);
+  return { optimal: [...routine, ...extras], recommended: routine, available };
+}
 
-  document.getElementById('product-recommendations').innerHTML = scored.map(p => {
-    const isTop = p.score > 4;
-    const sim   = p.sim;
+function sameSet(set, arr) {
+  return set.size === arr.length && arr.every(n => set.has(n));
+}
 
-    // ── 델타 배지 HTML ──
-    let deltaHtml = '';
-    if (sim) {
-      // PDI 델타 (소수점 1자리)
-      const pdiSign  = sim.deltaPDI  >= 0 ? '+' : '';
-      const phySign  = sim.deltaPhyto >= 0 ? '+' : '';
-      const pdiColor = sim.deltaPDI  > 0 ? '#10B981' : (sim.deltaPDI < 0 ? '#EF4444' : '#9CA3AF');
-      const phyColor = sim.deltaPhyto > 0 ? '#8B5CF6' : (sim.deltaPhyto < 0 ? '#EF4444' : '#9CA3AF');
+function simBadges(sim) {
+  if (!sim) return '';
+  const pdiColor = sim.deltaPDI > 0 ? 'text-emerald-700' : 'text-gray-400';
+  const phyColor = sim.deltaPhyto > 0 ? 'text-purple-700' : 'text-gray-400';
+  return '<span class="text-xs ' + pdiColor + '">PDI ' + (sim.deltaPDI >= 0 ? '+' : '') + sim.deltaPDI + '%p</span>'
+    + '<span class="text-xs ' + phyColor + '">파이토 ' + (sim.deltaPhyto >= 0 ? '+' : '') + sim.deltaPhyto + '점</span>';
+}
 
-      // 신규 계열 추가 여부
-      const newKeyTags = sim.newKeys.map(k => {
-        const g = PHYTOCHEMICAL_GROUPS[k];
-        return g ? '<span class="text-xs px-1.5 py-0.5 rounded text-white font-medium" style="background:' + g.color + '">' + g.icon + ' ' + g.name + ' 신규</span>' : '';
-      }).join('');
+function renderProductRecommendations(r) {
+  const el = document.getElementById('product-recommendations');
+  const d = defaultProductSets(r);
+  if (!productSets.optimal) {
+    productSets.optimal = new Set(d.optimal);
+    productSets.recommended = new Set(d.recommended);
+  }
+  const byName = Object.fromEntries(BOBSNU_PRODUCTS.map(p => [p.name, p]));
+  const excluded = BOBSNU_PRODUCTS.filter(p => productAllergens(p, r.profile.allergies).length);
 
-      deltaHtml =
-        '<div class="mt-3 pt-3 border-t border-gray-100">'
-        + '<div class="text-xs font-bold text-gray-500 mb-1.5">📊 먹으면 예상 점수 변화</div>'
-        + '<div class="flex flex-wrap gap-2">'
-        // PDI 변화
-        + '<div class="flex items-center gap-1 px-2.5 py-1 rounded-full text-white text-xs font-bold" style="background:' + pdiColor + '">'
-        + '<span>PDI</span>'
-        + '<span>' + pdiSign + sim.deltaPDI + '%p</span>'
-        + '<span class="opacity-75 font-normal">→ ' + sim.newPDI + '%</span>'
-        + '</div>'
-        // 파이토 변화
-        + '<div class="flex items-center gap-1 px-2.5 py-1 rounded-full text-white text-xs font-bold" style="background:' + phyColor + '">'
-        + '<span>🌿파이토</span>'
-        + '<span>' + phySign + sim.deltaPhyto + '점</span>'
-        + '<span class="opacity-75 font-normal">→ ' + sim.newPhyto + '점</span>'
-        + '</div>'
-        + '</div>'
-        // 신규 파이토 계열 태그
-        + (newKeyTags ? '<div class="flex flex-wrap gap-1 mt-1.5">' + newKeyTags + '</div>' : '')
-        + '</div>';
-    }
+  const setDefs = [
+    { key: 'optimal',     title: '⭐ 최적 추천 세트', desc: '체중 관리 루틴 + 내 식단·목표 맞춤 제품', def: d.optimal,     accent: '#059669' },
+    { key: 'recommended', title: '👍 권장 세트',      desc: '체중 관리 기본 루틴 (아침·점심·저녁)',  def: d.recommended, accent: '#2563EB' },
+  ];
 
-    return '<div class="border-2 rounded-2xl p-5 bg-white hover:shadow-md transition-shadow" style="border-color:' + (isTop ? p.color : '#E5E7EB') + '">'
-      + (isTop ? '<div class="text-xs font-bold mb-2" style="color:' + p.color + '"><i class="fas fa-star mr-1"></i>맞춤 추천</div>' : '')
-      + '<div class="flex items-start gap-3 mb-3"><span class="text-3xl">' + p.icon + '</span>'
-      + '<div><div class="font-bold text-gray-900">' + p.name + '</div>'
-      + '<div class="text-xs text-gray-500 mt-0.5">' + p.desc + '</div></div></div>'
-      + '<div class="flex flex-wrap gap-1 mb-2">'
-      + p.targets.map(t => '<span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">' + t + '</span>').join('')
+  const setCards = setDefs.map(sd => {
+    const set = productSets[sd.key];
+    const custom = !sameSet(set, sd.def);
+    const rate = custom ? PRODUCT_SET_DISCOUNT.custom : PRODUCT_SET_DISCOUNT[sd.key];
+    const items = [...set].map(n => byName[n]).filter(Boolean);
+    const addable = d.available.filter(p => !set.has(p.name));
+    return '<div class="rounded-2xl border-2 p-5" style="border-color:' + sd.accent + '33">'
+      + '<div class="flex flex-wrap items-start justify-between gap-2 mb-3">'
+      + '<div><div class="font-bold text-gray-900">' + sd.title + '</div><div class="text-xs text-gray-500 mt-0.5">' + sd.desc + '</div></div>'
+      + (items.length
+          ? '<div class="text-right"><span class="inline-block px-3 py-1 rounded-full text-white text-sm font-bold" style="background:' + (custom ? '#6B7280' : sd.accent) + '">'
+            + (custom ? '커스텀 ' : '세트 ') + rate + '% 할인</span>'
+            + (custom ? '<div class="text-xs text-gray-400 mt-1">기본 구성 시 ' + PRODUCT_SET_DISCOUNT[sd.key] + '% · <button type="button" onclick="resetProductSet(\'' + sd.key + '\')" class="underline">되돌리기</button></div>' : '')
+            + '</div>'
+          : '')
       + '</div>'
-      + '<div class="flex flex-wrap gap-1">'
-      + p.phytos.map(ph => {
-          const g = PHYTOCHEMICAL_GROUPS[ph];
-          return '<span class="text-xs px-2 py-0.5 rounded-full text-white font-medium" style="background:' + (g ? g.color : '#6B7280') + '">' + (g ? g.name : ph) + '</span>';
-        }).join('')
-      + '</div>'
-      + deltaHtml
+      + (items.length
+          ? '<ul class="divide-y divide-gray-100">' + items.map(p =>
+              '<li class="flex items-center gap-3 py-2">'
+              + '<span class="text-2xl">' + p.icon + '</span>'
+              + '<div class="flex-1 min-w-0"><div class="text-sm font-bold text-gray-900">' + p.name + '</div>'
+              + '<div class="flex flex-wrap gap-x-2 text-xs text-gray-500"><span class="truncate">' + p.desc + '</span>' + simBadges(simulateAddFood(p.name)) + '</div></div>'
+              + '<button type="button" onclick="toggleSetItem(\'' + sd.key + '\',\'' + p.name + '\')" class="text-gray-300 hover:text-red-400 flex-shrink-0" aria-label="' + p.name + ' 빼기"><i class="fas fa-minus-circle text-lg"></i></button>'
+              + '</li>').join('') + '</ul>'
+          : '<p class="text-sm text-gray-400 py-3">제품을 1개 이상 담아주세요</p>')
+      + (addable.length
+          ? '<div class="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-1.5 items-center"><span class="text-xs text-gray-400 mr-1">구성 추가:</span>'
+            + addable.map(p => '<button type="button" onclick="toggleSetItem(\'' + sd.key + '\',\'' + p.name + '\')" class="text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-emerald-400 hover:text-emerald-700">+ ' + p.icon + ' ' + p.name + '</button>').join('')
+            + '</div>'
+          : '')
       + '</div>';
   }).join('');
+
+  // 추가 구성품: 최적 세트 기본 구성에 없는 제품 — 먹으면 예상 점수 변화와 함께
+  const addons = d.available.filter(p => !d.optimal.includes(p.name))
+    .map(p => ({ p, s: productScore(p, r), sim: simulateAddFood(p.name) }))
+    .sort((a, b) => b.s - a.s);
+  const addonCards = addons.map(({ p, sim }) => {
+    const inSet = productSets.optimal.has(p.name);
+    return '<div class="rounded-2xl border border-gray-100 bg-gray-50 p-4 flex flex-col">'
+      + '<div class="flex items-start gap-2 mb-2"><span class="text-2xl">' + p.icon + '</span>'
+      + '<div class="min-w-0"><div class="text-sm font-bold text-gray-900">' + p.name + '</div><div class="text-xs text-gray-500">' + p.desc + '</div></div></div>'
+      + '<div class="flex flex-wrap gap-1 mb-2">' + p.phytos.map(ph => {
+          const g = PHYTOCHEMICAL_GROUPS[ph];
+          return '<span class="text-xs px-1.5 py-0.5 rounded text-white" style="background:' + (g ? g.color : '#6B7280') + '">' + (g ? g.name : ph) + '</span>';
+        }).join('') + '</div>'
+      + '<div class="flex gap-2 mb-3">' + simBadges(sim) + '</div>'
+      + '<button type="button" onclick="toggleSetItem(\'optimal\',\'' + p.name + '\')" class="mt-auto w-full py-2 rounded-xl text-xs font-bold transition '
+      + (inSet ? 'bg-white border border-emerald-600 text-emerald-700' : 'bg-emerald-700 text-white hover:bg-emerald-800') + '">'
+      + (inSet ? '✓ 최적 세트에 담김 (빼기)' : '+ 최적 세트에 추가') + '</button>'
+      + '</div>';
+  }).join('');
+
+  el.innerHTML =
+    '<div class="grid lg:grid-cols-2 gap-4">' + setCards + '</div>'
+    + (addons.length
+        ? '<div><div class="text-sm font-bold text-gray-800 mb-2">➕ 추가 구성품</div>'
+          + '<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">' + addonCards + '</div></div>'
+        : '')
+    + (excluded.length
+        ? '<p class="text-xs text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>알레르기(' + [...new Set(excluded.flatMap(p => productAllergens(p, r.profile.allergies)))].join('·') + ')로 제외된 제품: ' + excluded.map(p => p.name).join(', ') + '</p>'
+        : '')
+    + '<p class="text-xs text-gray-400">※ 할인율은 가안입니다 (기본 구성: 최적 ' + PRODUCT_SET_DISCOUNT.optimal + '% · 권장 ' + PRODUCT_SET_DISCOUNT.recommended + '% / 구성 변경 시 ' + PRODUCT_SET_DISCOUNT.custom + '%). 예상 점수 변화는 1회분 추가 기준입니다.</p>';
+}
+
+function toggleSetItem(key, name) {
+  const set = productSets[key];
+  if (set.has(name)) set.delete(name); else set.add(name);
+  renderProductRecommendations(pdiResult);
+}
+
+function resetProductSet(key) {
+  productSets[key] = new Set(defaultProductSets(pdiResult)[key]);
+  renderProductRecommendations(pdiResult);
 }
 
 // ── 파이토 점수 렌더링 ────────────────────────
@@ -1468,41 +1787,162 @@ function renderPhytoScore(ps) {
     + '</div>';
 }
 
-// ── 점수 요약 (PDI · 파이토 · PFS 나란히) ────────
-function renderScoreSummary(r) {
-  const el = document.getElementById('score-summary');
+// ── 핵심 요약 ────────────────────────────────
+// 섭취/기준 칼로리 게이지 + PDI · 파이토 다양성 · 단백질 · 식이섬유 · PFS
+function renderKeySummary(r) {
+  const el = document.getElementById('key-summary');
   if (!el) return;
+  const pfs = r.pfs;
+  const eer = pfs.eer;
+  const intake = r.totalCalories;
+  const ratio = eer > 0 ? intake / eer : 0;
+  const n = pfs.daily.nutrients;
 
-  function tile(bg, label, valueHtml, subHtml) {
-    return '<div class="rounded-2xl p-5 ' + bg + '">'
+  // 칼로리 게이지: 0–150% 눈금, 100% 위치에 기준선
+  let calState, calColor;
+  if (ratio > 1.1)       { calState = '초과 +' + Math.round(intake - eer).toLocaleString() + ' kcal'; calColor = '#EF4444'; }
+  else if (ratio >= 0.8) { calState = '적정';                                                        calColor = '#10B981'; }
+  else                   { calState = '부족 −' + Math.round(eer - intake).toLocaleString() + ' kcal'; calColor = '#F59E0B'; }
+  const gaugeMax = 1.5;
+  const fillPct = Math.min(ratio, gaugeMax) / gaugeMax * 100;
+  const markPct = 1 / gaugeMax * 100;
+
+  // 목표 대비 막대 (target 도달 = 100%)
+  function miniBar(value, target, color) {
+    const pct = target > 0 ? Math.min(value / target, 1) * 100 : 0;
+    return '<div class="h-2 bg-gray-100 rounded-full overflow-hidden mt-2"><div class="h-2 rounded-full" style="width:' + pct + '%;background:' + color + '"></div></div>';
+  }
+  function tile(label, valueHtml, sub, extra) {
+    return '<div class="bg-gray-50 rounded-2xl p-4 min-w-0">'
       + '<div class="text-xs font-bold text-gray-500 mb-1">' + label + '</div>'
-      + '<div class="flex items-baseline gap-1.5">' + valueHtml + '</div>'
-      + '<div class="text-xs text-gray-500 mt-1">' + subHtml + '</div>'
+      + '<div class="flex items-baseline gap-1 flex-wrap">' + valueHtml + '</div>'
+      + (extra || '')
+      + '<div class="text-xs text-gray-400 mt-1.5">' + sub + '</div>'
       + '</div>';
   }
 
+  const protLo = pfs.ranges.protein[0], protHi = pfs.ranges.protein[1];
+  const fibT = pfs.ranges.fiber;
   const ps = r.phytoScore;
-  let pfsTile;
-  if (r.pfs) {
-    const t = PFS_TREND_LABELS[r.pfs.trend];
-    pfsTile = tile('bg-sky-50', '🥗 PFS 식단 점수',
-      '<span class="text-3xl font-black" style="color:' + t.color + '">' + r.pfs.daily.total.toFixed(2) + '</span>'
-      + '<span class="text-xs font-bold px-2 py-0.5 rounded-full text-white" style="background:' + t.color + '">' + t.name + '</span>',
-      'Basic ' + r.pfs.daily.basic.toFixed(2) + ' / 4.0 · ' + t.formula);
-  } else {
-    pfsTile = tile('bg-sky-50', '🥗 PFS 식단 점수',
-      '<span class="text-lg font-bold text-gray-400">프로필 미입력</span>',
-      '<button onclick="goToStep(1)" class="text-sky-700 font-medium underline">나이·신장·체중 입력하기</button>');
-  }
+  const t = PFS_TREND_LABELS[pfs.trend];
+
+  const basisHtml = r.basis === 'log'
+    ? '<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">🍽 오늘 식사 기록 기반</span>'
+      + (r.surveyPDI !== null ? '<span class="text-xs text-gray-500">설문 예측 PDI ' + r.surveyPDI.toFixed(1) + '% → 기록 PDI ' + r.pdiScore.toFixed(1) + '%</span>' : '')
+    : '<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">📝 설문 기반 예측치</span>'
+      + '<button type="button" onclick="goToStep(2); setInputMode(\'log\')" class="text-xs text-emerald-700 underline">식사를 기록하면 더 정확해져요</button>';
 
   el.innerHTML =
-    tile('bg-emerald-50', '📊 PDI 점수',
-      '<span class="text-3xl font-black" style="color:' + r.gradeColor + '">' + r.pdiScore.toFixed(1) + '%</span>',
-      'PRF 칼로리 비율 · 목표 40%')
-    + tile('bg-purple-50', '🌿 파이토케미컬 점수',
-      '<span class="text-3xl font-black text-purple-700">' + ps.total + '</span><span class="text-sm text-gray-400">/ 100</span>',
-      ps.coveredCount + '/' + PHYTO_SCORED_KEYS.length + '개 계열 검출')
-    + pfsTile;
+    '<div class="flex flex-wrap items-center justify-between gap-2 mb-5">'
+    + '<h3 class="text-xl font-bold text-gray-900">📋 나의 식단 요약</h3>'
+    + '<div class="flex flex-wrap items-center gap-2">' + basisHtml + '</div>'
+    + '</div>'
+
+    // 칼로리 게이지
+    + '<div class="rounded-2xl border border-gray-100 p-5 mb-4">'
+    + '<div class="flex flex-wrap items-end justify-between gap-2 mb-3">'
+    + '<div><div class="text-xs font-bold text-gray-500 mb-1">섭취 칼로리 / 기준 칼로리</div>'
+    + '<div class="text-2xl md:text-3xl font-black text-gray-900">' + Math.round(intake).toLocaleString()
+    + '<span class="text-base font-medium text-gray-400"> / ' + eer.toLocaleString() + ' kcal</span></div></div>'
+    + '<div class="text-right"><span class="text-3xl font-black" style="color:' + calColor + '">' + Math.round(ratio * 100) + '%</span>'
+    + '<div class="text-sm font-bold" style="color:' + calColor + '">' + calState + '</div></div>'
+    + '</div>'
+    + '<div class="relative h-5 bg-gray-100 rounded-full" role="img" aria-label="기준 칼로리 대비 ' + Math.round(ratio * 100) + '%">'
+    + '<div class="absolute inset-y-0 left-0 rounded-full transition-all duration-700" style="width:' + fillPct + '%;background:' + calColor + '"></div>'
+    + '<div class="absolute -top-1 -bottom-1 w-0.5 bg-gray-800" style="left:' + markPct + '%"></div>'
+    + '</div>'
+    + '<div class="relative h-4 mt-1 text-xs text-gray-400">'
+    + '<span class="absolute left-0">0</span>'
+    + '<span class="absolute -translate-x-1/2 font-bold text-gray-600" style="left:' + markPct + '%">기준 100%</span>'
+    + '<span class="absolute right-0">150%</span>'
+    + '</div>'
+    + '<p class="text-xs text-gray-400 mt-2">기준 칼로리: KDRI 2020 에너지필요추정량 (' + (PFS_ACTIVITY_LEVELS[r.profile.activity] || {}).name + ')'
+    + (r.body.bmi ? ' · BMI ' + r.body.bmi.toFixed(1) + ' (' + r.body.bmiLabel + ')' : '') + '</p>'
+    + '</div>'
+
+    // 지표 타일
+    + '<div class="grid grid-cols-2 lg:grid-cols-5 gap-3">'
+    + tile('📊 PDI' + (r.basis === 'survey' ? ' (예측)' : ''),
+        '<span class="text-2xl font-black" style="color:' + r.gradeColor + '">' + r.pdiScore.toFixed(1) + '%</span>',
+        '목표 40% 이상', miniBar(r.pdiScore, 40, r.gradeColor))
+    + tile('🌈 파이토케미컬 다양성',
+        '<span class="text-2xl font-black text-purple-700">' + ps.coveredCount + '</span><span class="text-sm text-gray-400">/ ' + PHYTO_SCORED_KEYS.length + ' 계열</span>',
+        '파이토 점수 ' + ps.total + '/100', miniBar(ps.coveredCount, PHYTO_SCORED_KEYS.length, '#8B5CF6'))
+    + tile('💪 단백질',
+        '<span class="text-2xl font-black text-orange-600">' + Math.round(n.protein) + '</span><span class="text-sm text-gray-400">g</span>',
+        '권장 ' + Math.round(protLo) + '–' + Math.round(protHi) + 'g', miniBar(n.protein, protLo, '#EA580C'))
+    + tile('🌾 식이섬유',
+        '<span class="text-2xl font-black text-emerald-700">' + n.fiber.toFixed(1) + '</span><span class="text-sm text-gray-400">g</span>',
+        '목표 ' + Math.round(fibT) + 'g 이상', miniBar(n.fiber, fibT, '#10B981'))
+    + '<div class="col-span-2 lg:col-span-1">' + tile('🥗 PFS 식단 점수',
+        '<span class="text-2xl font-black" style="color:' + t.color + '">' + pfs.daily.total.toFixed(2) + '</span>'
+        + '<span class="text-xs font-bold px-1.5 py-0.5 rounded-full text-white" style="background:' + t.color + '">' + t.name + '</span>',
+        'Basic ' + pfs.daily.basic.toFixed(2) + ' / 4.0') + '</div>'
+    + '</div>'
+    + '<p class="text-xs text-gray-400 mt-3">단백질·식이섬유는 식재료 칼로리·식품군 기반 추정치입니다.</p>';
+}
+
+// ── 주의사항 & 관리 가이드 ─────────────────────
+function renderGuide(r) {
+  const el = document.getElementById('guide-section');
+  if (!el) return;
+  const warn = [];
+  const ratio = r.pfs.eer > 0 ? r.totalCalories / r.pfs.eer : 0;
+  const ps = r.phytoScore;
+
+  if (r.allergyHits.length) {
+    warn.push(['🚫', '알레르기 주의', r.allergyHits.map(h => h.name + '(' + h.allergens.join('·') + ')').join(', ')]);
+  }
+  if (ratio > 1.1) warn.push(['🔥', '칼로리 초과', '기준보다 ' + Math.round(r.totalCalories - r.pfs.eer) + 'kcal 많아요. 간식·가공식품부터 줄여보세요.']);
+  if (ps.coveredCount < 6) warn.push(['🌈', '파이토케미컬 다양성 부족', ps.coveredCount + '/' + PHYTO_SCORED_KEYS.length + '개 계열만 섭취 — 색깔이 다른 채소·과일·콩을 곁들이세요.']);
+  if (r.intake.wholeGrainPct < 5) warn.push(['🌾', '통곡물 섭취 부족', '흰쌀밥을 잡곡·현미밥으로 바꾸면 식이섬유와 PDI가 함께 올라갑니다.']);
+  if (r.intake.vegG < 200) warn.push(['🥬', '채소 섭취 부족', '약 ' + Math.round(r.intake.vegG) + 'g — 끼니마다 채소 반찬 1–2접시(하루 350g 이상)를 권장합니다.']);
+  if (r.intake.fruitG < 100) warn.push(['🍎', '과일 섭취 부족', '하루 1–2회(주먹 1개 크기) 과일을 드세요.']);
+  if (!r.categoryMap.legumes) warn.push(['🫘', '두류 미섭취', '두부·된장·콩밥 등 콩 식품은 핵심 PRF 식품군입니다.']);
+  if (r.categoryMap.refined && r.categoryMap.refined.percentage > 40) {
+    warn.push(['🍞', '정제 식품 비율 높음', '정제 곡물·당류 비율 ' + r.categoryMap.refined.percentage.toFixed(0) + '% — 가공식품을 줄여보세요.']);
+  }
+  if (r.body.abdominal) warn.push(['📏', '복부비만', '허리둘레가 기준(남 90cm·여 85cm) 이상입니다. 체중 관리 루틴을 꾸준히 실천하세요.']);
+
+  const allergySet = r.profile.allergies;
+  const routineHtml = WEIGHT_ROUTINE.map(step => {
+    const prods = step.products.map(name => {
+      const p = BOBSNU_PRODUCTS.find(x => x.name === name);
+      const al = p ? productAllergens(p, allergySet) : [];
+      return '<span class="inline-flex items-center gap-1 text-sm font-bold px-2.5 py-1 rounded-full '
+        + (al.length ? 'bg-gray-100 text-gray-400 line-through' : 'bg-white text-gray-800 shadow-sm') + '"'
+        + (al.length ? ' title="' + al.join('·') + ' 알레르기"' : '') + '>'
+        + (p ? p.icon : '') + ' ' + name + '</span>';
+    }).join('<span class="text-gray-400 text-sm">+</span>');
+    return '<div class="bg-emerald-50 rounded-2xl p-4">'
+      + '<div class="text-sm font-bold text-emerald-800 mb-2">' + step.icon + ' ' + step.slot + '</div>'
+      + '<div class="flex flex-wrap items-center gap-1.5">'
+      + (step.meal ? '<span class="text-sm text-gray-700">' + step.meal + '</span><span class="text-gray-400 text-sm">+</span>' : '')
+      + prods + '</div></div>';
+  }).join('');
+  const routineAllergy = [...new Set(WEIGHT_ROUTINE.flatMap(s => s.products))]
+    .map(n => BOBSNU_PRODUCTS.find(x => x.name === n)).filter(p => p && productAllergens(p, allergySet).length);
+
+  const goalTips = HEALTH_GOALS.filter(g => selectedGoals.has(g.id)).map(g =>
+    '<li class="flex gap-2 text-sm"><span>' + g.icon + '</span><span><b class="text-gray-800">' + g.name + '</b> <span class="text-gray-600">' + g.tip + '</span></span></li>'
+  ).join('');
+
+  el.innerHTML =
+    '<h3 class="text-xl font-bold text-gray-900 mb-4">⚠️ 주의사항 & 관리 가이드</h3>'
+    + (warn.length
+        ? '<div class="grid md:grid-cols-2 gap-3 mb-6">' + warn.map(([icon, title, body]) =>
+            '<div class="flex gap-3 bg-amber-50 border border-amber-100 rounded-xl p-3.5">'
+            + '<span class="text-xl leading-none">' + icon + '</span>'
+            + '<div><div class="text-sm font-bold text-amber-900">' + title + '</div><div class="text-xs text-amber-800 mt-0.5">' + body + '</div></div></div>'
+          ).join('') + '</div>'
+        : '<div class="bg-emerald-50 rounded-xl p-4 text-sm text-emerald-800 mb-6">🎉 큰 문제 없이 균형 잡힌 식단입니다.</div>')
+    + '<div class="text-sm font-bold text-gray-800 mb-2">⚖️ 체중 관리 하루 루틴</div>'
+    + '<div class="grid md:grid-cols-3 gap-3 mb-2">' + routineHtml + '</div>'
+    + (routineAllergy.length
+        ? '<p class="text-xs text-red-600 mb-4"><i class="fas fa-exclamation-triangle mr-1"></i>' + routineAllergy.map(p => p.name).join('·') + '은(는) 알레르기로 제외하세요 — 해당 끼니는 과일·채소 등 가벼운 식사로 대체합니다.</p>'
+        : '<div class="mb-4"></div>')
+    + '<div class="text-sm font-bold text-gray-800 mb-2">🎯 목표별 관리 팁</div>'
+    + '<ul class="space-y-1.5">' + goalTips + '</ul>';
 }
 
 // ── PFS 식단 점수 렌더링 ──────────────────────
@@ -1649,26 +2089,31 @@ function renderPFSScore(pfs) {
     + '체중 추세: 이전 체중보다 감소 → 감량기, 증가 → 증가기, 동일·미입력 → 유지기.</p>';
 }
 
-// ── 건강 목적 렌더링 ─────────────────────────
+// ── 관리 목표 렌더링 ─────────────────────────
 function renderHealthGoals() {
   const grid = document.getElementById('health-goals-grid');
   if (!grid) return;
   grid.innerHTML = HEALTH_GOALS.map(goal => {
     const sel = selectedGoals.has(goal.id);
-    return '<div onclick="toggleGoal(\'' + goal.id + '\')" class="border-2 rounded-2xl p-4 text-center cursor-pointer transition-all ' + (sel ? 'border-emerald-500 bg-emerald-50' : 'border-gray-100 bg-white hover:border-gray-300') + '">'
+    const cls = goal.base
+      ? 'border-emerald-600 bg-emerald-600 text-white cursor-default'
+      : (sel ? 'border-emerald-500 bg-emerald-50 cursor-pointer' : 'border-gray-100 bg-white hover:border-gray-300 cursor-pointer');
+    return '<button type="button"' + (goal.base ? ' disabled' : ' onclick="toggleGoal(\'' + goal.id + '\')"') + ' aria-pressed="' + sel + '"'
+      + ' class="border-2 rounded-2xl p-4 text-center transition-all ' + cls + '">'
       + '<div class="text-3xl mb-2">' + goal.icon + '</div>'
-      + '<div class="text-sm font-medium text-gray-800">' + goal.name + '</div>'
-      + (sel ? '<div class="mt-1"><i class="fas fa-check-circle text-emerald-500 text-sm"></i></div>' : '')
-      + '</div>';
+      + '<div class="text-sm font-bold ' + (goal.base ? '' : 'text-gray-800') + '">' + goal.name + '</div>'
+      + (goal.base
+          ? '<div class="mt-1 text-xs opacity-90">기본 관리</div>'
+          : (sel ? '<div class="mt-1"><i class="fas fa-check-circle text-emerald-500 text-sm"></i></div>' : '<div class="mt-1 text-xs text-gray-400">+ 추가</div>'))
+      + '</button>';
   }).join('');
 }
 
 function toggleGoal(id) {
-  if (selectedGoals.has(id)) { selectedGoals.delete(id); }
-  else {
-    if (selectedGoals.size >= 3) { alert('건강 목적은 최대 3개까지 선택할 수 있습니다'); return; }
-    selectedGoals.add(id);
-  }
+  const goal = HEALTH_GOALS.find(g => g.id === id);
+  if (!goal || goal.base) return;
+  if (selectedGoals.has(id)) selectedGoals.delete(id);
+  else selectedGoals.add(id);
   renderHealthGoals();
 }
 
@@ -1698,9 +2143,13 @@ function renderProductGrid() {
 // ── 재시작 ───────────────────────────────────
 function restartAssessment() {
   addedMeals = [];
+  for (const k of Object.keys(surveyAnswers)) delete surveyAnswers[k];
   selectedGoals.clear();
+  for (const g of HEALTH_GOALS) if (g.base) selectedGoals.add(g.id);
   pdiResult = null;
   renderMealList();
+  renderSurvey();
+  setInputMode('survey');
   renderHealthGoals();
   goToStep(1);
   document.getElementById('meal-input').value = '';
