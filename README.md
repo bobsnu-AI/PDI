@@ -98,6 +98,12 @@ webapp/
 └── vite.config.ts         # Vite 빌드 설정
 ```
 
+## 배포 (GitHub Pages)
+- `main`에 머지되면 `.github/workflows/deploy-pages.yml`이 자동으로 빌드·배포합니다
+- 주소: https://bobsnu-ai.github.io/PDI/
+- 최초 1회: 저장소 Settings → Pages → Source를 **GitHub Actions**로 설정
+- 로컬 정적 빌드: `npm run build:static` → `dist-static/index.html`
+
 ## 개발 방법
 ```bash
 npm run build          # 빌드
