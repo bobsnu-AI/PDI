@@ -204,16 +204,19 @@ function findNutrientProfile(name, cat) {
 }
 
 // ──────────────────────────────────────────────
-// estimateIngredientNutrients(name, grams)
+// estimateIngredientNutrients(name, grams, servings)
+//   servings: 밥스누 제품 섭취 횟수 (1회 제공량 기준 · 기본 1)
 //   반환: { energy, carb, protein, fat, fiber, chol, sugar, satfat, trans, sodium, weight }
 // ──────────────────────────────────────────────
-function estimateIngredientNutrients(name, grams) {
+function estimateIngredientNutrients(name, grams, servings) {
   const ing = INGREDIENTS[name];
   if (!ing) return null;
 
   if (ing.cat === 'bobsnu') {
-    const b = PFS_BOBSNU_NUTRITION[name] || {};
-    return Object.assign(emptyNutrients(), b, { energy: ing.kcal || 0 });
+    const b = Object.assign(emptyNutrients(), PFS_BOBSNU_NUTRITION[name] || {}, { energy: ing.kcal || 0 });
+    const n = servings == null ? 1 : servings;
+    for (const k of PFS_NUTRIENT_KEYS) b[k] *= n;
+    return b;
   }
 
   const g = Number(grams) || 0;
@@ -253,7 +256,7 @@ function estimateIngredientNutrients(name, grams) {
 function estimateDishNutrients(analysis) {
   const total = emptyNutrients();
   for (const ing of analysis.ingredients) {
-    const n = estimateIngredientNutrients(ing.name, ing.grams);
+    const n = estimateIngredientNutrients(ing.name, ing.grams, ing.servings);
     if (!n) continue;
     for (const k of PFS_NUTRIENT_KEYS) total[k] += n[k] || 0;
   }
