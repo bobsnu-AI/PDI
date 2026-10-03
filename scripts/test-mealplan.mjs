@@ -436,6 +436,7 @@ ok('구독 세트 렌더 (추천 근거·수량·가격)', () => {
     assert.ok(h.includes(s), '누락: ' + s)
   assert.ok(!h.includes('부족: 칼슘') && !h.includes('충족: 칼슘'), '칼슘 판정이 남아 있음')
   assert.ok(/\d{1,3}(,\d{3})*원/.test(h), '금액 표기 없음')
+  assert.ok(h.includes('requestMealPlan'), '식단 추천받기 버튼이 구독 패널에 없음')
   assert.ok(!h.includes('undefined') && !h.includes('NaN'), 'undefined/NaN 포함')
 })
 ok('가이드 렌더 (체중 유형·권장 영양 섭취량)', () => {
@@ -458,9 +459,24 @@ vm.runInContext(`
 vm.runInContext(`
   const __p = generateMealPlan({ profile: tracker.profile, targets: pdiResult.targets,
     cart: subCartToQuoteInput(), days: 30, allergies: pdiResult.profile.allergies });
-  tracker.plan = __p; tracker.planKey = 'x'; tracker.startDate = isoToday();
+  tracker.plan = __p;
+  tracker.planKey = JSON.stringify(subCartToQuoteInput()) + '|' + pdiResult.targets.targetKcal;
+  tracker.startDate = isoToday();
   renderMealPlan(); renderMonitor();
 `, ctx)
+ok('식단 전에는 「식단 추천받기」 안내가 보임', () => {
+  vm.runInContext('const __keep = tracker.plan; tracker.plan = null; renderMealPlan(); tracker.plan = __keep;', ctx)
+  const h = html('mealplan-section')
+  for (const s of ['구독 구성 정하기', '식단 추천받기', '매일 실천 기록', 'requestMealPlan'])
+    assert.ok(h.includes(s), '누락: ' + s)
+})
+ok('구독 구성이 바뀌면 다시 추천받기 안내로 바뀜', () => {
+  vm.runInContext("const __k = tracker.planKey; tracker.planKey = 'changed'; renderMealPlan(); tracker.planKey = __k;", ctx)
+  const h = html('mealplan-section')
+  assert.ok(h.includes('구독 구성이 바뀌었습니다'), '변경 안내 없음')
+  assert.ok(h.includes('requestMealPlan'), '다시 추천받기 버튼 없음')
+  vm.runInContext('renderMealPlan();', ctx)        // 원래 상태로 복구
+})
 ok('30일 식단 렌더', () => {
   const h = html('mealplan-section')
   assert.ok(h.length > 5000, 'len=' + h.length)

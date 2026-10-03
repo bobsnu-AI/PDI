@@ -221,10 +221,46 @@ function statusBtn(day, type, status, label, icon, active) {
     + 'class="text-xs font-bold px-2.5 py-1 rounded-full ' + cls + '">' + icon + ' ' + label + '</button>';
 }
 
+// 구독 구성을 고르고 버튼을 누르기 전에 보여주는 안내 화면
+//   「제품을 구독하면 그 구성에 맞는 30일 식단을 받는다」는 흐름을 그대로 보여줍니다
+function mealPlanPromptHtml(reason) {
+  const q = (typeof subCart !== 'undefined' && subCart) ? subscriptionQuote(subCartToQuoteInput()) : null;
+  const c = q ? q.counts : null;
+  const empty = !c || (c.soymilk + c.phyto + c.bar === 0);
+  const step = (n, title, body, done) =>
+    '<div class="flex gap-3">'
+    + '<span class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold '
+    + (done ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500') + '">' + (done ? '✓' : n) + '</span>'
+    + '<div><div class="text-sm font-bold ' + (done ? 'text-gray-900' : 'text-gray-500') + '">' + title + '</div>'
+    + '<div class="text-xs text-gray-500 mt-0.5">' + body + '</div></div></div>';
+
+  return '<h3 class="text-xl font-bold text-gray-900 mb-1">🗓 30일 맞춤 식단</h3>'
+    + '<p class="text-sm text-gray-500 mb-5">구독하는 제품 구성에 맞춰 30일 식단을 만들어 드립니다</p>'
+    + (reason ? '<div class="bg-amber-50 border border-amber-100 rounded-xl p-3.5 mb-5 text-sm text-amber-900">' + reason + '</div>' : '')
+    + '<div class="space-y-3 mb-5">'
+    + step(1, '구독 구성 정하기', '위 「맞춤 구독 세트」에서 두유·파이토100·프로틴바 수량을 정하세요', !empty)
+    + step(2, '식단 추천받기', '정한 구성으로 30일 식단을 계산합니다 (약 1초)', false)
+    + step(3, '매일 실천 기록', '끼니마다 먹었는지 체크하고 체중을 기록하면 목표를 다시 맞춰 드립니다', false)
+    + '</div>'
+    + (empty
+        ? '<div class="bg-gray-50 rounded-xl p-4 text-sm text-gray-500">제품을 1개 이상 담으면 식단을 추천받을 수 있습니다.</div>'
+        : '<div class="rounded-2xl border-2 border-emerald-100 bg-emerald-50 p-4">'
+          + '<div class="text-sm font-bold text-emerald-900 mb-1">선택한 구성</div>'
+          + '<div class="text-xs text-emerald-800 mb-3">두유 ' + c.soymilk + ' · 파이토100 ' + c.phyto + ' · 프로틴바 ' + c.bar
+          + (c.addon ? ' · 추가 구성품 ' + c.addon : '')
+          + ' → 월 ' + won(q.finalPrice) + ' (' + q.rate + '% 할인)</div>'
+          + '<button type="button" onclick="requestMealPlan()" class="w-full py-3 rounded-xl bg-emerald-700 text-white font-bold hover:bg-emerald-800 transition">'
+          + '🗓 이 구성으로 30일 식단 추천받기</button></div>');
+}
+
 function renderMealPlan() {
   const el = document.getElementById('mealplan-section');
   if (!el) return;
-  if (!tracker.plan) { el.innerHTML = ''; return; }
+  if (!tracker.plan) { el.innerHTML = mealPlanPromptHtml(null); return; }
+  if (typeof planStale === 'function' && planStale()) {
+    el.innerHTML = mealPlanPromptHtml('구독 구성이 바뀌었습니다. 새 구성으로 식단을 다시 추천받으세요. (지금까지의 실천 기록은 초기화됩니다)');
+    return;
+  }
 
   const plan = tracker.plan;
   const today = planDayIndex();
@@ -304,12 +340,8 @@ function renderMealPlan() {
     '<div class="flex flex-wrap items-center justify-between gap-2 mb-4">'
     + '<h3 class="text-xl font-bold text-gray-900">🗓 30일 맞춤 식단</h3>'
     + '<p class="w-full text-xs text-gray-500">영양 균형 · PDI 달성도 · 메뉴 다양성 · 메뉴 궁합 네 가지를 함께 맞춘 결과입니다</p>'
-    + '<button type="button" onclick="regenerateMealPlan()" class="text-xs font-bold px-3 py-1.5 rounded-lg border border-emerald-600 text-emerald-700 hover:bg-emerald-50"><i class="fas fa-rotate mr-1"></i>다시 생성</button>'
+    + '<button type="button" onclick="requestMealPlan()" class="text-xs font-bold px-3 py-1.5 rounded-lg border border-emerald-600 text-emerald-700 hover:bg-emerald-50"><i class="fas fa-rotate mr-1"></i>식단 다시 만들기</button>'
     + '</div>'
-    + (typeof planStale === 'function' && planStale()
-        ? '<div class="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-4 text-xs text-amber-800">'
-          + '⚠️ 구독 구성이나 목표 칼로리가 바뀌었습니다. <b>다시 생성</b>을 누르면 새 구성으로 식단을 만듭니다 (기록은 초기화됩니다).</div>'
-        : '')
 
     + '<div class="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-4">'
     + scoreTile('영양 균형', sc.nutrition, '#10B981')

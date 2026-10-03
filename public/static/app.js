@@ -979,7 +979,7 @@ function calculateAndShow() {
   subCart = null;                   // 결과가 바뀌면 구독 구성 초기화
   goToStep(4);
   displayResults();
-  buildMealPlan();                  // 30일 식단 생성 (구독 구성 기준)
+  buildMealPlan();                  // 저장된 식단이 현재 구성과 맞으면 표시, 아니면 안내 화면
 }
 
 // ── 30일 식단 생성 ────────────────────────────
@@ -990,10 +990,12 @@ function buildMealPlan(force) {
   const cart = subCartToQuoteInput();
   // 체중은 키에 넣지 않음 — 매번 체중을 기록할 때마다 식단이 낡은 것으로 표시되지 않게
   const cartKey = JSON.stringify(cart) + '|' + r.targets.targetKcal;
-  if (!force && tracker.plan && tracker.planKey === cartKey) { renderMealPlan(); renderMonitor(); return; }
+  // 버튼을 누르지 않았으면 최적화를 돌리지 않는다 — 저장된 식단이 맞으면 보여주고, 아니면 안내 화면
+  if (!force) { renderMealPlan(); renderMonitor(); return; }
 
-  if (el) el.innerHTML = '<div class="flex items-center gap-3 text-sm text-gray-500">'
-    + '<i class="fas fa-circle-notch fa-spin text-emerald-600"></i>30일 식단을 계산하는 중…</div>';
+  if (el) el.innerHTML = '<div class="flex items-center gap-3 text-sm text-gray-500 py-4">'
+    + '<i class="fas fa-circle-notch fa-spin text-emerald-600 text-xl"></i>'
+    + '<span>선택한 구독 구성으로 30일 식단을 계산하는 중… <span class="text-gray-400">영양 균형·PDI·메뉴 다양성·메뉴 궁합을 함께 맞춥니다</span></span></div>';
 
   // 렌더 프레임을 양보한 뒤 최적화 (버튼 클릭이 멈춘 것처럼 보이지 않게)
   setTimeout(() => {
@@ -1015,12 +1017,34 @@ function buildMealPlan(force) {
   }, 30);
 }
 
+// 「이 구성으로 식단 추천받기」 — 구독 구성을 정한 뒤 최적화를 돌린다
+function requestMealPlan() {
+  if (!pdiResult || !subCart) return;
+  const q = subscriptionQuote(subCartToQuoteInput());
+  if (q.counts.soymilk + q.counts.phyto + q.counts.bar === 0) {
+    alert('제품을 1개 이상 담은 뒤 식단을 추천받을 수 있습니다.');
+    return;
+  }
+  const logged = Object.keys(tracker.log || {}).length;
+  if (logged && !confirm('새 구성으로 식단을 다시 만들면 지금까지의 실천 기록이 초기화됩니다. 계속할까요?')) return;
+  tracker.startDate = isoToday();
+  tracker.log = {};
+  buildMealPlan(true);
+  const el = document.getElementById('mealplan-section');
+  if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 // 명시적 재생성만 이행 기록을 초기화한다
 // (applyRetarget 은 목표만 바꾸고 지금까지의 기록·체중 추이를 유지)
 function regenerateMealPlan() {
   tracker.startDate = isoToday();
   tracker.log = {};
   buildMealPlan(true);
+}
+
+// 현재 구독 구성으로 만든 식단이 이미 있는지
+function planFresh() {
+  return !!(tracker.plan && !planStale());
 }
 
 // 구독 구성·목표가 바뀌어 저장된 식단이 최신이 아닌지
@@ -1679,20 +1703,27 @@ function initSubCart(r) {
   subRecommendation.lacks = lacks;
 }
 
+// 구독 구성이 바뀌면 구독 패널과 식단 섹션을 함께 다시 그린다
+//   (식단 섹션은 「구성이 바뀌었습니다 → 다시 추천받기」 안내로 바뀜)
+function onSubCartChanged() {
+  renderSubscription(pdiResult);
+  renderMealPlan();
+}
+
 function setSubQty(kind, delta) {
   subCart[kind] = Math.max(0, Math.min(10, subCart[kind] + delta));
-  renderSubscription(pdiResult);
+  onSubCartChanged();
 }
 
 function setSoymilkCode(code) {
   subCart.soymilkCode = code;
   if (subCart.soymilk === 0) subCart.soymilk = 1;
-  renderSubscription(pdiResult);
+  onSubCartChanged();
 }
 
 function toggleAddon(code) {
   if (subCart.addon.has(code)) subCart.addon.delete(code); else subCart.addon.add(code);
-  renderSubscription(pdiResult);
+  onSubCartChanged();
 }
 
 function applyPreset(id) {
@@ -1702,12 +1733,12 @@ function applyPreset(id) {
   subCart.phyto   = ps.counts.phyto;
   subCart.bar     = ps.counts.bar;
   subCart.addon.clear();
-  renderSubscription(pdiResult);
+  onSubCartChanged();
 }
 
 function resetSubCart() {
   initSubCart(pdiResult);
-  renderSubscription(pdiResult);
+  onSubCartChanged();
 }
 
 function won(v) { return v.toLocaleString('ko-KR') + '원'; }
@@ -1843,6 +1874,21 @@ function renderSubscription(r) {
         : '')
     + '<p class="text-xs text-gray-400 mt-2">할인 근거: ' + rateReason + '</p>'
     + (simRows ? '<div class="mt-3 pt-3 border-t border-gray-100 space-y-1"><div class="text-xs font-bold text-gray-500 mb-1">1회분 추가 시 예상 변화</div>' + simRows + '</div>' : '')
+    + '</div></div>'
+
+    // 구독 → 식단 추천 흐름의 연결점
+    + '<div class="mt-4 rounded-2xl border-2 p-4" style="border-color:' + (planFresh() ? '#E5E7EB' : '#05966966') + ';background:' + (planFresh() ? '#F9FAFB' : '#ECFDF5') + '">'
+    + '<div class="flex flex-wrap items-center justify-between gap-3">'
+    + '<div class="min-w-0"><div class="text-sm font-bold text-gray-900">'
+    + (planFresh() ? '✓ 이 구성으로 만든 30일 식단이 아래에 있습니다' : '🗓 이 구성으로 30일 식단을 받아보세요') + '</div>'
+    + '<div class="text-xs text-gray-500 mt-0.5">'
+    + (planFresh()
+        ? '수량을 바꾸면 그 구성에 맞춰 다시 추천받을 수 있습니다'
+        : '구독한 제품을 30일에 나눠 넣고, 영양 균형·PDI·메뉴 다양성·메뉴 궁합을 함께 맞춥니다')
+    + '</div></div>'
+    + '<button type="button" onclick="requestMealPlan()" class="flex-shrink-0 px-5 py-2.5 rounded-xl font-bold text-sm transition '
+    + (planFresh() ? 'border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50' : 'bg-emerald-700 text-white hover:bg-emerald-800') + '">'
+    + (planFresh() ? '다시 추천받기' : '식단 추천받기 →') + '</button>'
     + '</div></div>'
 
     + '<p class="text-xs text-gray-400 mt-3">※ 가격·할인율은 「제품 추천 로직 구성」 엑셀 Sheet3 기준입니다. '
@@ -2040,7 +2086,8 @@ function renderKeySummary(r) {
     + '<div class="col-span-2 lg:col-span-1">' + tile('🥗 PFS 식단 점수',
         '<span class="text-2xl font-black" style="color:' + t.color + '">' + pfs.daily.total.toFixed(2) + '</span>'
         + '<span class="text-xs font-bold px-1.5 py-0.5 rounded-full text-white" style="background:' + t.color + '">' + t.name + '</span>',
-        'Basic ' + pfs.daily.basic.toFixed(2) + ' / 4.0') + '</div>'
+        'Basic ' + pfs.daily.basic.toFixed(2) + ' (가점 ' + (pfs.daily.sub.carb + pfs.daily.sub.protein + pfs.daily.sub.fat + pfs.daily.sub.fiber).toFixed(1)
+        + ' − 감점 ' + Math.abs(pfs.daily.sub.chol + pfs.daily.sub.sugar + pfs.daily.sub.satfat + pfs.daily.sub.trans + pfs.daily.sub.sodium).toFixed(1) + ')') + '</div>'
     + '</div>'
     + '<p class="text-xs text-gray-400 mt-3">단백질·식이섬유는 식재료 칼로리·식품군 기반 추정치입니다.</p>';
 }
@@ -2231,7 +2278,7 @@ function renderPFSScore(pfs) {
 
     // 요약 통계
     + '<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">'
-    + stat('Basic 점수', d.basic.toFixed(2), '영양소 적정성 · 최대 4.0', 'bg-emerald-50')
+    + stat('Basic 점수', d.basic.toFixed(2), '가점 4종 합(최대 4.0) − 감점 5종 합', 'bg-emerald-50')
     + stat('ED 점수', d.ed.toFixed(0), '에너지 밀도 kcal/100g', 'bg-amber-50')
     + stat('SI 점수', d.si.toFixed(1), '포만 지수', 'bg-indigo-50')
     + stat('에너지필요추정량', fmtNum(pfs.eer, 0) + '<span class="text-sm font-medium text-gray-500">kcal</span>', 'KDRI 2020 공식', 'bg-gray-50')
