@@ -32,3 +32,11 @@ lerna-debug.log*
 
 # misc
 .DS_Store
+
+# 분류체계 원본 엑셀 (10MB+ · foodclass.js 생성에만 필요)
+#   node scripts/build-foodclass.mjs 를 다시 돌릴 때 이 폴더에 두세요
+scripts/data/
+
+# 기획 원본 엑셀 (내부 메모 포함 · 저장소가 공개이므로 커밋 금지)
+*.xlsx
+*.pptx

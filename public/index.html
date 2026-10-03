@@ -354,12 +354,18 @@
       <!-- 주의사항 & 관리 가이드 -->
       <div id="guide-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
 
-      <!-- Product Sets -->
+      <!-- 구독 세트 (수량 조정 · 할인가) -->
       <div class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6">
-        <h3 class="text-xl font-bold text-gray-900 mb-1">🛒 맞춤 제품 추천</h3>
-        <p class="text-gray-500 text-sm mb-6">세트 구성은 자유롭게 바꿀 수 있어요 · 구성을 바꾸면 할인율이 달라집니다</p>
+        <h3 class="text-xl font-bold text-gray-900 mb-1">🛒 맞춤 구독 세트</h3>
+        <p class="text-gray-500 text-sm mb-6">두유·파이토100·프로틴바 수량을 조정하면 할인율과 결제 금액이 바뀝니다</p>
         <div id="product-recommendations" class="space-y-5"></div>
       </div>
+
+      <!-- 30일 맞춤 식단 (SPEA2 최적화) + 이행 기록 -->
+      <div id="mealplan-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
+
+      <!-- 체중 변화 · 모니터링 -->
+      <div id="monitor-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
 
       <!-- PDI Score Card -->
       <div class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6">
@@ -655,8 +661,13 @@
   </div>
 </footer>
 
+<datalist id="plan-food-list"></datalist>
 <script src="/static/recipes.js"></script>
+<script src="/static/foodclass.js"></script>
 <script src="/static/pfs.js"></script>
+<script src="/static/products.js"></script>
+<script src="/static/mealplan.js"></script>
+<script src="/static/tracker.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

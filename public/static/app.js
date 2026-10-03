@@ -147,29 +147,8 @@ const HEALTH_GOALS = [
     tip: '아침 식사를 거르지 말고 단백질을 끼니마다 나눠 드세요. 충분한 수면이 기본입니다.' },
 ];
 
-// ── 밥스누 제품 ─────────────────────────────
-// allergens: 알레르기 유발 원료 (약콩 = 대두). 파이토100 계열은 원료 정보 확인 필요
-const BOBSNU_PRODUCTS = [
-  { id: 'yakong_soymilk', name: '약콩두유',        desc: '약콩(흑두) 기반 이소플라본·안토시아닌',      icon: '🫘', phytos: ['isoflavones', 'anthocyanins', 'saponins'],            targets: ['여성건강', '골건강', '콜레스테롤'], color: '#8B5CF6', allergens: ['soy'] },
-  { id: 'phyto100',       name: '파이토100',        desc: '100종 파이토케미컬 통합 블렌드',             icon: '💊', phytos: ['phenolicAcids', 'lignans', 'catechins', 'carotenoids'], targets: ['혈당', '항산화', '종합건강'],       color: '#059669', allergens: [] },
-  { id: 'phyto100_s2',    name: '파이토100 시즌2',  desc: '혈관·뇌건강 특화 피세아탄놀',               icon: '🧠', phytos: ['stilbenes', 'anthocyanins', 'catechins'],               targets: ['혈관', '뇌건강', '항산화'],         color: '#2563EB', allergens: [] },
-  { id: 'phyto_black',    name: '파이토블랙',        desc: '검은색 식품 파이토케미컬 집중 공급',        icon: '🫐', phytos: ['anthocyanins', 'stilbenes'],                            targets: ['항산화', '혈관'],                  color: '#4F46E5', allergens: [] },
-  { id: 'protein_bar',    name: '약콩 프로틴바',     desc: '약콩 단백질 + 이소플라본',                  icon: '💪', phytos: ['isoflavones', 'phenolicAcids', 'saponins'],             targets: ['근육', '시니어', '단백질'],         color: '#EA580C', allergens: ['soy'] },
-  { id: 'yakong_tea',     name: '약콩차',            desc: '약콩 기반 카테킨·이소플라본 차',            icon: '🍵', phytos: ['catechins', 'isoflavones'],                             targets: ['체지방', '항산화'],                color: '#0D9488', allergens: ['soy'] },
-  { id: 'diet_soymilk',   name: '다이어트 두유',     desc: '설포라핀(글루코시놀레이트) 특화',           icon: '🥦', phytos: ['glucosinolates', 'isoflavones'],                        targets: ['다이어트', '체지방'],              color: '#16A34A', allergens: ['soy'] },
-  { id: 'yakong100',      name: '약콩100',           desc: '약콩 100% 순수 파이토케미컬 농축',          icon: '⭐', phytos: ['isoflavones', 'anthocyanins', 'saponins'],             targets: ['시니어', '여성건강'],              color: '#CA8A04', allergens: ['soy'] },
-];
-
-// ── 체중 관리 기본 루틴 ─────────────────────────
-const WEIGHT_ROUTINE = [
-  { slot: '아침', icon: '🌅', products: ['파이토100', '약콩두유'],        meal: '' },
-  { slot: '점심', icon: '☀️', products: ['약콩차'],                      meal: '평소 식단' },
-  { slot: '저녁', icon: '🌙', products: ['약콩 프로틴바', '약콩두유'],    meal: '가벼운 식사 (과일·채소 샐러드 등)' },
-];
-
-// ── 제품 세트 할인율 (가안 · 확정 전) ──────────────
-//   기본 구성 그대로 구매 시 세트 할인, 구성을 바꾸면 커스텀 할인
-const PRODUCT_SET_DISCOUNT = { optimal: 20, recommended: 15, custom: 10 };
+// 밥스누 제품 마스터(이름·가격·영양성분·알레르기·기능)는 products.js 의 BOBSNU_CATALOG 참조
+// 제품 마스터·가격·할인·추천 룰은 products.js (엑셀 Sheet3) 참조
 
 // ── 알레르기 (식품 등 표시기준 알레르기 유발물질, 아황산류 제외) ──
 // re: 식재료명 매칭 규칙
@@ -222,7 +201,7 @@ const SURVEY_FOODS = {
 };
 
 // 식사 기록 빠른 추가 칩
-const QUICK_FOODS = ['잡곡밥', '쌀밥', '된장찌개', '김치찌개', '배추김치', '시금치나물', '계란말이', '사과', '약콩두유'];
+const QUICK_FOODS = ['잡곡밥', '쌀밥', '된장찌개', '김치찌개', '배추김치', '시금치나물', '계란말이', '사과', '오리지널 약콩 두유'];
 
 // ══════════════════════════════════════════════
 // STATE
@@ -238,15 +217,31 @@ const selectedAllergies = new Set();
 let pdiResult = null;
 let chartInstance = null;
 let gender = 'female';
-// 제품 세트 구성 (결과 화면에서 커스터마이징)
-const productSets = { optimal: null, recommended: null };
 
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
+// 저장된 프로필을 Step 1 입력 폼으로 복원
+function restoreProfileForm() {
+  const p = tracker.profile;
+  if (!p) return;
+  gender = p.gender || 'female';
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+  set('profile-age', p.age); set('profile-height', p.height); set('profile-weight', p.weight);
+  set('profile-waist', p.waist); set('profile-prev-weight', p.prevWeight); set('profile-activity', p.activity);
+  selectedAllergies.clear();
+  for (const a of (p.allergies || [])) selectedAllergies.add(a);
+  selectedGoals.clear();
+  for (const g of HEALTH_GOALS) if (g.base) selectedGoals.add(g.id);
+  for (const g of (tracker.goals || [])) selectedGoals.add(g);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  trackerLoad();
+  restoreProfileForm();
   renderActivityOptions();
   renderAllergyChips();
+  setGender(gender);
   renderSurvey();
   renderQuickChips();
   setInputMode('survey');
@@ -254,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderProductGrid();
   renderMealList();
   initAutocomplete();
+  initPlanFoodList();
   // 상세 분석은 펼칠 때 그림 (접힌 상태에서는 크기가 0이라 차트·생키를 그릴 수 없음)
   const detail = document.getElementById('detail-analysis');
   if (detail) detail.addEventListener('toggle', () => { if (detail.open && pdiResult) renderDetailAnalysis(pdiResult); });
@@ -341,18 +337,29 @@ function validateProfile(p) {
   return null;
 }
 
-// BMI (대한비만학회 기준) · 복부비만 (남 90cm, 여 85cm 이상)
+// BMI 체중 유형 (products.js BODY_TYPES · 엑셀 Sheet3 기준) · 복부비만 (남 90cm, 여 85cm 이상)
 function bodyIndices(p) {
   const out = {};
   if (p.height > 0 && p.weight > 0) {
     out.bmi = p.weight / ((p.height / 100) ** 2);
-    if (out.bmi < 18.5)      out.bmiLabel = '저체중';
-    else if (out.bmi < 23)   out.bmiLabel = '정상';
-    else if (out.bmi < 25)   out.bmiLabel = '비만 전단계';
-    else                     out.bmiLabel = '비만';
+    out.bodyType = classifyBodyType(out.bmi);
+    out.bmiLabel = out.bodyType.name;
   }
   if (p.waist > 0) out.abdominal = p.waist >= (p.gender === 'male' ? 90 : 85);
   return out;
+}
+
+// ── 목표 칼로리·영양 기준 (체중 유형 반영 + 모니터링 재조정 반영) ──
+function currentTargets() {
+  const p = (tracker && tracker.profile) ? tracker.profile : readProfile();
+  const t = nutritionTargets(p);
+  if (!t) return null;
+  if (tracker && tracker.targetKcalOverride) {
+    t.targetKcal = tracker.targetKcalOverride;
+    t.weeklyDelta = Math.round((t.targetKcal - t.eer) * 7 / 7700 * 100) / 100;
+    t.ranges = calculateNutrientStandards(t.targetKcal);
+  }
+  return t;
 }
 
 function updateProfilePreview() {
@@ -450,7 +457,7 @@ function initAutocomplete() {
       addSeparator('⭐ 밥스누 제품');
       bobsnuMatches.forEach(name => {
         const ing  = INGREDIENTS[name];
-        const prod = BOBSNU_PRODUCTS.find(p => p.name === name);
+        const prod = BOBSNU_CATALOG.find(p => p.name === name);
         const li = document.createElement('li');
         li.className = 'px-4 py-2.5 hover:bg-purple-50 cursor-pointer flex items-center justify-between group';
         li.innerHTML =
@@ -562,11 +569,6 @@ function findAllergens(name, analysis, allergySet) {
   if (!allergySet || !allergySet.size) return [];
   const names = [name, ...analysis.ingredients.map(i => i.name)];
   return ALLERGENS.filter(a => allergySet.has(a.id) && names.some(n => a.re.test(n))).map(a => a.name);
-}
-
-function productAllergens(prod, allergySet) {
-  return (prod.allergens || []).filter(id => allergySet.has(id))
-    .map(id => (ALLERGENS.find(a => a.id === id) || {}).name);
 }
 
 // ══════════════════════════════════════════════
@@ -965,10 +967,76 @@ function calculateAndShow() {
   pdiResult.allergyHits = meals
     .map(m => ({ name: m.name, allergens: findAllergens(m.name, m.analysis, profile.allergies) }))
     .filter(x => x.allergens.length);
-  productSets.optimal = null;       // 결과가 바뀌면 세트 구성 초기화
-  productSets.recommended = null;
+
+  // 프로필·목표를 저장하고 목표 칼로리·영양 기준 산출 (체중 유형 반영)
+  tracker.profile = { ...profile, allergies: [...profile.allergies] };
+  tracker.goals = [...selectedGoals];
+  if (!tracker.weights.length) tracker.weights.push({ date: isoToday(), kg: profile.weight });
+  tracker.targetKcalOverride = null;
+  trackerSave();
+  pdiResult.targets = currentTargets();
+
+  subCart = null;                   // 결과가 바뀌면 구독 구성 초기화
   goToStep(4);
   displayResults();
+  buildMealPlan();                  // 30일 식단 생성 (구독 구성 기준)
+}
+
+// ── 30일 식단 생성 ────────────────────────────
+function buildMealPlan(force) {
+  const r = pdiResult;
+  if (!r || !subCart) return;
+  const el = document.getElementById('mealplan-section');
+  const cart = subCartToQuoteInput();
+  // 체중은 키에 넣지 않음 — 매번 체중을 기록할 때마다 식단이 낡은 것으로 표시되지 않게
+  const cartKey = JSON.stringify(cart) + '|' + r.targets.targetKcal;
+  if (!force && tracker.plan && tracker.planKey === cartKey) { renderMealPlan(); renderMonitor(); return; }
+
+  if (el) el.innerHTML = '<div class="flex items-center gap-3 text-sm text-gray-500">'
+    + '<i class="fas fa-circle-notch fa-spin text-emerald-600"></i>30일 식단을 계산하는 중…</div>';
+
+  // 렌더 프레임을 양보한 뒤 최적화 (버튼 클릭이 멈춘 것처럼 보이지 않게)
+  setTimeout(() => {
+    const plan = generateMealPlan({
+      profile: tracker.profile, targets: r.targets, cart,
+      days: 30, allergies: r.profile.allergies,
+    });
+    if (plan.error) {
+      if (el) el.innerHTML = '<p class="text-sm text-red-600">식단 생성 실패: ' + plan.error + '</p>';
+      return;
+    }
+    tracker.plan = plan;
+    tracker.planKey = cartKey;
+    if (!tracker.startDate) tracker.startDate = isoToday();
+    trackerSave();
+    planViewFrom = Math.max(1, Math.min(30 - 6, planDayIndex() || 1));
+    renderMealPlan();
+    renderMonitor();
+  }, 30);
+}
+
+// 명시적 재생성만 이행 기록을 초기화한다
+// (applyRetarget 은 목표만 바꾸고 지금까지의 기록·체중 추이를 유지)
+function regenerateMealPlan() {
+  tracker.startDate = isoToday();
+  tracker.log = {};
+  buildMealPlan(true);
+}
+
+// 구독 구성·목표가 바뀌어 저장된 식단이 최신이 아닌지
+function planStale() {
+  if (!tracker.plan || !pdiResult || !subCart) return false;
+  const key = JSON.stringify(subCartToQuoteInput()) + '|' + pdiResult.targets.targetKcal;
+  return tracker.planKey !== key;
+}
+
+// 모니터링에서 제안한 목표 칼로리를 적용하고 식단을 다시 생성
+function applyRetarget(newTargetKcal) {
+  tracker.targetKcalOverride = newTargetKcal;
+  trackerSave();
+  if (pdiResult) pdiResult.targets = currentTargets();
+  renderGuide(pdiResult);
+  buildMealPlan(true);
 }
 
 // 통곡물 kcal 비율, 채소·과일 섭취량(g) — 주의사항 판단용
@@ -1017,9 +1085,11 @@ function displayResults() {
 
   renderKeySummary(r);
   renderGuide(r);
-  renderProductRecommendations(r);
+  renderSubscription(r);
   renderPFSScore(r.pfs);
   renderPhytoScore(r.phytoScore);
+  renderMealPlan();
+  renderMonitor();
 
   // 상세 분석은 펼쳐져 있을 때만 그림
   const detail = document.getElementById('detail-analysis');
@@ -1558,35 +1628,6 @@ function simulateAddFood(prodName) {
   };
 }
 
-// ─ 제품 추천: 최적 추천 세트 · 권장 세트 · 추가 구성품 ─
-// 부족 파이토케미컬 +3, 선택 목표 파이토케미컬 +2
-function productScore(prod, r) {
-  const goalPhytos = new Set(
-    Array.from(selectedGoals).flatMap(gid => (HEALTH_GOALS.find(h => h.id === gid) || {}).phytos || [])
-  );
-  const defSet = new Set(r.deficient);
-  return prod.phytos.reduce((s, p) => s + (defSet.has(p) ? 3 : 0) + (goalPhytos.has(p) ? 2 : 0), 0);
-}
-
-// 기본 구성: 권장 = 체중 관리 루틴 제품, 최적 = 루틴 + 식단·목표 맞춤 상위 2개 (알레르기 제품 제외)
-function defaultProductSets(r) {
-  const available = BOBSNU_PRODUCTS.filter(p => !productAllergens(p, r.profile.allergies).length);
-  const availNames = new Set(available.map(p => p.name));
-  const routine = [...new Set(WEIGHT_ROUTINE.flatMap(x => x.products))].filter(n => availNames.has(n));
-  const extras = available
-    .filter(p => !routine.includes(p.name))
-    .map(p => ({ name: p.name, s: productScore(p, r) }))
-    .filter(x => x.s > 0)
-    .sort((a, b) => b.s - a.s)
-    .slice(0, 2)
-    .map(x => x.name);
-  return { optimal: [...routine, ...extras], recommended: routine, available };
-}
-
-function sameSet(set, arr) {
-  return set.size === arr.length && arr.every(n => set.has(n));
-}
-
 function simBadges(sim) {
   if (!sim) return '';
   const pdiColor = sim.deltaPDI > 0 ? 'text-emerald-700' : 'text-gray-400';
@@ -1595,95 +1636,217 @@ function simBadges(sim) {
     + '<span class="text-xs ' + phyColor + '">파이토 ' + (sim.deltaPhyto >= 0 ? '+' : '') + sim.deltaPhyto + '점</span>';
 }
 
-function renderProductRecommendations(r) {
+// ══════════════════════════════════════════════
+// 구독 세트 — 수량 조정 + 할인가 (엑셀 Sheet3 가격·할인 정책)
+// ══════════════════════════════════════════════
+// 구독 상태: 두유는 제품 1종을 골라 수량 조정, 파이토·프로틴바는 수량만, 추가 구성품은 on/off
+let subCart = null;
+let subRecommendation = null;
+
+function subCartToQuoteInput() {
+  return {
+    soymilk: Array(subCart.soymilk).fill(subCart.soymilkCode),
+    phyto:   Array(subCart.phyto).fill('가'),
+    bar:     Array(subCart.bar).fill('나'),
+    addon:   [...subCart.addon],
+  };
+}
+
+// 부족 판정 — 룰테이블의 「통곡물·채소·단백질 부족」 축
+//   칼슘은 식재료 DB에 칼슘 함량이 없어 판정하지 않습니다 (룰테이블의 칼슘 열도 사용 안 함)
+function dietLacks(r) {
+  return {
+    wholeGrain: r.intake.wholeGrainPct < 5,
+    veg:        r.intake.vegG < 350,
+    protein:    r.pfs.daily.nutrients.protein < r.pfs.ranges.protein[0],
+  };
+}
+
+function initSubCart(r) {
+  const lacks = dietLacks(r);
+  subRecommendation = recommendSubscription({
+    pdi: r.pdiScore, bmi: r.body.bmi, age: r.profile.age,
+    lacks, goals: selectedGoals, allergies: r.profile.allergies,
+  });
+  const c = subRecommendation.cart;
+  subCart = {
+    soymilkCode: c.soymilk.length ? c.soymilk[0] : 'A',
+    soymilk: c.soymilk.length,
+    phyto:   c.phyto.length,
+    bar:     c.bar.length,
+    addon:   new Set(c.addon),
+  };
+  subRecommendation.lacks = lacks;
+}
+
+function setSubQty(kind, delta) {
+  subCart[kind] = Math.max(0, Math.min(10, subCart[kind] + delta));
+  renderSubscription(pdiResult);
+}
+
+function setSoymilkCode(code) {
+  subCart.soymilkCode = code;
+  if (subCart.soymilk === 0) subCart.soymilk = 1;
+  renderSubscription(pdiResult);
+}
+
+function toggleAddon(code) {
+  if (subCart.addon.has(code)) subCart.addon.delete(code); else subCart.addon.add(code);
+  renderSubscription(pdiResult);
+}
+
+function applyPreset(id) {
+  const ps = SUBSCRIPTION_PRESETS.find(p => p.id === id);
+  if (!ps) return;
+  subCart.soymilk = ps.counts.soymilk;
+  subCart.phyto   = ps.counts.phyto;
+  subCart.bar     = ps.counts.bar;
+  subCart.addon.clear();
+  renderSubscription(pdiResult);
+}
+
+function resetSubCart() {
+  initSubCart(pdiResult);
+  renderSubscription(pdiResult);
+}
+
+function won(v) { return v.toLocaleString('ko-KR') + '원'; }
+
+function qtyRow(label, icon, qty, kind, extra) {
+  return '<div class="flex items-center gap-2 py-2.5 border-b border-gray-100 last:border-0">'
+    + '<span class="text-2xl">' + icon + '</span>'
+    + '<div class="flex-1 min-w-0">' + label + '</div>'
+    + (extra || '')
+    + '<div class="flex items-center gap-1 flex-shrink-0">'
+    + '<button type="button" onclick="setSubQty(\'' + kind + '\',-1)" class="w-7 h-7 rounded-lg border border-gray-200 text-gray-600 hover:border-gray-400" aria-label="줄이기">−</button>'
+    + '<span class="w-8 text-center text-sm font-black text-gray-900">' + qty + '</span>'
+    + '<button type="button" onclick="setSubQty(\'' + kind + '\',1)" class="w-7 h-7 rounded-lg border border-gray-200 text-gray-600 hover:border-gray-400" aria-label="늘리기">+</button>'
+    + '</div></div>';
+}
+
+function renderSubscription(r) {
   const el = document.getElementById('product-recommendations');
-  const d = defaultProductSets(r);
-  if (!productSets.optimal) {
-    productSets.optimal = new Set(d.optimal);
-    productSets.recommended = new Set(d.recommended);
-  }
-  const byName = Object.fromEntries(BOBSNU_PRODUCTS.map(p => [p.name, p]));
-  const excluded = BOBSNU_PRODUCTS.filter(p => productAllergens(p, r.profile.allergies).length);
+  if (!el) return;
+  if (!subCart) initSubCart(r);
 
-  const setDefs = [
-    { key: 'optimal',     title: '⭐ 최적 추천 세트', desc: '체중 관리 루틴 + 내 식단·목표 맞춤 제품', def: d.optimal,     accent: '#059669' },
-    { key: 'recommended', title: '👍 권장 세트',      desc: '체중 관리 기본 루틴 (아침·점심·저녁)',  def: d.recommended, accent: '#2563EB' },
-  ];
+  const quote = subscriptionQuote(subCartToQuoteInput());
+  const rec = subRecommendation;
+  const allergySet = r.profile.allergies;
+  const soymilks = BOBSNU_CATALOG.filter(p => p.kind === 'soymilk' && !catalogAllergens(p).some(a => allergySet.has(a)));
+  const phyto = CATALOG_BY_CODE['가'], bar = CATALOG_BY_CODE['나'];
 
-  const setCards = setDefs.map(sd => {
-    const set = productSets[sd.key];
-    const custom = !sameSet(set, sd.def);
-    const rate = custom ? PRODUCT_SET_DISCOUNT.custom : PRODUCT_SET_DISCOUNT[sd.key];
-    const items = [...set].map(n => byName[n]).filter(Boolean);
-    const addable = d.available.filter(p => !set.has(p.name));
-    return '<div class="rounded-2xl border-2 p-5" style="border-color:' + sd.accent + '33">'
-      + '<div class="flex flex-wrap items-start justify-between gap-2 mb-3">'
-      + '<div><div class="font-bold text-gray-900">' + sd.title + '</div><div class="text-xs text-gray-500 mt-0.5">' + sd.desc + '</div></div>'
-      + (items.length
-          ? '<div class="text-right"><span class="inline-block px-3 py-1 rounded-full text-white text-sm font-bold" style="background:' + (custom ? '#6B7280' : sd.accent) + '">'
-            + (custom ? '커스텀 ' : '세트 ') + rate + '% 할인</span>'
-            + (custom ? '<div class="text-xs text-gray-400 mt-1">기본 구성 시 ' + PRODUCT_SET_DISCOUNT[sd.key] + '% · <button type="button" onclick="resetProductSet(\'' + sd.key + '\')" class="underline">되돌리기</button></div>' : '')
-            + '</div>'
-          : '')
-      + '</div>'
-      + (items.length
-          ? '<ul class="divide-y divide-gray-100">' + items.map(p =>
-              '<li class="flex items-center gap-3 py-2">'
-              + '<span class="text-2xl">' + p.icon + '</span>'
-              + '<div class="flex-1 min-w-0"><div class="text-sm font-bold text-gray-900">' + p.name + '</div>'
-              + '<div class="flex flex-wrap gap-x-2 text-xs text-gray-500"><span class="truncate">' + p.desc + '</span>' + simBadges(simulateAddFood(p.name)) + '</div></div>'
-              + '<button type="button" onclick="toggleSetItem(\'' + sd.key + '\',\'' + p.name + '\')" class="text-gray-300 hover:text-red-400 flex-shrink-0" aria-label="' + p.name + ' 빼기"><i class="fas fa-minus-circle text-lg"></i></button>'
-              + '</li>').join('') + '</ul>'
-          : '<p class="text-sm text-gray-400 py-3">제품을 1개 이상 담아주세요</p>')
-      + (addable.length
-          ? '<div class="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-1.5 items-center"><span class="text-xs text-gray-400 mr-1">구성 추가:</span>'
-            + addable.map(p => '<button type="button" onclick="toggleSetItem(\'' + sd.key + '\',\'' + p.name + '\')" class="text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-emerald-400 hover:text-emerald-700">+ ' + p.icon + ' ' + p.name + '</button>').join('')
-            + '</div>'
-          : '')
-      + '</div>';
+  // ── 추천 근거 (엑셀 룰테이블) ──
+  const ruleLabel = PDI_BANDS.find(b => b.id === rec.rule.pdiBand).name + ' / ' + rec.bodyType.name
+    + ' / ' + AGE_BANDS.find(a => a.id === rec.rule.ageBand).name;
+  const lackChips = [
+    ['통곡물', rec.lacks.wholeGrain], ['채소', rec.lacks.veg], ['단백질', rec.lacks.protein],
+  ].map(([n, bad]) => '<span class="text-xs px-2 py-0.5 rounded-full ' + (bad ? 'bg-amber-100 text-amber-800 font-bold' : 'bg-gray-100 text-gray-400') + '">'
+    + (bad ? '부족: ' : '충족: ') + n + '</span>').join('');
+
+  const reasonsHtml = rec.reasons.map(x => {
+    const names = String(x.code).split('·').map(c => (CATALOG_BY_CODE[c] || {}).name || c).join(' · ');
+    return '<li class="flex gap-2 text-xs"><span class="font-bold text-emerald-800 flex-shrink-0">' + names + '</span>'
+      + '<span class="text-gray-500">' + x.why + '</span></li>';
   }).join('');
 
-  // 추가 구성품: 최적 세트 기본 구성에 없는 제품 — 먹으면 예상 점수 변화와 함께
-  const addons = d.available.filter(p => !d.optimal.includes(p.name))
-    .map(p => ({ p, s: productScore(p, r), sim: simulateAddFood(p.name) }))
-    .sort((a, b) => b.s - a.s);
-  const addonCards = addons.map(({ p, sim }) => {
-    const inSet = productSets.optimal.has(p.name);
-    return '<div class="rounded-2xl border border-gray-100 bg-gray-50 p-4 flex flex-col">'
-      + '<div class="flex items-start gap-2 mb-2"><span class="text-2xl">' + p.icon + '</span>'
-      + '<div class="min-w-0"><div class="text-sm font-bold text-gray-900">' + p.name + '</div><div class="text-xs text-gray-500">' + p.desc + '</div></div></div>'
-      + '<div class="flex flex-wrap gap-1 mb-2">' + p.phytos.map(ph => {
-          const g = PHYTOCHEMICAL_GROUPS[ph];
-          return '<span class="text-xs px-1.5 py-0.5 rounded text-white" style="background:' + (g ? g.color : '#6B7280') + '">' + (g ? g.name : ph) + '</span>';
-        }).join('') + '</div>'
-      + '<div class="flex gap-2 mb-3">' + simBadges(sim) + '</div>'
-      + '<button type="button" onclick="toggleSetItem(\'optimal\',\'' + p.name + '\')" class="mt-auto w-full py-2 rounded-xl text-xs font-bold transition '
-      + (inSet ? 'bg-white border border-emerald-600 text-emerald-700' : 'bg-emerald-700 text-white hover:bg-emerald-800') + '">'
-      + (inSet ? '✓ 최적 세트에 담김 (빼기)' : '+ 최적 세트에 추가') + '</button>'
-      + '</div>';
+  // ── 제품 선택 ──
+  const soymilkSelect = '<select onchange="setSoymilkCode(this.value)" class="text-xs px-2 py-1.5 border border-gray-200 rounded-lg max-w-48">'
+    + soymilks.map(p => '<option value="' + p.code + '"' + (p.code === subCart.soymilkCode ? ' selected' : '') + '>'
+        + p.code + '. ' + p.name + ' (' + p.pack + ' ' + won(p.price) + ')</option>').join('')
+    + '</select>';
+
+  const sm = CATALOG_BY_CODE[subCart.soymilkCode];
+  const rows =
+    qtyRow('<div class="text-sm font-bold text-gray-900">두유</div><div class="text-xs text-gray-500 truncate">' + sm.note + '</div>',
+           sm.icon, subCart.soymilk, 'soymilk', soymilkSelect)
+    + qtyRow('<div class="text-sm font-bold text-gray-900">' + phyto.name + '</div><div class="text-xs text-gray-500">' + phyto.pack + ' · ' + won(phyto.price) + ' · PDI 기여 ' + phyto.pdiKcal + ' kcal</div>',
+             phyto.icon, subCart.phyto, 'phyto')
+    + qtyRow('<div class="text-sm font-bold text-gray-900">' + bar.name + '</div><div class="text-xs text-gray-500">' + bar.pack + ' · ' + won(bar.price) + ' · PDI 기여 ' + bar.pdiKcal + ' kcal</div>',
+             bar.icon, subCart.bar, 'bar');
+
+  const addonChips = BOBSNU_CATALOG.filter(p => p.kind === 'addon').map(p => {
+    const on = subCart.addon.has(p.code);
+    const recommended = rec.cart.addon.includes(p.code);
+    return '<button type="button" onclick="toggleAddon(\'' + p.code + '\')" aria-pressed="' + on + '" '
+      + 'class="text-xs px-3 py-1.5 rounded-full border-2 ' + (on ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-bold' : 'border-gray-200 text-gray-600 hover:border-gray-400') + '">'
+      + p.icon + ' ' + p.name + ' ' + won(p.price) + (recommended ? ' <span class="text-emerald-600">★</span>' : '') + '</button>';
+  }).join('');
+
+  const presetBtns = SUBSCRIPTION_PRESETS.map(ps => {
+    const on = quote.preset && quote.preset.id === ps.id;
+    const q = subscriptionQuote({
+      soymilk: Array(ps.counts.soymilk).fill(subCart.soymilkCode),
+      phyto: Array(ps.counts.phyto).fill('가'), bar: Array(ps.counts.bar).fill('나'), addon: [],
+    });
+    return '<button type="button" onclick="applyPreset(\'' + ps.id + '\')" '
+      + 'class="text-xs px-3 py-1.5 rounded-full border-2 ' + (on ? 'border-emerald-600 bg-emerald-600 text-white font-bold' : 'border-gray-200 text-gray-600 hover:border-emerald-400') + '">'
+      + ps.title + ' · ' + ps.desc + ' → ' + q.rate + '% ' + won(q.finalPrice) + '</button>';
+  }).join('');
+
+  // ── 가격 ──
+  const lineItems = quote.lines.map(l =>
+    '<li class="flex items-center gap-2 text-xs py-1"><span>' + l.product.icon + '</span>'
+    + '<span class="flex-1 min-w-0 truncate text-gray-700">' + l.product.name + (l.product.pack ? ' (' + l.product.pack + ')' : '') + ' × ' + l.qty + '</span>'
+    + '<span class="font-bold text-gray-800">' + won(l.amount) + '</span></li>').join('');
+
+  const c = quote.counts;
+  const baseReason =
+      quote.rate === 0                                        ? '제품을 1개 이상 담아주세요'
+    : (c.soymilk >= 2 && c.phyto >= 2 && c.bar >= 3)          ? '최적 구독 세트 구성 (두유 2 · 파이토 2 · 프로틴바 3)'
+    : (c.soymilk >= 1 && c.phyto >= 1 && c.bar >= 2)          ? '최소 권장 세트 구성 (두유 1 · 파이토 1 · 프로틴바 2)'
+    : (c.soymilk + c.phyto + c.bar >= 2)                      ? '직접 구성 · 제품 2개 이상'
+    :                                                           '직접 구성 · 제품 1개';
+  const rateReason = baseReason + (quote.rate > 0 && c.addon > 0 ? ' + 추가 구성품 5%p' : '');
+
+  // ── 1회분 더 먹었을 때의 예상 점수 변화 ──
+  const simRows = ['soymilk', 'phyto', 'bar'].map(kind => {
+    const p = kind === 'soymilk' ? sm : (kind === 'phyto' ? phyto : bar);
+    const sim = simulateAddFood(p.name);
+    return sim ? '<div class="flex items-center gap-2 text-xs"><span class="flex-1 truncate text-gray-600">' + p.name + '</span>' + simBadges(sim) + '</div>' : '';
   }).join('');
 
   el.innerHTML =
-    '<div class="grid lg:grid-cols-2 gap-4">' + setCards + '</div>'
-    + (addons.length
-        ? '<div><div class="text-sm font-bold text-gray-800 mb-2">➕ 추가 구성품</div>'
-          + '<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">' + addonCards + '</div></div>'
-        : '')
-    + (excluded.length
-        ? '<p class="text-xs text-red-600"><i class="fas fa-exclamation-triangle mr-1"></i>알레르기(' + [...new Set(excluded.flatMap(p => productAllergens(p, r.profile.allergies)))].join('·') + ')로 제외된 제품: ' + excluded.map(p => p.name).join(', ') + '</p>'
-        : '')
-    + '<p class="text-xs text-gray-400">※ 할인율은 가안입니다 (기본 구성: 최적 ' + PRODUCT_SET_DISCOUNT.optimal + '% · 권장 ' + PRODUCT_SET_DISCOUNT.recommended + '% / 구성 변경 시 ' + PRODUCT_SET_DISCOUNT.custom + '%). 예상 점수 변화는 1회분 추가 기준입니다.</p>';
-}
+    '<div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-4 mb-4">'
+    + '<div class="flex flex-wrap items-center gap-2 mb-2">'
+    + '<span class="text-sm font-bold text-emerald-900">🎯 체중 관리자 추천 룰</span>'
+    + '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-white text-emerald-800">' + ruleLabel + '</span>'
+    + '</div>'
+    + '<div class="flex flex-wrap gap-1.5 mb-2">' + lackChips + '</div>'
+    + '<ul class="space-y-1">' + reasonsHtml + '</ul>'
+    + (rec.excluded.length ? '<p class="text-xs text-red-600 mt-2"><i class="fas fa-exclamation-triangle mr-1"></i>알레르기로 제외: ' + rec.excluded.map(p => p.name).join(', ') + '</p>' : '')
+    + '</div>'
 
-function toggleSetItem(key, name) {
-  const set = productSets[key];
-  if (set.has(name)) set.delete(name); else set.add(name);
-  renderProductRecommendations(pdiResult);
-}
 
-function resetProductSet(key) {
-  productSets[key] = new Set(defaultProductSets(pdiResult)[key]);
-  renderProductRecommendations(pdiResult);
+    + '<div class="flex flex-wrap gap-1.5 mb-3">' + presetBtns
+    + '<button type="button" onclick="resetSubCart()" class="text-xs px-3 py-1.5 rounded-full border-2 border-gray-200 text-gray-500 hover:border-gray-400">추천 구성으로 되돌리기</button></div>'
+
+    + '<div class="grid lg:grid-cols-2 gap-4">'
+    + '<div class="rounded-2xl border-2 border-gray-100 p-4">'
+    + '<div class="text-sm font-bold text-gray-900 mb-1">구독 구성 (월 기준)</div>'
+    + '<div class="text-xs text-gray-400 mb-2">수량을 조정하면 할인율이 바뀝니다</div>'
+    + rows
+    + '<div class="mt-3 pt-3 border-t border-gray-100"><div class="text-xs font-bold text-gray-500 mb-1.5">추가 구성품 <span class="font-normal text-gray-400">(넣으면 +5%p · ★ 추천)</span></div>'
+    + '<div class="flex flex-wrap gap-1.5">' + addonChips + '</div></div>'
+    + '</div>'
+
+    + '<div class="rounded-2xl border-2 p-4" style="border-color:#05966933">'
+    + '<div class="text-sm font-bold text-gray-900 mb-2">결제 금액</div>'
+    + '<ul class="divide-y divide-gray-50 mb-3">' + (lineItems || '<li class="text-xs text-gray-400 py-2">담긴 제품이 없습니다</li>') + '</ul>'
+    + '<div class="flex items-center justify-between text-sm py-1"><span class="text-gray-500">정가</span>'
+    + '<span class="' + (quote.rate ? 'line-through text-gray-400' : 'font-bold text-gray-900') + '">' + won(quote.listPrice) + '</span></div>'
+    + (quote.rate
+        ? '<div class="flex items-center justify-between text-sm py-1"><span class="text-gray-500">구독 할인</span>'
+          + '<span class="font-bold text-emerald-700">' + quote.rate + '% · −' + won(quote.discount) + '</span></div>'
+          + '<div class="flex items-end justify-between pt-2 mt-1 border-t border-gray-100">'
+          + '<span class="text-sm font-bold text-gray-700">월 결제액</span>'
+          + '<span class="text-3xl font-black text-emerald-700">' + won(quote.finalPrice) + '</span></div>'
+        : '')
+    + '<p class="text-xs text-gray-400 mt-2">할인 근거: ' + rateReason + '</p>'
+    + (simRows ? '<div class="mt-3 pt-3 border-t border-gray-100 space-y-1"><div class="text-xs font-bold text-gray-500 mb-1">1회분 추가 시 예상 변화</div>' + simRows + '</div>' : '')
+    + '</div></div>'
+
+    + '<p class="text-xs text-gray-400 mt-3">※ 가격·할인율은 「제품 추천 로직 구성」 엑셀 Sheet3 기준입니다. '
+    + '정가는 제품 단가 합계로 계산하며, 엑셀 프리셋 정가(두유2+파이토2 = 138,000원 / 두유1+파이토1 = 69,000원)와 수량 조합이 일치하면 함께 표시합니다.</p>';
 }
 
 // ── 파이토 점수 렌더링 ────────────────────────
@@ -1904,24 +2067,38 @@ function renderGuide(r) {
   }
   if (r.body.abdominal) warn.push(['📏', '복부비만', '허리둘레가 기준(남 90cm·여 85cm) 이상입니다. 체중 관리 루틴을 꾸준히 실천하세요.']);
 
-  const allergySet = r.profile.allergies;
-  const routineHtml = WEIGHT_ROUTINE.map(step => {
-    const prods = step.products.map(name => {
-      const p = BOBSNU_PRODUCTS.find(x => x.name === name);
-      const al = p ? productAllergens(p, allergySet) : [];
-      return '<span class="inline-flex items-center gap-1 text-sm font-bold px-2.5 py-1 rounded-full '
-        + (al.length ? 'bg-gray-100 text-gray-400 line-through' : 'bg-white text-gray-800 shadow-sm') + '"'
-        + (al.length ? ' title="' + al.join('·') + ' 알레르기"' : '') + '>'
-        + (p ? p.icon : '') + ' ' + name + '</span>';
-    }).join('<span class="text-gray-400 text-sm">+</span>');
-    return '<div class="bg-emerald-50 rounded-2xl p-4">'
-      + '<div class="text-sm font-bold text-emerald-800 mb-2">' + step.icon + ' ' + step.slot + '</div>'
-      + '<div class="flex flex-wrap items-center gap-1.5">'
-      + (step.meal ? '<span class="text-sm text-gray-700">' + step.meal + '</span><span class="text-gray-400 text-sm">+</span>' : '')
-      + prods + '</div></div>';
-  }).join('');
-  const routineAllergy = [...new Set(WEIGHT_ROUTINE.flatMap(s => s.products))]
-    .map(n => BOBSNU_PRODUCTS.find(x => x.name === n)).filter(p => p && productAllergens(p, allergySet).length);
+  // ── 체중 유형 + 권장 영양 섭취량 ──
+  const t = r.targets;
+  const bt = t.bodyType;
+  const rg = t.ranges;
+  const dirLabel = t.targetKcal < t.eer ? '감량' : (t.targetKcal > t.eer ? '증량' : '유지');
+  const nutRow = (name, value, note) =>
+    '<div class="flex items-baseline justify-between gap-2 py-1.5 border-b border-gray-50 last:border-0">'
+    + '<span class="text-xs text-gray-500">' + name + '</span>'
+    + '<span class="text-sm font-bold text-gray-800">' + value + '</span>'
+    + '<span class="text-xs text-gray-400 w-20 text-right flex-shrink-0">' + note + '</span></div>';
+
+  const targetHtml =
+    '<div class="grid md:grid-cols-3 gap-3 mb-3">'
+    + '<div class="bg-emerald-50 rounded-2xl p-4"><div class="text-xs font-bold text-emerald-700 mb-1">체중 유형</div>'
+    + '<div class="text-2xl font-black text-emerald-900">' + bt.name + '</div>'
+    + '<div class="text-xs text-emerald-700 mt-1">BMI ' + t.bmi.toFixed(1) + ' · ' + bt.desc + '</div>'
+    + '<div class="text-xs text-emerald-700">표준 체중 ' + t.targetWeight + ' kg (BMI 22)</div></div>'
+    + '<div class="bg-emerald-50 rounded-2xl p-4"><div class="text-xs font-bold text-emerald-700 mb-1">목표 칼로리</div>'
+    + '<div class="text-2xl font-black text-emerald-900">' + t.targetKcal.toLocaleString() + '<span class="text-sm font-medium"> kcal/일</span></div>'
+    + '<div class="text-xs text-emerald-700 mt-1">기준(EER) ' + t.eer.toLocaleString() + ' kcal ' + (t.targetKcal - t.eer >= 0 ? '+' : '') + (t.targetKcal - t.eer) + '</div>'
+    + '<div class="text-xs text-emerald-700">예상 ' + dirLabel + ' ' + Math.abs(t.weeklyDelta) + ' kg/주</div></div>'
+    + '<div class="bg-gray-50 rounded-2xl p-4"><div class="text-xs font-bold text-gray-600 mb-1">권장 영양 섭취량</div>'
+    + nutRow('탄수화물', Math.round(rg.carb[0]) + '–' + Math.round(rg.carb[1]) + ' g', '55–65%E')
+    + nutRow('단백질',   Math.round(rg.protein[0]) + '–' + Math.round(rg.protein[1]) + ' g', '7–20%E')
+    + nutRow('지방',     Math.round(rg.fat[0]) + '–' + Math.round(rg.fat[1]) + ' g', '15–30%E')
+    + '</div></div>'
+    + '<div class="grid sm:grid-cols-4 gap-2 mb-4">'
+    + [['식이섬유', Math.round(rg.fiber) + ' g 이상'], ['당류', Math.round(rg.sugar) + ' g 미만'],
+       ['포화지방', Math.round(rg.satfat) + ' g 미만'], ['나트륨', rg.sodium.toLocaleString() + ' mg 미만']]
+       .map(([n, v]) => '<div class="bg-gray-50 rounded-xl px-3 py-2"><div class="text-xs text-gray-500">' + n + '</div>'
+         + '<div class="text-sm font-bold text-gray-800">' + v + '</div></div>').join('')
+    + '</div>';
 
   const goalTips = HEALTH_GOALS.filter(g => selectedGoals.has(g.id)).map(g =>
     '<li class="flex gap-2 text-sm"><span>' + g.icon + '</span><span><b class="text-gray-800">' + g.name + '</b> <span class="text-gray-600">' + g.tip + '</span></span></li>'
@@ -1936,11 +2113,8 @@ function renderGuide(r) {
             + '<div><div class="text-sm font-bold text-amber-900">' + title + '</div><div class="text-xs text-amber-800 mt-0.5">' + body + '</div></div></div>'
           ).join('') + '</div>'
         : '<div class="bg-emerald-50 rounded-xl p-4 text-sm text-emerald-800 mb-6">🎉 큰 문제 없이 균형 잡힌 식단입니다.</div>')
-    + '<div class="text-sm font-bold text-gray-800 mb-2">⚖️ 체중 관리 하루 루틴</div>'
-    + '<div class="grid md:grid-cols-3 gap-3 mb-2">' + routineHtml + '</div>'
-    + (routineAllergy.length
-        ? '<p class="text-xs text-red-600 mb-4"><i class="fas fa-exclamation-triangle mr-1"></i>' + routineAllergy.map(p => p.name).join('·') + '은(는) 알레르기로 제외하세요 — 해당 끼니는 과일·채소 등 가벼운 식사로 대체합니다.</p>'
-        : '<div class="mb-4"></div>')
+    + '<div class="text-sm font-bold text-gray-800 mb-2">⚖️ 체중 유형 · 권장 영양 섭취량</div>'
+    + targetHtml
     + '<div class="text-sm font-bold text-gray-800 mb-2">🎯 목표별 관리 팁</div>'
     + '<ul class="space-y-1.5">' + goalTips + '</ul>';
 }
@@ -2117,32 +2291,52 @@ function toggleGoal(id) {
   renderHealthGoals();
 }
 
-// ── B2C 제품 그리드 ──────────────────────────
+// ── 제품 목록 ────────────────────────────────
+// 가격·영양성분이 있는 카탈로그(products.js)를 그대로 보여줍니다
+const KIND_COLOR = { soymilk: '#8B5CF6', phyto: '#059669', bar: '#EA580C', addon: '#0D9488' };
 function renderProductGrid() {
   const el = document.getElementById('product-grid');
   if (!el) return;
-  el.innerHTML = BOBSNU_PRODUCTS.map(p =>
-    '<div class="rounded-3xl border-2 p-6 bg-white hover:shadow-lg transition-shadow" style="border-color:' + p.color + '20">'
-    + '<div class="text-4xl mb-4">' + p.icon + '</div>'
-    + '<h3 class="text-lg font-bold text-gray-900 mb-1">' + p.name + '</h3>'
-    + '<p class="text-sm text-gray-600 mb-4">' + p.desc + '</p>'
-    + '<div class="flex flex-wrap gap-1 mb-4">'
-    + p.targets.map(t => '<span class="text-xs px-2 py-1 rounded-full font-medium" style="background:' + p.color + '15;color:' + p.color + '">' + t + '</span>').join('')
-    + '</div>'
-    + '<div class="flex flex-wrap gap-1 mb-4">'
-    + p.phytos.slice(0, 3).map(ph => {
-        const g = PHYTOCHEMICAL_GROUPS[ph];
-        return '<span class="text-xs px-2 py-0.5 rounded-full text-white font-medium" style="background:' + (g ? g.color : '#6B7280') + '">' + (g ? g.name : ph) + '</span>';
-      }).join('')
-    + '</div>'
-    + '<button onclick="alert(\'구독 서비스 준비 중입니다.\\n제품 상담 문의로 연락주세요\')" class="w-full py-2.5 rounded-xl text-white text-sm font-medium transition" style="background:' + p.color + '">구독 신청</button>'
-    + '</div>'
-  ).join('');
+  el.innerHTML = BOBSNU_CATALOG.map(p => {
+    const color = KIND_COLOR[p.kind] || '#6B7280';
+    const n = p.nut;
+    return '<div class="rounded-3xl border-2 p-6 bg-white hover:shadow-lg transition-shadow flex flex-col" style="border-color:' + color + '20">'
+      + '<div class="flex items-start justify-between mb-3">'
+      + '<span class="text-4xl">' + p.icon + '</span>'
+      + '<span class="text-xs font-bold px-2 py-1 rounded-full text-white" style="background:' + color + '">' + p.code + ' · ' + CATALOG_KIND_LABEL[p.kind] + '</span>'
+      + '</div>'
+      + '<h3 class="text-lg font-bold text-gray-900 mb-1">' + p.name + '</h3>'
+      + '<p class="text-sm text-gray-600 mb-3">' + p.note + '</p>'
+      + '<div class="flex flex-wrap gap-1 mb-3">'
+      + p.funcs.map(t => '<span class="text-xs px-2 py-1 rounded-full font-medium" style="background:' + color + '15;color:' + color + '">' + t + '</span>').join('')
+      + '</div>'
+      + '<div class="text-xs text-gray-500 space-y-0.5 mb-3">'
+      + '<div>' + n.energy + ' kcal · 단백질 ' + n.protein + 'g · 식이섬유 ' + n.fiber + 'g'
+      + (n.calcium ? ' · 칼슘 ' + n.calcium + 'mg' : '') + '</div>'
+      + '<div class="text-gray-400">1회 제공량 ' + n.weight + (p.kind === 'soymilk' || p.code === '1' ? ' mL' : ' g') + ' 기준 · 제품소개서 표시값</div>'
+      + '</div>'
+      + '<div class="mt-auto pt-3 border-t border-gray-100">'
+      + '<div class="flex items-baseline justify-between mb-2">'
+      + '<span class="text-xs text-gray-500">' + p.pack + '</span>'
+      + '<span class="text-lg font-black text-gray-900">' + won(p.price) + '</span></div>'
+      + '<button onclick="scrollToAssessment()" class="w-full py-2.5 rounded-xl text-white text-sm font-medium transition" style="background:' + color + '">PDI 평가로 맞춤 구독 받기</button>'
+      + '</div></div>';
+  }).join('');
+}
+
+// 「다른 음식」 입력용 datalist — 레시피 + 단품 식재료
+// ponytail: 14,715개를 한 번에 넣으면 무거워 상위 2,000개만. 부족하면 입력형 자동완성(initAutocomplete)으로 승격
+function initPlanFoodList() {
+  const dl = document.getElementById('plan-food-list');
+  if (!dl) return;
+  const names = RECIPE_NAMES.slice(0, 1600).concat(INGREDIENT_NAMES.slice(0, 400));
+  dl.innerHTML = names.map(n => '<option value="' + n.replace(/"/g, '&quot;') + '">').join('');
 }
 
 // ── 재시작 ───────────────────────────────────
 function restartAssessment() {
   addedMeals = [];
+  subCart = null;
   for (const k of Object.keys(surveyAnswers)) delete surveyAnswers[k];
   selectedGoals.clear();
   for (const g of HEALTH_GOALS) if (g.base) selectedGoals.add(g.id);
