@@ -1104,14 +1104,25 @@ function displayResults() {
   // ─ Summary Stats ─
   document.getElementById('total-cal').textContent     = Math.round(r.totalCalories) + ' kcal';
   document.getElementById('prf-cal').textContent       = Math.round(r.prfCalories) + ' kcal';
+  // (설문 기반이면 위 두 칼로리 타일은 displayResults 에서 숨깁니다)
   document.getElementById('diversity-score').textContent = r.phytoScore.coveredCount + '/' + PHYTO_SCORED_KEYS.length;
   document.getElementById('food-cat-count').textContent  = Object.keys(r.categoryMap).length + '가지';
+
+  // 설문 기반이면 섭취량에 의존하는 지표는 아예 보여주지 않는다
+  const isSurvey = r.basis === 'survey';
+  const show = (id, on) => {
+    const sec = document.getElementById(id);
+    if (sec) sec.classList.toggle('hidden', !on);
+  };
+  show('pfs-score-section', !isSurvey);      // PFS 식단 점수 — 나트륨·당류 등 양 의존
+  show('stat-total-cal', !isSurvey);         // 총 칼로리
+  show('stat-prf-cal', !isSurvey);           // PRF 칼로리
 
   renderKeySummary(r);
   renderGuide(r);
   renderSubscription(r);
-  renderPFSScore(r.pfs);
-  renderPhytoScore(r.phytoScore);
+  if (!isSurvey) renderPFSScore(r.pfs);
+  renderPhytoScore(r.phytoScore, isSurvey);
   renderMealPlan();
   renderMonitor();
 
@@ -1896,7 +1907,8 @@ function renderSubscription(r) {
 }
 
 // ── 파이토 점수 렌더링 ────────────────────────
-function renderPhytoScore(ps) {
+// isSurvey: 설문 기반이면 mg 기반 100점 점수는 숨기고 「어떤 계열을 먹었는지」만 보여줍니다
+function renderPhytoScore(ps, isSurvey) {
   const el = document.getElementById('phyto-score-section');
   if (!el) return;
 
@@ -1951,24 +1963,30 @@ function renderPhytoScore(ps) {
   el.innerHTML =
     '<div class="flex flex-wrap items-center justify-between gap-4 mb-6">'
     + '<div>'
-    + '<h3 class="text-xl font-bold text-gray-900">🌿 파이토케미컬 점수</h3>'
-    + '<p class="text-gray-500 text-sm mt-1">우리 DB 기반 일일 기준량(p75) 대비 달성도</p>'
+    + '<h3 class="text-xl font-bold text-gray-900">🌿 파이토케미컬 ' + (isSurvey ? '구성' : '점수') + '</h3>'
+    + '<p class="text-gray-500 text-sm mt-1">'
+    + (isSurvey ? '설문으로 추정한 섭취 계열 — 섭취량(mg)은 식사를 기록해야 알 수 있습니다'
+                : '우리 DB 기반 일일 기준량(p75) 대비 달성도') + '</p>'
     + '</div>'
-    // 총점 뱃지
+    // 총점 뱃지 — 설문이면 mg 기반 점수 대신 계열 수만
     + '<div class="flex items-center gap-3">'
     + '<div class="text-center">'
-    + '<div class="text-5xl font-black" style="color:' + gradeColor + '">' + total + '</div>'
-    + '<div class="text-xs text-gray-400">/ 100점</div>'
+    + '<div class="text-5xl font-black" style="color:' + (isSurvey ? '#8B5CF6' : gradeColor) + '">'
+    + (isSurvey ? ps.coveredCount : total) + '</div>'
+    + '<div class="text-xs text-gray-400">' + (isSurvey ? '/ ' + PHYTO_SCORED_KEYS.length + ' 계열' : '/ 100점') + '</div>'
     + '</div>'
     + '<div class="text-left">'
-    + '<div class="inline-flex items-center px-3 py-1.5 rounded-full text-white text-sm font-bold" style="background:' + gradeColor + '">' + grade + '</div>'
-    + '<div class="text-xs text-gray-400 mt-1">' + ps.coveredCount + '/' + PHYTO_SCORED_KEYS.length + '개 계열 검출</div>'
+    + (isSurvey
+        ? '<div class="inline-flex items-center px-3 py-1.5 rounded-full bg-purple-100 text-purple-800 text-sm font-bold">📝 설문 추정</div>'
+          + '<div class="text-xs text-gray-400 mt-1">섭취한 계열 수</div>'
+        : '<div class="inline-flex items-center px-3 py-1.5 rounded-full text-white text-sm font-bold" style="background:' + gradeColor + '">' + grade + '</div>'
+          + '<div class="text-xs text-gray-400 mt-1">' + ps.coveredCount + '/' + PHYTO_SCORED_KEYS.length + '개 계열 검출</div>')
     + '</div>'
     + '</div>'
     + '</div>'
 
-    // 3개 하위 점수
-    + '<div class="grid grid-cols-3 gap-4 mb-6">'
+    // 3개 하위 점수 — 충분량·목적 집중도는 mg 기반이라 설문에서는 제외
+    + (isSurvey ? '' : '<div class="grid grid-cols-3 gap-4 mb-6">'
     // 다양성
     + '<div class="bg-blue-50 rounded-2xl p-4">'
     + '<div class="flex items-center gap-2 mb-2"><span class="text-lg">🌈</span><span class="text-sm font-bold text-blue-800">다양성</span></div>'
@@ -1987,12 +2005,27 @@ function renderPhytoScore(ps) {
     + bar(ps.focus, 30, '#6366F1')
     + '<p class="text-xs text-indigo-600 mt-2">' + ps.focusLabel + '</p>'
     + '</div>'
-    + '</div>'
+    + '</div>')
 
-    // 계열별 달성률
+    // 계열별 — 기록 기반이면 DRV 달성률, 설문이면 섭취한 계열 목록
     + '<div class="bg-gray-50 rounded-2xl p-5">'
-    + '<div class="text-sm font-bold text-gray-700 mb-3">계열별 DRV 달성률 <span class="font-normal text-gray-400 text-xs ml-1">🎯 = 선택한 목적 계열</span></div>'
-    + '<div class="grid md:grid-cols-2 gap-x-6">' + keyBars + '</div>'
+    + '<div class="text-sm font-bold text-gray-700 mb-3">'
+    + (isSurvey
+        ? '섭취한 파이토케미컬 계열 <span class="font-normal text-gray-400 text-xs ml-1">🎯 = 선택한 목적 계열</span>'
+        : '계열별 DRV 달성률 <span class="font-normal text-gray-400 text-xs ml-1">🎯 = 선택한 목적 계열</span>')
+    + '</div>'
+    + (isSurvey
+        ? '<div class="flex flex-wrap gap-1.5">' + keyRows.map(row => {
+            const on = row.mg > 0.01;
+            const isGoal = ps.goalKeys.includes(row.k);
+            return '<span class="text-xs px-2.5 py-1 rounded-full font-bold '
+              + (on ? 'text-white' : 'bg-gray-200 text-gray-400') + '"'
+              + (on ? ' style="background:' + (row.g ? row.g.color : '#6B7280') + '"' : '') + '>'
+              + (row.g ? row.g.icon + ' ' + row.g.name : row.k) + (isGoal ? ' 🎯' : '') + '</span>';
+          }).join('') + '</div>'
+          + '<p class="text-xs text-gray-400 mt-3">회색은 설문 응답에서 섭취가 추정되지 않은 계열입니다. '
+          + '계열별 섭취량(mg)과 기준 달성률은 식사를 기록하면 계산됩니다.</p>'
+        : '<div class="grid md:grid-cols-2 gap-x-6">' + keyBars + '</div>')
     + '</div>';
 }
 
@@ -2035,11 +2068,15 @@ function renderKeySummary(r) {
   const ps = r.phytoScore;
   const t = PFS_TREND_LABELS[pfs.trend];
 
-  const basisHtml = r.basis === 'log'
+  // 설문은 「무엇을 얼마나 자주」만 묻기 때문에 비율 지표(PDI)는 추정할 수 있지만
+  // 칼로리·나트륨·당류처럼 섭취량에 직접 비례하는 값은 신뢰할 수 없습니다.
+  // 그래서 설문 기반일 때는 PDI·파이토 다양성·단백질만 보여주고 나머지는 숨깁니다
+  const isSurvey = r.basis === 'survey';
+
+  const basisHtml = !isSurvey
     ? '<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">🍽 오늘 식사 기록 기반</span>'
       + (r.surveyPDI !== null ? '<span class="text-xs text-gray-500">설문 예측 PDI ' + r.surveyPDI.toFixed(1) + '% → 기록 PDI ' + r.pdiScore.toFixed(1) + '%</span>' : '')
-    : '<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">📝 설문 기반 예측치</span>'
-      + '<button type="button" onclick="goToStep(2); setInputMode(\'log\')" class="text-xs text-emerald-700 underline">식사를 기록하면 더 정확해져요</button>';
+    : '<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">📝 설문 기반 예측치</span>';
 
   el.innerHTML =
     '<div class="flex flex-wrap items-center justify-between gap-2 mb-5">'
@@ -2047,8 +2084,22 @@ function renderKeySummary(r) {
     + '<div class="flex flex-wrap items-center gap-2">' + basisHtml + '</div>'
     + '</div>'
 
-    // 칼로리 게이지
-    + '<div class="rounded-2xl border border-gray-100 p-5 mb-4">'
+    // 설문 기반이면 칼로리 게이지 대신 안내 (섭취량을 묻지 않아 칼로리를 낼 수 없음)
+    + (isSurvey
+        ? '<div class="rounded-2xl border-2 border-amber-100 bg-amber-50 p-5 mb-4">'
+          + '<div class="text-sm font-bold text-amber-900 mb-1">📝 설문으로는 PDI와 단백질까지만 알 수 있습니다</div>'
+          + '<p class="text-xs text-amber-800 leading-relaxed">설문은 「무엇을 얼마나 자주 먹는지」를 묻기 때문에 '
+          + '식품군 구성비(PDI)는 추정할 수 있지만, 밥을 몇 공기 먹는지처럼 <b>섭취량</b>은 묻지 않습니다.<br>'
+          + '그래서 <b>섭취 칼로리 · 식이섬유 · 나트륨 · PFS 식단 점수</b>는 보여드리지 않습니다 — '
+          + '끼니별로 먹은 음식을 기록하면 모두 계산됩니다.</p>'
+          + '<button type="button" onclick="goToStep(2); setInputMode(\'log\')" class="mt-3 px-4 py-2 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600">🍽 식사 기록하고 전체 분석 받기</button>'
+          + '<div class="text-xs text-amber-700 mt-2">기준 칼로리(프로필 기반) ' + eer.toLocaleString() + ' kcal/일'
+          + (r.body.bmi ? ' · BMI ' + r.body.bmi.toFixed(1) + ' (' + r.body.bmiLabel + ')' : '') + '</div>'
+          + '</div>'
+        : '')
+
+    // 칼로리 게이지 (식사 기록 기반일 때만)
+    + (isSurvey ? '' : '<div class="rounded-2xl border border-gray-100 p-5 mb-4">'
     + '<div class="flex flex-wrap items-end justify-between gap-2 mb-3">'
     + '<div><div class="text-xs font-bold text-gray-500 mb-1">섭취 칼로리 / 기준 칼로리</div>'
     + '<div class="text-2xl md:text-3xl font-black text-gray-900">' + Math.round(intake).toLocaleString()
@@ -2067,29 +2118,34 @@ function renderKeySummary(r) {
     + '</div>'
     + '<p class="text-xs text-gray-400 mt-2">기준 칼로리: KDRI 2020 에너지필요추정량 (' + (PFS_ACTIVITY_LEVELS[r.profile.activity] || {}).name + ')'
     + (r.body.bmi ? ' · BMI ' + r.body.bmi.toFixed(1) + ' (' + r.body.bmiLabel + ')' : '') + '</p>'
-    + '</div>'
+    + '</div>')
 
-    // 지표 타일
-    + '<div class="grid grid-cols-2 lg:grid-cols-5 gap-3">'
+    // 지표 타일 — 설문이면 PDI·파이토 다양성·단백질 3개만
+    + '<div class="grid grid-cols-2 ' + (isSurvey ? 'lg:grid-cols-3' : 'lg:grid-cols-5') + ' gap-3">'
     + tile('📊 PDI' + (r.basis === 'survey' ? ' (예측)' : ''),
         '<span class="text-2xl font-black" style="color:' + r.gradeColor + '">' + r.pdiScore.toFixed(1) + '%</span>',
         '목표 40% 이상', miniBar(r.pdiScore, 40, r.gradeColor))
     + tile('🌈 파이토케미컬 다양성',
         '<span class="text-2xl font-black text-purple-700">' + ps.coveredCount + '</span><span class="text-sm text-gray-400">/ ' + PHYTO_SCORED_KEYS.length + ' 계열</span>',
-        '파이토 점수 ' + ps.total + '/100', miniBar(ps.coveredCount, PHYTO_SCORED_KEYS.length, '#8B5CF6'))
-    + tile('💪 단백질',
+        isSurvey ? '섭취한 계열 수 (구성 기반)' : '파이토 점수 ' + ps.total + '/100',
+        miniBar(ps.coveredCount, PHYTO_SCORED_KEYS.length, '#8B5CF6'))
+    + tile('💪 단백질' + (isSurvey ? ' (예측)' : ''),
         '<span class="text-2xl font-black text-orange-600">' + Math.round(n.protein) + '</span><span class="text-sm text-gray-400">g</span>',
         '권장 ' + Math.round(protLo) + '–' + Math.round(protHi) + 'g', miniBar(n.protein, protLo, '#EA580C'))
-    + tile('🌾 식이섬유',
+    + (isSurvey ? '' : tile('🌾 식이섬유',
         '<span class="text-2xl font-black text-emerald-700">' + n.fiber.toFixed(1) + '</span><span class="text-sm text-gray-400">g</span>',
-        '목표 ' + Math.round(fibT) + 'g 이상', miniBar(n.fiber, fibT, '#10B981'))
-    + '<div class="col-span-2 lg:col-span-1">' + tile('🥗 PFS 식단 점수',
+        '목표 ' + Math.round(fibT) + 'g 이상', miniBar(n.fiber, fibT, '#10B981')))
+    + (isSurvey ? '' : '<div class="col-span-2 lg:col-span-1">' + tile('🥗 PFS 식단 점수',
         '<span class="text-2xl font-black" style="color:' + t.color + '">' + pfs.daily.total.toFixed(2) + '</span>'
         + '<span class="text-xs font-bold px-1.5 py-0.5 rounded-full text-white" style="background:' + t.color + '">' + t.name + '</span>',
         'Basic ' + pfs.daily.basic.toFixed(2) + ' (가점 ' + (pfs.daily.sub.carb + pfs.daily.sub.protein + pfs.daily.sub.fat + pfs.daily.sub.fiber).toFixed(1)
-        + ' − 감점 ' + Math.abs(pfs.daily.sub.chol + pfs.daily.sub.sugar + pfs.daily.sub.satfat + pfs.daily.sub.trans + pfs.daily.sub.sodium).toFixed(1) + ')') + '</div>'
+        + ' − 감점 ' + Math.abs(pfs.daily.sub.chol + pfs.daily.sub.sugar + pfs.daily.sub.satfat + pfs.daily.sub.trans + pfs.daily.sub.sodium).toFixed(1) + ')') + '</div>')
     + '</div>'
-    + '<p class="text-xs text-gray-400 mt-3">단백질·식이섬유는 식재료 칼로리·식품군 기반 추정치입니다.</p>';
+    + '<p class="text-xs text-gray-400 mt-3">'
+    + (isSurvey
+        ? '설문 응답을 대표 음식으로 환산한 예측치입니다. 단백질은 고기·생선·달걀·콩 문항에서 추정했습니다.'
+        : '단백질·식이섬유는 식재료 칼로리·식품군 기반 추정치입니다.')
+    + '</p>';
 }
 
 // ── 주의사항 & 관리 가이드 ─────────────────────
@@ -2103,10 +2159,13 @@ function renderGuide(r) {
   if (r.allergyHits.length) {
     warn.push(['🚫', '알레르기 주의', r.allergyHits.map(h => h.name + '(' + h.allergens.join('·') + ')').join(', ')]);
   }
-  if (ratio > 1.1) warn.push(['🔥', '칼로리 초과', '기준보다 ' + Math.round(r.totalCalories - r.pfs.eer) + 'kcal 많아요. 간식·가공식품부터 줄여보세요.']);
+  // 칼로리·나트륨처럼 섭취량 기반 경고는 식사 기록이 있을 때만 (설문으로는 양을 알 수 없음)
+  if (r.basis === 'log' && ratio > 1.1) warn.push(['🔥', '칼로리 초과', '기준보다 ' + Math.round(r.totalCalories - r.pfs.eer) + 'kcal 많아요. 간식·가공식품부터 줄여보세요.']);
   if (ps.coveredCount < 6) warn.push(['🌈', '파이토케미컬 다양성 부족', ps.coveredCount + '/' + PHYTO_SCORED_KEYS.length + '개 계열만 섭취 — 색깔이 다른 채소·과일·콩을 곁들이세요.']);
   if (r.intake.wholeGrainPct < 5) warn.push(['🌾', '통곡물 섭취 부족', '흰쌀밥을 잡곡·현미밥으로 바꾸면 식이섬유와 PDI가 함께 올라갑니다.']);
-  if (r.intake.vegG < 200) warn.push(['🥬', '채소 섭취 부족', '약 ' + Math.round(r.intake.vegG) + 'g — 끼니마다 채소 반찬 1–2접시(하루 350g 이상)를 권장합니다.']);
+  if (r.intake.vegG < 200) warn.push(['🥬', '채소 섭취 부족', r.basis === 'log'
+    ? '약 ' + Math.round(r.intake.vegG) + 'g — 끼니마다 채소 반찬 1–2접시(하루 350g 이상)를 권장합니다.'
+    : '끼니마다 채소 반찬 1–2접시(하루 350g 이상)를 권장합니다.']);
   if (r.intake.fruitG < 100) warn.push(['🍎', '과일 섭취 부족', '하루 1–2회(주먹 1개 크기) 과일을 드세요.']);
   if (!r.categoryMap.legumes) warn.push(['🫘', '두류 미섭취', '두부·된장·콩밥 등 콩 식품은 핵심 PRF 식품군입니다.']);
   if (r.categoryMap.refined && r.categoryMap.refined.percentage > 40) {

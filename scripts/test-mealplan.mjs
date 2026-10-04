@@ -445,9 +445,40 @@ ok('가이드 렌더 (체중 유형·권장 영양 섭취량)', () => {
     assert.ok(h.includes(s), '누락: ' + s)
   assert.ok(!h.includes('undefined') && !h.includes('NaN'))
 })
-ok('요약·PFS·파이토 렌더', () => {
-  for (const id of ['key-summary', 'pfs-score-section', 'phyto-score-section'])
-    assert.ok(html(id).length > 500, id + ' len=' + html(id).length)
+ok('설문 기반에서는 PDI·단백질만 보이고 양 의존 지표는 숨김', () => {
+  const ks = html('key-summary')
+  assert.ok(ks.length > 500, 'key-summary len=' + ks.length)
+  // 보여야 하는 것
+  for (const s of ['📊 PDI', '💪 단백질', '파이토케미컬 다양성'])
+    assert.ok(ks.includes(s), '누락: ' + s)
+  assert.ok(ks.includes('📝 설문 기반 예측치'), '설문 배지 없음')
+  assert.ok(ks.includes('식사 기록하고 전체 분석 받기'), '기록 유도 버튼 없음')
+  // 숨겨야 하는 것 — 타일 라벨 기준 (안내 문구에 이름이 언급되는 건 정상)
+  for (const s of ['섭취 칼로리 / 기준 칼로리', '🌾 식이섬유', '🥗 PFS 식단 점수', 'Basic '])
+    assert.ok(!ks.includes(s), '설문인데 노출됨: ' + s)
+  // PFS 섹션은 아예 비어 있어야 함
+  assert.equal(html('pfs-score-section'), '', 'PFS 섹션이 그려짐')
+  // 파이토 섹션은 계열 구성만 (mg·DRV 없음)
+  const ph = html('phyto-score-section')
+  assert.ok(ph.length > 500, 'phyto len=' + ph.length)
+  assert.ok(ph.includes('파이토케미컬 구성'), '설문용 제목이 아님')
+  assert.ok(!ph.includes('DRV 달성률') && !ph.includes('/ 100점'), '설문인데 mg 기반 점수 노출')
+})
+ok('식사 기록 기반에서는 전체 지표가 보임', () => {
+  vm.runInContext(`
+    addedMeals = [];
+    addMeal('잡곡밥'); addMeal('된장찌개'); addMeal('제육볶음'); addMeal('배추김치'); addMeal('시금치나물');
+    calculateAndShow();
+  `, ctx)
+  const ks = html('key-summary')
+  assert.ok(ks.includes('🍽 오늘 식사 기록 기반'), '기록 배지 없음')
+  for (const s of ['섭취 칼로리 / 기준 칼로리', '🌾 식이섬유', '🥗 PFS 식단 점수'])
+    assert.ok(ks.includes(s), '기록인데 누락: ' + s)
+  assert.ok(html('pfs-score-section').length > 500, 'PFS 섹션이 안 그려짐')
+  assert.ok(html('phyto-score-section').includes('DRV 달성률'), '파이토 DRV 달성률 없음')
+  // 설문 상태로 되돌림 (뒤 검사들이 설문 기준으로 이어짐)
+  vm.runInContext('addedMeals = []; calculateAndShow();', ctx)
+  assert.ok(html('key-summary').includes('📝 설문 기반 예측치'))
 })
 
 // 30일 식단 + 실천 기록 + 모니터링 (setTimeout 없이 직접 실행)
