@@ -269,6 +269,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // 상세 분석은 펼칠 때 그림 (접힌 상태에서는 크기가 0이라 차트·생키를 그릴 수 없음)
   const detail = document.getElementById('detail-analysis');
   if (detail) detail.addEventListener('toggle', () => { if (detail.open && pdiResult) renderDetailAnalysis(pdiResult); });
+
+  // 화면 폭이 바뀌면(회전·창 크기 조절) 생키 다이어그램↔단계별 목록을 다시 판단한다
+  let wasWide = isWideScreen();
+  window.addEventListener('resize', () => {
+    const nowWide = isWideScreen();
+    if (nowWide === wasWide) return;
+    wasWide = nowWide;
+    if (pdiResult && detail && detail.open) renderDetailAnalysis(pdiResult);
+  });
 });
 
 // ══════════════════════════════════════════════
@@ -1236,6 +1245,8 @@ function buildLogFlow(r, allIng) {
   return {
     col1Title: '🍽 음식',
     col2Title: '🥬 식재료 (식품군)',
+    col1PlainTitle: '음식',
+    col2PlainTitle: '🥬 식재료',
     col1: r.meals.map(m => {
       const slot = MEAL_SLOTS.find(x => x.id === m.meal) || { icon: '🍽', name: m.meal };
       return { icon: slot.icon, name: m.name, sub: slot.name + ' · ' + Math.round((m.analysis || {}).totalCal || 0) + 'kcal' };
@@ -1294,8 +1305,63 @@ function buildSurveyFlow(r) {
   return {
     col1Title: '📝 설문 문항',
     col2Title: '🥬 식품군 <span class="font-normal">(칼로리 비중)</span>',
+    col1PlainTitle: '설문 문항',
+    col2PlainTitle: '🥬 식품군 (칼로리 비중)',
     col1, col2, col1To2, col2ToPhyto,
   };
+}
+
+// 화면이 좁으면 생키 다이어그램 대신 단계별 목록을 보여준다.
+// 4열 다이어그램은 폰에서 읽을 수 없고, SVG 좌표도 가로 스크롤과 섞이면 어긋납니다
+function isWideScreen() {
+  return typeof window === 'undefined' || !window.matchMedia
+    ? true
+    : window.matchMedia('(min-width: 768px)').matches;
+}
+
+function renderFlowList(flow, phytoToFunctions) {
+  const el = document.getElementById('flow-list');
+  if (!el) return;
+  const chip = (icon, text, cls, style) =>
+    '<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ' + (cls || '') + '"'
+    + (style ? ' style="' + style + '"' : '') + '>' + (icon ? icon + ' ' : '') + text + '</span>';
+
+  const rows = flow.col1.map((node, i) => {
+    const cats = [...(flow.col1To2[i] || [])];
+    const catNodes = cats.map(name => flow.col2.find(c => c.name === name)).filter(Boolean);
+    const phytoKeys = [...new Set(catNodes.flatMap(c => flow.col2ToPhyto[c.name] || []))];
+    const funcs = [...new Set(phytoKeys.flatMap(k => phytoToFunctions[k] || []))];
+    return '<details class="border border-gray-100 rounded-xl p-3 mb-2">'
+      + '<summary class="flex items-center gap-2 cursor-pointer list-none">'
+      + '<span class="text-lg leading-none">' + node.icon + '</span>'
+      + '<span class="min-w-0"><span class="block text-sm font-bold text-gray-900 truncate">' + node.name + '</span>'
+      + '<span class="block text-xs text-gray-400 truncate">' + node.sub + '</span></span>'
+      + '<span class="ml-auto text-xs text-gray-400 flex-shrink-0">' + phytoKeys.length + '계열</span>'
+      + '</summary>'
+      + '<div class="mt-2.5 pl-1 space-y-2">'
+      + '<div><div class="text-xs font-bold text-gray-500 mb-1">' + flow.col2PlainTitle + '</div>'
+      + '<div class="flex flex-wrap gap-1">' + (catNodes.length
+          ? catNodes.map(c => chip(c.icon, c.name + (c.note ? ' ' + c.note : ''),
+              c.prf ? 'bg-emerald-50 text-emerald-800' : 'bg-gray-100 text-gray-500')).join('')
+          : '<span class="text-xs text-gray-400">없음</span>') + '</div></div>'
+      + '<div><div class="text-xs font-bold text-gray-500 mb-1">🧬 파이토케미컬</div>'
+      + '<div class="flex flex-wrap gap-1">' + (phytoKeys.length
+          ? phytoKeys.map(k => {
+              const g = PHYTOCHEMICAL_GROUPS[k];
+              return chip(g ? g.icon : '', g ? g.name : k, 'text-white', 'background:' + (g ? g.color : '#6B7280'));
+            }).join('')
+          : '<span class="text-xs text-gray-400">연결된 파이토케미컬 없음</span>') + '</div></div>'
+      + (funcs.length
+          ? '<div><div class="text-xs font-bold text-gray-500 mb-1">💡 기대 효과</div>'
+            + '<div class="flex flex-wrap gap-1">' + funcs.map(f => chip(BENEFIT_ICON[f] || '✦', f, 'bg-indigo-50 text-indigo-700')).join('') + '</div></div>'
+          : '')
+      + '</div></details>';
+  }).join('');
+
+  el.innerHTML =
+    '<p class="text-xs text-gray-400 mb-3">' + flow.col1PlainTitle + '을 눌러 펼치면 '
+    + flow.col2PlainTitle.replace(/^[^ ]+ /, '') + ' → 파이토케미컬 → 기대 효과로 이어지는 경로가 보입니다</p>'
+    + rows;
 }
 
 function renderIngredientBreakdown(r) {
@@ -1324,6 +1390,10 @@ function renderIngredientBreakdown(r) {
   });
   // 등장한 기능성 분야 목록 (중복 제거, 순서 유지)
   const presentFuncKeys = [...new Set(presentPhytoKeys.flatMap(k => phytoToFunctions[k] || []))];
+
+  // 좁은 화면에서는 단계별 목록으로 대체 (4열 다이어그램은 폰에서 읽을 수 없음)
+  renderFlowList(flow, phytoToFunctions);
+  if (!isWideScreen()) { container.innerHTML = ''; return; }
 
   // ── 컨테이너 HTML 생성 ──
   container.innerHTML =
@@ -1878,15 +1948,17 @@ function resetSubCart() {
 function won(v) { return v.toLocaleString('ko-KR') + '원'; }
 
 function qtyRow(label, icon, qty, kind, extra) {
-  return '<div class="flex items-center gap-2 py-2.5 border-b border-gray-100 last:border-0">'
+  // 모바일: 제품 선택 드롭다운은 아래 줄로 내리고, ± 버튼은 터치 영역을 36px 로 키움
+  return '<div class="flex flex-wrap items-center gap-2 py-2.5 border-b border-gray-100 last:border-0">'
     + '<span class="text-2xl">' + icon + '</span>'
     + '<div class="flex-1 min-w-0">' + label + '</div>'
-    + (extra || '')
     + '<div class="flex items-center gap-1 flex-shrink-0">'
-    + '<button type="button" onclick="setSubQty(\'' + kind + '\',-1)" class="w-7 h-7 rounded-lg border border-gray-200 text-gray-600 hover:border-gray-400" aria-label="줄이기">−</button>'
-    + '<span class="w-8 text-center text-sm font-black text-gray-900">' + qty + '</span>'
-    + '<button type="button" onclick="setSubQty(\'' + kind + '\',1)" class="w-7 h-7 rounded-lg border border-gray-200 text-gray-600 hover:border-gray-400" aria-label="늘리기">+</button>'
-    + '</div></div>';
+    + '<button type="button" onclick="setSubQty(\'' + kind + '\',-1)" class="w-9 h-9 text-lg rounded-lg border border-gray-200 text-gray-600 hover:border-gray-400 active:bg-gray-100" aria-label="줄이기">−</button>'
+    + '<span class="w-8 text-center text-base font-black text-gray-900">' + qty + '</span>'
+    + '<button type="button" onclick="setSubQty(\'' + kind + '\',1)" class="w-9 h-9 text-lg rounded-lg border border-gray-200 text-gray-600 hover:border-gray-400 active:bg-gray-100" aria-label="늘리기">+</button>'
+    + '</div>'
+    + (extra ? '<div class="w-full sm:w-auto sm:order-2">' + extra + '</div>' : '')
+    + '</div>';
 }
 
 function renderSubscription(r) {
@@ -1915,7 +1987,7 @@ function renderSubscription(r) {
   }).join('');
 
   // ── 제품 선택 ──
-  const soymilkSelect = '<select onchange="setSoymilkCode(this.value)" class="text-xs px-2 py-1.5 border border-gray-200 rounded-lg max-w-48">'
+  const soymilkSelect = '<select onchange="setSoymilkCode(this.value)" class="w-full sm:w-auto text-xs px-2 py-2 border border-gray-200 rounded-lg sm:max-w-48">'
     + soymilks.map(p => '<option value="' + p.code + '"' + (p.code === subCart.soymilkCode ? ' selected' : '') + '>'
         + p.code + '. ' + p.name + ' (' + p.pack + ' ' + won(p.price) + ')</option>').join('')
     + '</select>';
@@ -2109,7 +2181,7 @@ function renderPhytoScore(ps, isSurvey) {
     + '</div>'
 
     // 3개 하위 점수 — 충분량·목적 집중도는 mg 기반이라 설문에서는 제외
-    + (isSurvey ? '' : '<div class="grid grid-cols-3 gap-4 mb-6">'
+    + (isSurvey ? '' : '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">'
     // 다양성
     + '<div class="bg-blue-50 rounded-2xl p-4">'
     + '<div class="flex items-center gap-2 mb-2"><span class="text-lg">🌈</span><span class="text-sm font-bold text-blue-800">다양성</span></div>'
@@ -2178,7 +2250,7 @@ function renderKeySummary(r) {
     return '<div class="h-2 bg-gray-100 rounded-full overflow-hidden mt-2"><div class="h-2 rounded-full" style="width:' + pct + '%;background:' + color + '"></div></div>';
   }
   function tile(label, valueHtml, sub, extra) {
-    return '<div class="bg-gray-50 rounded-2xl p-4 min-w-0">'
+    return '<div class="bg-gray-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 min-w-0">'
       + '<div class="text-xs font-bold text-gray-500 mb-1">' + label + '</div>'
       + '<div class="flex items-baseline gap-1 flex-wrap">' + valueHtml + '</div>'
       + (extra || '')

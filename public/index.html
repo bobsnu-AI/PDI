@@ -29,6 +29,22 @@
     .result-tab { color: #6B7280; background: transparent; }
     .result-tab:hover { background: #F3F4F6; }
     .result-tab.active { background: #065f46; color: #fff; }
+
+    /* ── 모바일 ────────────────────────────── */
+    /* 페이지 전체가 좌우로 밀리지 않게 (내부 요소는 자기 컨테이너에서만 스크롤) */
+    html, body { overflow-x: hidden; max-width: 100%; }
+    /* 긴 음식·식재료 이름이 화면을 넘기지 않게 */
+    body { word-break: keep-all; overflow-wrap: anywhere; }
+    /* iOS 에서 입력 포커스 시 화면이 확대되지 않도록 (16px 미만이면 자동 줌) */
+    @media (max-width: 767px) {
+      input, select, textarea { font-size: 16px !important; }
+      /* 터치 영역 최소 확보 */
+      button { touch-action: manipulation; }
+      /* 큰 숫자가 좁은 타일에서 넘치지 않게 */
+      .text-5xl { font-size: 2.25rem; line-height: 1; }
+      .text-4xl { font-size: 1.875rem; line-height: 1.1; }
+      .text-3xl { font-size: 1.5rem; line-height: 1.2; }
+    }
   </style>
 </head>
 <body class="bg-gray-50">
@@ -153,7 +169,7 @@
     </div>
 
     <!-- Steps Indicator -->
-    <div class="flex items-center justify-center mb-10 gap-2 flex-wrap">
+    <div class="flex items-center justify-center mb-8 md:mb-10 gap-1.5 md:gap-2 flex-wrap text-center">
       <div id="step-1-indicator" class="flex items-center gap-2">
         <div id="step-1-dot" class="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center text-sm font-bold">1</div>
         <span id="step-1-label" class="text-sm font-medium text-emerald-700">프로필</span>
@@ -353,20 +369,23 @@
     <div id="step-4" class="hidden animate-fade-in">
       <!-- 핵심 요약: 기준 대비 칼로리 · PDI · 파이토 다양성 · 단백질 · 식이섬유 -->
       <!-- 결과 탭 -->
-      <div class="flex flex-wrap gap-2 mb-6 bg-white rounded-2xl shadow-sm p-2" role="tablist">
+      <div class="sticky top-16 z-40 flex gap-1 sm:gap-2 mb-6 bg-white rounded-2xl shadow-sm p-1.5 sm:p-2" role="tablist">
         <button id="rtab-btn-analysis" role="tab" onclick="setResultTab('analysis')"
-          class="result-tab flex-1 min-w-36 px-4 py-3 rounded-xl text-sm font-bold transition">📊 나의 분석</button>
+          class="result-tab flex-1 min-w-0 px-2 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition leading-tight">
+          <span class="block sm:inline">📊</span><span class="block sm:inline sm:ml-1">나의 분석</span></button>
         <button id="rtab-btn-plan" role="tab" onclick="setResultTab('plan')"
-          class="result-tab flex-1 min-w-36 px-4 py-3 rounded-xl text-sm font-bold transition">🛒 제품 · 식단 구독</button>
+          class="result-tab flex-1 min-w-0 px-2 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition leading-tight">
+          <span class="block sm:inline">🛒</span><span class="block sm:inline sm:ml-1">제품<span class="hidden sm:inline"> · </span><span class="sm:hidden">·</span>식단</span></button>
         <button id="rtab-btn-track" role="tab" onclick="setResultTab('track')"
-          class="result-tab flex-1 min-w-36 px-4 py-3 rounded-xl text-sm font-bold transition">📈 체중 변화 · 실천</button>
+          class="result-tab flex-1 min-w-0 px-2 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition leading-tight">
+          <span class="block sm:inline">📈</span><span class="block sm:inline sm:ml-1">체중<span class="hidden sm:inline"> 변화</span><span class="sm:hidden">·실천</span></span></button>
       </div>
 
       <div id="rtab-analysis" role="tabpanel">
-      <div id="key-summary" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
+      <div id="key-summary" class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6"></div>
       <!-- 주의사항 & 관리 가이드 -->
       <!-- PDI Score Card -->
-      <div class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6">
+      <div class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6">
         <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
           <div>
             <h3 class="text-xl font-bold text-gray-900">📊 PDI 평가 <span id="pdi-basis-badge" class="align-middle ml-1 text-xs font-bold px-2 py-0.5 rounded-full"></span></h3>
@@ -417,13 +436,13 @@
           </div>
         </div>
       </div>
-      <div id="guide-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
+      <div id="guide-section" class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6"></div>
       <!-- PFS Diet Score -->
-      <div id="pfs-score-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
+      <div id="pfs-score-section" class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6"></div>
       <!-- Phyto Score -->
-      <div id="phyto-score-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
+      <div id="phyto-score-section" class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6"></div>
       <!-- 상세 분석 (식품군 구성 · 식재료 분해) — 필요할 때만 펼쳐보기 -->
-      <details id="detail-analysis" class="bg-white rounded-3xl shadow-lg mb-6 group">
+      <details id="detail-analysis" class="bg-white rounded-2xl md:rounded-3xl shadow-lg mb-4 md:mb-6 group">
         <summary class="cursor-pointer list-none p-6 md:p-8 flex items-center justify-between">
           <div>
             <h3 class="text-xl font-bold text-gray-900">🔍 상세 분석</h3>
@@ -441,25 +460,27 @@
           </div>
           <h4 class="text-lg font-bold text-gray-900 mb-1">🥢 식재료 분해 분석</h4>
           <p class="text-gray-500 text-sm mb-4">레시피 → 식재료 분해 → 식품군 매핑 → 파이토케미컬 매핑</p>
-          <div class="overflow-x-auto"><div id="ingredient-breakdown" class="min-w-[640px]"></div></div>
+          <!-- 모바일: 단계별 목록 / 데스크톱(768px 이상): 생키 다이어그램 -->
+          <div id="flow-list" class="md:hidden"></div>
+          <div class="hidden md:block overflow-x-auto -mx-2 px-2"><div id="ingredient-breakdown" class="min-w-[640px]"></div></div>
         </div>
       </details>
       </div>
 
       <div id="rtab-plan" class="hidden" role="tabpanel">
       <!-- 구독 세트 (수량 조정 · 할인가) -->
-      <div class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6">
+      <div class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6">
         <h3 class="text-xl font-bold text-gray-900 mb-1">🛒 맞춤 구독 세트</h3>
         <p class="text-gray-500 text-sm mb-6">두유·파이토100·프로틴바 수량을 조정하면 할인율과 결제 금액이 바뀝니다</p>
         <div id="product-recommendations" class="space-y-5"></div>
       </div>
       <!-- 30일 맞춤 식단 (SPEA2 최적화) + 이행 기록 -->
-      <div id="mealplan-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
+      <div id="mealplan-section" class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6"></div>
       <!-- 체중 변화 · 모니터링 -->
       </div>
 
       <div id="rtab-track" class="hidden" role="tabpanel">
-      <div id="monitor-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
+      <div id="monitor-section" class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6"></div>
       </div>
 
       <div class="text-center pb-4 flex flex-wrap justify-center gap-3">

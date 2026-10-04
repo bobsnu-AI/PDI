@@ -613,6 +613,60 @@ ok('목표 재조정 적용 → 식단 재생성', () => {
 // (브라우저에서 클릭했을 때 터지는 오류를 대신 잡는 용도)
 // ══════════════════════════════════════════════
 const tabHtml = read('public/index.html')
+console.log('\n── 모바일 최적화 ──')
+const mobHtml = read('public/index.html')
+ok('뷰포트·가로 넘침 방지가 설정됨', () => {
+  assert.ok(mobHtml.includes('name="viewport"') && mobHtml.includes('width=device-width'), '뷰포트 메타 없음')
+  assert.ok(mobHtml.includes('overflow-x: hidden'), '가로 스크롤 방지 없음')
+  assert.ok(/input, select, textarea \{ font-size: 16px/.test(mobHtml), 'iOS 입력 확대 방지 없음')
+})
+ok('다단 그리드에 모바일 분기가 있음', () => {
+  // 반응형 접두사 없는 3열 이상 그리드는 폰에서 읽을 수 없다
+  const srcs = ['public/index.html', 'public/static/app.js', 'public/static/tracker.js'].map(read).join('\n')
+  const bad = [...srcs.matchAll(/(?<![a-z]:)grid-cols-([3-9]|1[0-9])\b/g)]
+    .filter(m => {
+      const before = srcs.slice(Math.max(0, m.index - 24), m.index)
+      return !/(sm|md|lg|xl):$/.test(before)
+    })
+  assert.equal(bad.length, 0, '모바일 분기 없는 다단 그리드 ' + bad.length + '개: ' + bad.map(m => m[0]).join(', '))
+})
+ok('결과 탭이 좁은 화면에서 3등분으로 들어감', () => {
+  // min-w-36(144px) x3 = 432px 로는 360px 폰에서 줄바꿈됨 → min-w-0 + 반응형 패딩
+  const tabs = mobHtml.slice(mobHtml.indexOf('role="tablist"'), mobHtml.indexOf('id="rtab-analysis"'))
+  assert.ok(tabs.includes('min-w-0'), '탭에 min-w-0 이 없음')
+  assert.ok(!tabs.includes('min-w-36'), '탭에 고정 최소폭이 남아 있음')
+  assert.ok(tabs.includes('text-xs sm:text-sm'), '탭 글자 크기에 모바일 분기 없음')
+})
+ok('상세 분석은 좁은 화면에서 목록, 넓은 화면에서 다이어그램', () => {
+  assert.ok(mobHtml.includes('id="flow-list"') && mobHtml.includes('md:hidden'), '모바일 목록 컨테이너 없음')
+  const diag = mobHtml.slice(mobHtml.indexOf('id="flow-list"'))
+  assert.ok(/hidden md:block[^>]*overflow-x-auto/.test(diag), '다이어그램이 데스크톱 전용으로 감싸져 있지 않음')
+
+  // 좁은 화면으로 바꾸면 목록이 그려지고 다이어그램은 비워진다
+  sandbox.window = { matchMedia: () => ({ matches: false }), addEventListener: noop }
+  vm.runInContext('renderIngredientBreakdown(pdiResult);', ctx)
+  const list = html('flow-list')
+  assert.ok(list.length > 500, '모바일 목록 len=' + list.length)
+  assert.equal(html('ingredient-breakdown'), '', '좁은 화면인데 다이어그램이 그려짐')
+  for (const s of ['설문 문항', '식품군', '파이토케미컬'])
+    assert.ok(list.includes(s), '목록 누락: ' + s)
+  assert.ok(!list.includes('undefined') && !list.includes('NaN'))
+
+  // 넓은 화면이면 다이어그램도 그린다
+  sandbox.window = { matchMedia: () => ({ matches: true }), addEventListener: noop }
+  vm.runInContext('renderIngredientBreakdown(pdiResult);', ctx)
+  assert.ok(html('ingredient-breakdown').length > 1000, '넓은 화면인데 다이어그램이 없음')
+  assert.ok(html('flow-list').length > 500, '넓은 화면에서도 목록은 유지되어야 함(CSS 로 숨김)')
+  console.log('    모바일 목록 ' + html('flow-list').length + '자 · 데스크톱 다이어그램 ' + html('ingredient-breakdown').length + '자')
+})
+ok('터치 영역이 확보됨 (수량 ± · 끼니 상태 버튼)', () => {
+  const app = read('public/static/app.js'), trk = read('public/static/tracker.js')
+  assert.ok(!/w-7 h-7[^"]*aria-label="(줄이기|늘리기)"/.test(app), '수량 버튼이 28px 로 남아 있음')
+  assert.ok(app.includes('w-9 h-9'), '수량 버튼이 36px 로 커지지 않음')
+  assert.ok(!trk.includes('px-2.5 py-1 rounded-full'), '끼니 상태 버튼 터치 영역이 작음')
+})
+
+
 console.log('\n── 결과 화면 탭 ──')
 const panelOf = id => sandbox.document.getElementById('rtab-' + id)
 const hiddenOf = id => { const e = panelOf(id); return e && e.cls ? e.cls.has('hidden') : null }

@@ -218,7 +218,7 @@ function statusBtn(day, type, status, label, icon, active) {
     ? { eaten: 'bg-emerald-600 text-white', skipped: 'bg-gray-500 text-white', other: 'bg-amber-500 text-white' }[status]
     : 'bg-white border border-gray-200 text-gray-500 hover:border-gray-400';
   return '<button type="button" onclick="setMealStatus(' + day + ',\'' + type + '\',\'' + status + '\')" '
-    + 'class="text-xs font-bold px-2.5 py-1 rounded-full ' + cls + '">' + icon + ' ' + label + '</button>';
+    + 'class="text-xs font-bold px-3 py-2 rounded-full ' + cls + '">' + icon + ' ' + label + '</button>';
 }
 
 // 구독 구성을 고르고 버튼을 누르기 전에 보여주는 안내 화면
@@ -308,7 +308,7 @@ function renderMealPlan() {
           + '<select id="subp-' + d.day + '-' + meal.type + '" class="text-xs px-2 py-1.5 border border-gray-200 rounded-lg">'
           + [0.5, 1, 1.5, 2, 3].map(p => '<option value="' + p + '"' + (p === 1 ? ' selected' : '') + '>' + p + '인분</option>').join('')
           + '</select>'
-          + '<button type="button" onclick="submitSubstitute(' + d.day + ',\'' + meal.type + '\')" class="text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500 text-white">추가</button>'
+          + '<button type="button" onclick="submitSubstitute(' + d.day + ',\'' + meal.type + '\')" class="text-sm font-bold px-4 py-2 rounded-lg bg-amber-500 text-white">추가</button>'
           + '<span id="suberr-' + d.day + '-' + meal.type + '" class="text-xs text-red-600"></span></div>'
         : '';
 
