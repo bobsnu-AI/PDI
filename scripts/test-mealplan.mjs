@@ -380,7 +380,8 @@ function fakeEl(id) {
     id, _html: '', textContent: '', value: '', open: false, style: {},
     classList: { add: noop, remove: noop, toggle: noop },
     setAttribute: noop, getAttribute: () => null, addEventListener: noop,
-    appendChild: noop, querySelector: () => fakeEl(id + '-q'),
+    appendChild: noop, insertBefore: noop, remove: noop, removeChild: noop,
+    querySelector: () => fakeEl(id + '-q'), querySelectorAll: () => [],
     get innerHTML() { return this._html },
     set innerHTML(v) { this._html = String(v) },
     get innerText() { return String(this._html).replace(/<[^>]*>/g, ' ') },
@@ -393,6 +394,9 @@ sandbox.document.getElementById = id => {
   return els.get(id)
 }
 sandbox.document.createElement = () => fakeEl('new')
+// 생키 SVG 그리기는 실제 좌표가 필요해 검증 대상이 아니다 — 호출만 통과시킨다
+sandbox.document.createElementNS = () => fakeEl('svg')
+sandbox.requestAnimationFrame = (fn) => { fn(); return 0 }
 sandbox.alert = noop
 sandbox.confirm = () => false
 
@@ -452,7 +456,6 @@ ok('설문 기반에서는 PDI·단백질만 보이고 양 의존 지표는 숨�
   for (const s of ['📊 PDI', '💪 단백질', '파이토케미컬 다양성'])
     assert.ok(ks.includes(s), '누락: ' + s)
   assert.ok(ks.includes('📝 설문 기반 예측치'), '설문 배지 없음')
-  assert.ok(ks.includes('식사 기록하고 전체 분석 받기'), '기록 유도 버튼 없음')
   // 숨겨야 하는 것 — 타일 라벨 기준 (안내 문구에 이름이 언급되는 건 정상)
   for (const s of ['섭취 칼로리 / 기준 칼로리', '🌾 식이섬유', '🥗 PFS 식단 점수', 'Basic '])
     assert.ok(!ks.includes(s), '설문인데 노출됨: ' + s)
@@ -464,6 +467,52 @@ ok('설문 기반에서는 PDI·단백질만 보이고 양 의존 지표는 숨�
   assert.ok(ph.includes('파이토케미컬 구성'), '설문용 제목이 아님')
   assert.ok(!ph.includes('DRV 달성률') && !ph.includes('/ 100점'), '설문인데 mg 기반 점수 노출')
 })
+ok('설문 상세 분석은 문항 → 식품군 → 파이토케미컬로 이어짐', () => {
+  vm.runInContext('renderIngredientBreakdown(pdiResult);', ctx)
+  const h = html('ingredient-breakdown')
+  assert.ok(h.length > 1000, 'len=' + h.length)
+  assert.ok(h.includes('📝 설문 문항'), '1열이 설문 문항이 아님')
+  assert.ok(h.includes('식품군'), '2열이 식품군이 아님')
+  assert.ok(!h.includes('🍽 음식') && !h.includes('식재료 (식품군)'), '설문인데 음식·식재료 열이 그려짐')
+  // 식품을 만든 문항만 1열에 나오고, 각 문항의 라벨·선택한 답이 함께 보여야 함
+  const flow0 = $('buildSurveyFlow')($('pdiResult'))
+  assert.ok(flow0.col1.length >= 2, '1열 문항 ' + flow0.col1.length + '개')
+  for (const node of flow0.col1) {
+    assert.ok(h.includes(node.name), '문항 누락: ' + node.name)
+    assert.ok(node.sub.length > 0, node.name + ' 의 선택한 답이 비어 있음')
+  }
+  assert.ok(h.includes('밥 종류'), '밥 문항은 항상 있어야 함')
+  // 개별 식재료(백미·소금 등)가 노출되면 안 됨
+  for (const s of ['백미', '소금', '진간장', '고추장'])
+    assert.ok(!h.includes('data-id="' + s + '"'), '설문인데 식재료 노출: ' + s)
+  // 식품군 노드는 FOOD_CATEGORIES 이름으로
+  assert.ok(h.includes('통곡물') || h.includes('채소·나물·해조'), '식품군 이름 없음')
+  const flow = $('buildSurveyFlow')($('pdiResult'))
+  console.log('    문항 ' + flow.col1.length + '개 → 식품군 ' + flow.col2.length + '개 → 파이토케미컬 '
+    + new Set(Object.values(flow.col2ToPhyto).flat()).size + '계열')
+  console.log('    식품군: ' + flow.col2.map(c => c.icon + c.name + ' ' + c.note).join(' · '))
+})
+ok('양념·기름은 설문 상세 분석에서 제외', () => {
+  const flow = $('buildSurveyFlow')($('pdiResult'))
+  for (const c of flow.col2) assert.ok(c.cat !== 'spices' && c.cat !== 'oils', '제외 안 됨: ' + c.name)
+})
+ok('차류 식품군 보정 — 녹차가 PRF 로 계산됨', () => {
+  const ING = $('INGREDIENTS')
+  assert.equal(ING['녹차잎'].cat, 'tea')
+  assert.equal(ING['녹차잎'].prf, true)
+  assert.ok($('INGREDIENT_CAT_FIXED') > 0, '보정된 식재료가 없음')
+  // 녹차를 더 마시면 PDI 가 올라가야 함 (보정 전에는 내려갔음)
+  const Q = $('SURVEY_QUESTIONS'), build = $('buildSurveyDiet'), calc = $('calculatePDI')
+  const pdiFor = i => {
+    const a = {}; Q.forEach(q => { a[q.id] = q.options[1][1] })
+    a.tea = Q.find(q => q.id === 'tea').options[i][1]
+    return calc(build(a)).pdiScore
+  }
+  assert.ok(pdiFor(2) > pdiFor(0), '녹차를 마셔도 PDI 가 오르지 않음')
+  console.log('    보정 식재료 ' + $('INGREDIENT_CAT_FIXED') + '개 · 녹차 안 마심 '
+    + pdiFor(0).toFixed(1) + '% → 2잔 이상 ' + pdiFor(2).toFixed(1) + '%')
+})
+
 ok('식사 기록 기반에서는 전체 지표가 보임', () => {
   vm.runInContext(`
     addedMeals = [];
@@ -476,6 +525,10 @@ ok('식사 기록 기반에서는 전체 지표가 보임', () => {
     assert.ok(ks.includes(s), '기록인데 누락: ' + s)
   assert.ok(html('pfs-score-section').length > 500, 'PFS 섹션이 안 그려짐')
   assert.ok(html('phyto-score-section').includes('DRV 달성률'), '파이토 DRV 달성률 없음')
+  vm.runInContext('renderIngredientBreakdown(pdiResult);', ctx)
+  const ib = html('ingredient-breakdown')
+  assert.ok(ib.includes('🍽 음식'), '기록인데 음식 열이 없음')
+  assert.ok(ib.includes('식재료 (식품군)'), '기록인데 식재료 열이 없음')
   // 설문 상태로 되돌림 (뒤 검사들이 설문 기준으로 이어짐)
   vm.runInContext('addedMeals = []; calculateAndShow();', ctx)
   assert.ok(html('key-summary').includes('📝 설문 기반 예측치'))

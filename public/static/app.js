@@ -147,6 +147,22 @@ const HEALTH_GOALS = [
     tip: '아침 식사를 거르지 말고 단백질을 끼니마다 나눠 드세요. 충분한 수면이 기본입니다.' },
 ];
 
+// ── 식재료 식품군 보정 ──────────────────────────
+// recipes.js 는 자동 생성 DB라 차·코코아 원료가 「정제 곡물·당류」로 분류되어 있습니다.
+// PDI 원식(McCarty 2004)은 차류를 PRF 식품군으로 보므로 바로잡습니다.
+// 보정 전에는 설문의 「녹차를 하루 2잔 마신다」 응답이 PDI를 오히려 깎았습니다.
+const TEA_PRF_RE      = /^(녹차|말차|홍차|우롱차|보이차|루이보스|캐모마일|페퍼민트|재스민|히비스커스|코코아|카카오)/;
+const TEA_PRF_EXCLUDE = /아이스크림|소금|국수|우유|설탕|시럽|라떼|빵|쿠키|케이크|과자|떡|젤리|초콜릿|크림/;
+let INGREDIENT_CAT_FIXED = 0;
+
+for (const [name, ing] of Object.entries(INGREDIENTS)) {
+  if (ing.cat !== 'refined') continue;
+  if (!TEA_PRF_RE.test(name) || TEA_PRF_EXCLUDE.test(name)) continue;
+  ing.cat = 'tea';
+  ing.prf = true;
+  INGREDIENT_CAT_FIXED++;
+}
+
 // 밥스누 제품 마스터(이름·가격·영양성분·알레르기·기능)는 products.js 의 BOBSNU_CATALOG 참조
 // 제품 마스터·가격·할인·추천 룰은 products.js (엑셀 Sheet3) 참조
 
@@ -640,31 +656,34 @@ function splitPortions(total) {
 // 설문 응답 → 대표 음식으로 구성한 예측 1일 식단
 function buildSurveyDiet(ans) {
   const diet = [];
+  // q: 이 음식을 만든 설문 문항 id — 상세 분석의 「문항 → 식품군 → 파이토케미컬」 연결에 사용
+  let q = null;
   const push = (name, meal, portion, analysis) => {
     analysis = analysis || analyzeFood(name);
     if (!analysis || !(portion > 0)) return;
-    diet.push({ name, meal, portion, analysis: scaleAnalysis(analysis, portion), source: 'survey' });
+    diet.push({ name, meal, portion, analysis: scaleAnalysis(analysis, portion), source: 'survey', q });
   };
   const custom = name => buildCustomAnalysis(name, SURVEY_FOODS.custom[name]);
   const slots = ['breakfast', 'lunch', 'dinner'].slice(3 - ans.meals);
   const slotAt = i => slots[i % slots.length];
 
   // 밥
+  q = 'rice';
   for (const slot of slots) {
     if (ans.rice === 'white')      push('쌀밥', slot, 1);
     else if (ans.rice === 'grain') push('잡곡밥', slot, 1);
     else { push('쌀밥', slot, 0.5); push('잡곡밥', slot, 0.5); }
   }
   // 반찬
-  splitPortions(ans.veg).forEach((p, i)    => push(SURVEY_FOODS.veg[i % SURVEY_FOODS.veg.length], slotAt(i), p));
-  splitPortions(ans.kimchi).forEach((p, i) => push('배추김치', slotAt(i), p));
-  splitPortions(ans.soy).forEach((p, i)    => push('된장찌개', slotAt(i + 1), p));
-  splitPortions(ans.meat).forEach((p, i)   => push(SURVEY_FOODS.meat[i % SURVEY_FOODS.meat.length], slotAt(i + 1), p));
+  q = 'veg';    splitPortions(ans.veg).forEach((p, i)    => push(SURVEY_FOODS.veg[i % SURVEY_FOODS.veg.length], slotAt(i), p));
+  q = 'kimchi'; splitPortions(ans.kimchi).forEach((p, i) => push('배추김치', slotAt(i), p));
+  q = 'soy';    splitPortions(ans.soy).forEach((p, i)    => push('된장찌개', slotAt(i + 1), p));
+  q = 'meat';   splitPortions(ans.meat).forEach((p, i)   => push(SURVEY_FOODS.meat[i % SURVEY_FOODS.meat.length], slotAt(i + 1), p));
   // 간식류
-  splitPortions(ans.fruit).forEach((p, i)  => push(SURVEY_FOODS.fruit[i % SURVEY_FOODS.fruit.length], 'snack', p));
-  splitPortions(ans.nuts).forEach(p        => push('아몬드', 'snack', p));
-  splitPortions(ans.tea).forEach(p         => push('녹차 한 잔', 'snack', p, custom('녹차 한 잔')));
-  splitPortions(ans.snack).forEach((p, i)  => i % 2 === 0
+  q = 'fruit';  splitPortions(ans.fruit).forEach((p, i)  => push(SURVEY_FOODS.fruit[i % SURVEY_FOODS.fruit.length], 'snack', p));
+  q = 'nuts';   splitPortions(ans.nuts).forEach(p        => push('아몬드', 'snack', p));
+  q = 'tea';    splitPortions(ans.tea).forEach(p         => push('녹차 한 잔', 'snack', p, custom('녹차 한 잔')));
+  q = 'snack';  splitPortions(ans.snack).forEach((p, i)  => i % 2 === 0
     ? push('과자·단 음료', 'snack', p, custom('과자·단 음료'))
     : push('라면', 'snack', p));
   return diet;
@@ -1156,6 +1175,100 @@ function getMergedIngredients(r) {
 // 생키 플로우차트: 음식 → 식재료(식품군) → 파이토케미컬
 // ══════════════════════════════════════════════
 
+// ── 상세 분석의 1·2열 구성 ─────────────────────
+// 식사 기록 기반: 음식 → 식재료
+// 설문   기반: 설문 문항 → 식품군  (설문은 개별 식재료를 묻지 않으므로 식품군까지만)
+const SURVEY_FLOW_META = {
+  rice:   { icon: '🍚', label: '밥 종류' },
+  veg:    { icon: '🥬', label: '채소 반찬' },
+  kimchi: { icon: '🥬', label: '김치' },
+  fruit:  { icon: '🍎', label: '과일' },
+  soy:    { icon: '🫘', label: '콩·두부·된장' },
+  nuts:   { icon: '🥜', label: '견과류' },
+  meat:   { icon: '🍖', label: '고기·생선·달걀' },
+  tea:    { icon: '🍵', label: '무가당 차' },
+  snack:  { icon: '🍪', label: '가공식품' },
+};
+// 양념·기름은 설문이 묻지 않은 부수 재료이므로 제외 (레시피에 딸려오는 소금·참기름 등)
+const SURVEY_FLOW_SKIP_CATS = new Set(['spices', 'oils']);
+
+function buildLogFlow(r, allIng) {
+  const col1To2 = {};
+  r.meals.forEach((m, mi) => {
+    col1To2[mi] = new Set();
+    ((m.analysis || {}).ingredients || []).forEach(ing => {
+      if (allIng.some(x => x.name === ing.name)) col1To2[mi].add(ing.name);
+    });
+  });
+  const col2ToPhyto = {};
+  allIng.forEach(i => {
+    col2ToPhyto[i.name] = Object.keys((typeof i.phytos === 'object' && !Array.isArray(i.phytos)) ? i.phytos : {});
+  });
+  return {
+    col1Title: '🍽 음식',
+    col2Title: '🥬 식재료 (식품군)',
+    col1: r.meals.map(m => {
+      const slot = MEAL_SLOTS.find(x => x.id === m.meal) || { icon: '🍽', name: m.meal };
+      return { icon: slot.icon, name: m.name, sub: slot.name + ' · ' + Math.round((m.analysis || {}).totalCal || 0) + 'kcal' };
+    }),
+    col2: allIng.map(i => ({ ...i, icon: (FOOD_CATEGORIES[i.cat] || {}).icon })),
+    col1To2, col2ToPhyto,
+  };
+}
+
+function buildSurveyFlow(r) {
+  // 문항별로 그 문항이 만든 음식의 식재료를 식품군으로 모은다
+  const qCats = {};                 // 문항 id → Set(식품군 키)
+  const catPhytos = {};             // 식품군 키 → { phytoKey: mg }
+  const catKcal = {};               // 식품군 키 → kcal
+  for (const m of r.meals) {
+    if (!m.q || !SURVEY_FLOW_META[m.q]) continue;
+    for (const ing of (m.analysis || {}).ingredients || []) {
+      if (!ing.cat || SURVEY_FLOW_SKIP_CATS.has(ing.cat)) continue;
+      (qCats[m.q] || (qCats[m.q] = new Set())).add(ing.cat);
+      catKcal[ing.cat] = (catKcal[ing.cat] || 0) + (ing.kcal || 0);
+      const ph = (typeof ing.phytos === 'object' && !Array.isArray(ing.phytos)) ? ing.phytos : {};
+      const bag = catPhytos[ing.cat] || (catPhytos[ing.cat] = {});
+      for (const [k, v] of Object.entries(ph)) bag[k] = (bag[k] || 0) + (v || 0);
+    }
+  }
+
+  // 1열: 응답한 문항 (설문 순서 유지) — 선택한 답을 함께 보여준다
+  const qIds = SURVEY_QUESTIONS.map(q => q.id).filter(id => qCats[id]);
+  const col1 = qIds.map(id => {
+    const q = SURVEY_QUESTIONS.find(x => x.id === id);
+    const picked = q.options.find(o => o[1] === surveyAnswers[id]);
+    return { icon: SURVEY_FLOW_META[id].icon, name: SURVEY_FLOW_META[id].label, sub: picked ? picked[0] : '' };
+  });
+
+  // 2열: 식품군 (칼로리 큰 순)
+  const cats = Object.keys(catKcal).sort((a, b) => catKcal[b] - catKcal[a]);
+  const totalKcal = Object.values(catKcal).reduce((s, v) => s + v, 0) || 1;
+  const col2 = cats.map(c => {
+    const meta = FOOD_CATEGORIES[c] || {};
+    return {
+      name: meta.name || c,
+      cat: c,
+      icon: meta.icon || '🔸',
+      prf: !!meta.isPRF,
+      note: Math.round(catKcal[c] / totalKcal * 100) + '%',
+      phytos: catPhytos[c] || {},
+    };
+  });
+  const catToName = Object.fromEntries(cats.map(c => [c, (FOOD_CATEGORIES[c] || {}).name || c]));
+
+  const col1To2 = {};
+  qIds.forEach((id, i) => { col1To2[i] = new Set([...qCats[id]].map(c => catToName[c]).filter(Boolean)); });
+  const col2ToPhyto = {};
+  col2.forEach(n => { col2ToPhyto[n.name] = Object.keys(n.phytos).filter(k => n.phytos[k] > 0); });
+
+  return {
+    col1Title: '📝 설문 문항',
+    col2Title: '🥬 식품군 <span class="font-normal">(칼로리 비중)</span>',
+    col1, col2, col1To2, col2ToPhyto,
+  };
+}
+
 function renderIngredientBreakdown(r) {
   const container = document.getElementById('ingredient-breakdown');
   if (!container) return;
@@ -1163,33 +1276,15 @@ function renderIngredientBreakdown(r) {
   const allIng = getMergedIngredients(r);
 
   // ── 데이터 준비 ──
-  // Col 1: 음식 — 계산에 사용된 식단 (식사 기록 또는 설문 예측 식단)
-  const meals = r.meals; // [{ name, meal, analysis }]
-
-  // Col 2: 식재료+식품군 (중복 제거됨)
-  // Col 3: 파이토케미컬
-  const presentPhytoKeys = [...new Set(allIng.flatMap(i => Object.keys((typeof i.phytos === 'object' && !Array.isArray(i.phytos)) ? i.phytos : {})))];
-
-  // 엣지 정의
-  // meal → ingredient: 어떤 meal이 어떤 ing를 포함하는지
-  const mealToIng = {}; // mealIdx → Set(ingName)
-  meals.forEach((m, mi) => {
-    mealToIng[mi] = new Set();
-    const a = m.analysis;
-    if (a && a.ingredients) {
-      a.ingredients.forEach(ing => {
-        // mergedIngredients 의 key는 name|cat
-        const merged = allIng.find(x => x.name === ing.name);
-        if (merged) mealToIng[mi].add(merged.name);
-      });
-    }
-  });
-
-  // ing → phyto
-  const ingToPhyto = {}; // ingName → [phytoKey]
-  allIng.forEach(i => {
-    ingToPhyto[i.name] = Object.keys((typeof i.phytos === 'object' && !Array.isArray(i.phytos)) ? i.phytos : {});
-  });
+  // 설문 기반이면 「설문 문항 → 식품군」, 식사 기록 기반이면 「음식 → 식재료」로 잇습니다.
+  // 설문은 개별 식재료를 묻지 않으므로 식재료까지 내려가면 사실과 다른 연결이 됩니다.
+  const isSurvey = r.basis === 'survey';
+  const flow = isSurvey ? buildSurveyFlow(r) : buildLogFlow(r, allIng);
+  const meals = flow.col1;          // Col 1: 설문 문항 또는 음식
+  const nodes2 = flow.col2;         // Col 2: 식품군 또는 식재료
+  const mealToIng = flow.col1To2;
+  const ingToPhyto = flow.col2ToPhyto;
+  const presentPhytoKeys = [...new Set(Object.values(ingToPhyto).flat())];
 
   // phyto → functions (benefit 키워드)
   // 현재 식단에 등장한 파이토케미컬의 benefits만 모음
@@ -1205,7 +1300,9 @@ function renderIngredientBreakdown(r) {
   container.innerHTML =
     '<div class="text-xs text-amber-600 mb-4 flex items-center gap-2">'
     + '<i class="fas fa-info-circle"></i>'
-    + '<span>노드에 마우스를 올리면 경로가 강조됩니다 · 파이토케미컬 수치는 실측 mg/100g 기반</span>'
+    + '<span>' + (isSurvey
+        ? '노드에 마우스를 올리면 경로가 강조됩니다 · 설문 응답 → 식품군 → 파이토케미컬 → 기대 효과 순서로 이어집니다'
+        : '노드에 마우스를 올리면 경로가 강조됩니다 · 파이토케미컬 수치는 실측 mg/100g 기반') + '</span>'
     + '</div>'
     + '<div id="sankey-wrap" style="position:relative;overflow:visible">'
     // 4열 그리드
@@ -1213,33 +1310,30 @@ function renderIngredientBreakdown(r) {
 
     // ── 열1: 음식 ──
     + '<div id="col-meal" style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;padding-right:40px">'
-    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2" style="align-self:flex-end">🍽 음식</div>'
-    + meals.map((m, mi) => {
-        const slot = MEAL_SLOTS.find(x => x.id === m.meal) || { icon: '🍽', name: m.meal };
-        const mealLabel = slot.icon;
-        return '<div id="node-meal-' + mi + '" data-col="meal" data-id="' + mi + '"'
-          + ' class="sankey-node flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 cursor-pointer select-none transition-all border-blue-300 bg-blue-50 text-blue-800 text-xs font-semibold whitespace-nowrap"'
-          + ' style="max-width:140px">'
-          + '<span class="text-base leading-none">' + mealLabel + '</span>'
-          + '<div style="overflow:hidden">'
-          + '<div class="truncate font-bold" style="max-width:100px">' + m.name + '</div>'
-          + '<div class="text-blue-400 font-normal">' + slot.name + ' · ' + Math.round((m.analysis||{}).totalCal||0) + 'kcal</div>'
-          + '</div>'
-          + '</div>';
-      }).join('')
+    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2" style="align-self:flex-end">' + flow.col1Title + '</div>'
+    + meals.map((m, mi) =>
+        '<div id="node-meal-' + mi + '" data-col="meal" data-id="' + mi + '"'
+        + ' class="sankey-node flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 cursor-pointer select-none transition-all border-blue-300 bg-blue-50 text-blue-800 text-xs font-semibold whitespace-nowrap"'
+        + ' style="max-width:160px">'
+        + '<span class="text-base leading-none">' + m.icon + '</span>'
+        + '<div style="overflow:hidden">'
+        + '<div class="truncate font-bold" style="max-width:120px">' + m.name + '</div>'
+        + '<div class="text-blue-400 font-normal truncate" style="max-width:120px">' + m.sub + '</div>'
+        + '</div>'
+        + '</div>').join('')
     + '</div>'
 
     // ── 열2: 식재료(식품군) ──
     + '<div id="col-ing" style="display:flex;flex-direction:column;gap:8px;align-items:center;padding:0 20px">'
-    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">🥬 식재료 (식품군)</div>'
-    + allIng.map(ing => {
-        const cat  = FOOD_CATEGORIES[ing.cat] || {};
+    + '<div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">' + flow.col2Title + '</div>'
+    + nodes2.map(ing => {
         const isPRF = ing.prf;
         const bg   = isPRF ? 'border-emerald-400 bg-emerald-50 text-emerald-800' : 'border-gray-200 bg-gray-50 text-gray-500';
         return '<div id="node-ing-' + ing.name.replace(/\s/g,'_') + '" data-col="ing" data-id="' + ing.name + '"'
           + ' class="sankey-node flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 cursor-pointer select-none transition-all text-xs font-semibold whitespace-nowrap ' + bg + '">'
-          + '<span class="text-sm leading-none">' + (cat.icon||'🔸') + '</span>'
+          + '<span class="text-sm leading-none">' + (ing.icon || '🔸') + '</span>'
           + '<span>' + ing.name + '</span>'
+          + (ing.note ? '<span class="font-normal opacity-60">' + ing.note + '</span>' : '')
           + (isPRF ? '<span class="text-emerald-500 font-bold text-xs">PRF</span>' : '')
           + '</div>';
       }).join('')
@@ -1283,7 +1377,7 @@ function renderIngredientBreakdown(r) {
   // ── SVG + 인터랙션 — DOM 완전 안정 후 그리기 ──
   // phytoScore / categoryChart 렌더 후 레이아웃이 확정되어야 좌표가 정확함
   setTimeout(() => {
-    drawSankey({ meals, allIng, presentPhytoKeys, mealToIng, ingToPhyto, phytoToFunctions, presentFuncKeys });
+    drawSankey({ meals, allIng: nodes2, presentPhytoKeys, mealToIng, ingToPhyto, phytoToFunctions, presentFuncKeys });
   }, 350);
 }
 
@@ -2083,20 +2177,6 @@ function renderKeySummary(r) {
     + '<h3 class="text-xl font-bold text-gray-900">📋 나의 식단 요약</h3>'
     + '<div class="flex flex-wrap items-center gap-2">' + basisHtml + '</div>'
     + '</div>'
-
-    // 설문 기반이면 칼로리 게이지 대신 안내 (섭취량을 묻지 않아 칼로리를 낼 수 없음)
-    + (isSurvey
-        ? '<div class="rounded-2xl border-2 border-amber-100 bg-amber-50 p-5 mb-4">'
-          + '<div class="text-sm font-bold text-amber-900 mb-1">📝 설문으로는 PDI와 단백질까지만 알 수 있습니다</div>'
-          + '<p class="text-xs text-amber-800 leading-relaxed">설문은 「무엇을 얼마나 자주 먹는지」를 묻기 때문에 '
-          + '식품군 구성비(PDI)는 추정할 수 있지만, 밥을 몇 공기 먹는지처럼 <b>섭취량</b>은 묻지 않습니다.<br>'
-          + '그래서 <b>섭취 칼로리 · 식이섬유 · 나트륨 · PFS 식단 점수</b>는 보여드리지 않습니다 — '
-          + '끼니별로 먹은 음식을 기록하면 모두 계산됩니다.</p>'
-          + '<button type="button" onclick="goToStep(2); setInputMode(\'log\')" class="mt-3 px-4 py-2 rounded-xl bg-amber-500 text-white text-sm font-bold hover:bg-amber-600">🍽 식사 기록하고 전체 분석 받기</button>'
-          + '<div class="text-xs text-amber-700 mt-2">기준 칼로리(프로필 기반) ' + eer.toLocaleString() + ' kcal/일'
-          + (r.body.bmi ? ' · BMI ' + r.body.bmi.toFixed(1) + ' (' + r.body.bmiLabel + ')' : '') + '</div>'
-          + '</div>'
-        : '')
 
     // 칼로리 게이지 (식사 기록 기반일 때만)
     + (isSurvey ? '' : '<div class="rounded-2xl border border-gray-100 p-5 mb-4">'
