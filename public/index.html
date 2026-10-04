@@ -26,6 +26,9 @@
     .hero-bg { background: linear-gradient(135deg, #022c22 0%, #064e3b 40%, #065f46 70%, #047857 100%); }
     .nav-link:hover { color: #10b981; }
     .selected-chip { border-color: #059669 !important; background-color: #f0fdf4 !important; }
+    .result-tab { color: #6B7280; background: transparent; }
+    .result-tab:hover { background: #F3F4F6; }
+    .result-tab.active { background: #065f46; color: #fff; }
   </style>
 </head>
 <body class="bg-gray-50">
@@ -349,24 +352,19 @@
     <!-- Step 4: Results -->
     <div id="step-4" class="hidden animate-fade-in">
       <!-- 핵심 요약: 기준 대비 칼로리 · PDI · 파이토 다양성 · 단백질 · 식이섬유 -->
-      <div id="key-summary" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
-
-      <!-- 주의사항 & 관리 가이드 -->
-      <div id="guide-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
-
-      <!-- 구독 세트 (수량 조정 · 할인가) -->
-      <div class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6">
-        <h3 class="text-xl font-bold text-gray-900 mb-1">🛒 맞춤 구독 세트</h3>
-        <p class="text-gray-500 text-sm mb-6">두유·파이토100·프로틴바 수량을 조정하면 할인율과 결제 금액이 바뀝니다</p>
-        <div id="product-recommendations" class="space-y-5"></div>
+      <!-- 결과 탭 -->
+      <div class="flex flex-wrap gap-2 mb-6 bg-white rounded-2xl shadow-sm p-2" role="tablist">
+        <button id="rtab-btn-analysis" role="tab" onclick="setResultTab('analysis')"
+          class="result-tab flex-1 min-w-36 px-4 py-3 rounded-xl text-sm font-bold transition">📊 나의 분석</button>
+        <button id="rtab-btn-plan" role="tab" onclick="setResultTab('plan')"
+          class="result-tab flex-1 min-w-36 px-4 py-3 rounded-xl text-sm font-bold transition">🛒 제품 · 식단 구독</button>
+        <button id="rtab-btn-track" role="tab" onclick="setResultTab('track')"
+          class="result-tab flex-1 min-w-36 px-4 py-3 rounded-xl text-sm font-bold transition">📈 체중 변화 · 실천</button>
       </div>
 
-      <!-- 30일 맞춤 식단 (SPEA2 최적화) + 이행 기록 -->
-      <div id="mealplan-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
-
-      <!-- 체중 변화 · 모니터링 -->
-      <div id="monitor-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
-
+      <div id="rtab-analysis" role="tabpanel">
+      <div id="key-summary" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
+      <!-- 주의사항 & 관리 가이드 -->
       <!-- PDI Score Card -->
       <div class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6">
         <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
@@ -419,13 +417,11 @@
           </div>
         </div>
       </div>
-
+      <div id="guide-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
       <!-- PFS Diet Score -->
       <div id="pfs-score-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
-
       <!-- Phyto Score -->
       <div id="phyto-score-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
-
       <!-- 상세 분석 (식품군 구성 · 식재료 분해) — 필요할 때만 펼쳐보기 -->
       <details id="detail-analysis" class="bg-white rounded-3xl shadow-lg mb-6 group">
         <summary class="cursor-pointer list-none p-6 md:p-8 flex items-center justify-between">
@@ -448,6 +444,23 @@
           <div class="overflow-x-auto"><div id="ingredient-breakdown" class="min-w-[640px]"></div></div>
         </div>
       </details>
+      </div>
+
+      <div id="rtab-plan" class="hidden" role="tabpanel">
+      <!-- 구독 세트 (수량 조정 · 할인가) -->
+      <div class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-1">🛒 맞춤 구독 세트</h3>
+        <p class="text-gray-500 text-sm mb-6">두유·파이토100·프로틴바 수량을 조정하면 할인율과 결제 금액이 바뀝니다</p>
+        <div id="product-recommendations" class="space-y-5"></div>
+      </div>
+      <!-- 30일 맞춤 식단 (SPEA2 최적화) + 이행 기록 -->
+      <div id="mealplan-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
+      <!-- 체중 변화 · 모니터링 -->
+      </div>
+
+      <div id="rtab-track" class="hidden" role="tabpanel">
+      <div id="monitor-section" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6"></div>
+      </div>
 
       <div class="text-center pb-4 flex flex-wrap justify-center gap-3">
         <button onclick="restartAssessment()" class="border-2 border-emerald-700 text-emerald-700 px-8 py-3 rounded-xl font-medium hover:bg-emerald-50 transition">

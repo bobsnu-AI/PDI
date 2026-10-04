@@ -378,7 +378,13 @@ const els = new Map()
 function fakeEl(id) {
   const el = {
     id, _html: '', textContent: '', value: '', open: false, style: {},
-    classList: { add: noop, remove: noop, toggle: noop },
+    cls: new Set(),
+    classList: {
+      add(c) { el.cls.add(c) },
+      remove(c) { el.cls.delete(c) },
+      toggle(c, on) { if (on === undefined) { el.cls.has(c) ? el.cls.delete(c) : el.cls.add(c) } else { on ? el.cls.add(c) : el.cls.delete(c) } },
+      contains(c) { return el.cls.has(c) },
+    },
     setAttribute: noop, getAttribute: () => null, addEventListener: noop,
     appendChild: noop, insertBefore: noop, remove: noop, removeChild: noop,
     querySelector: () => fakeEl(id + '-q'), querySelectorAll: () => [],
@@ -606,6 +612,50 @@ ok('목표 재조정 적용 → 식단 재생성', () => {
 // 화면 조작 점검 — 버튼·입력에 연결된 함수를 전부 실제로 호출해 본다
 // (브라우저에서 클릭했을 때 터지는 오류를 대신 잡는 용도)
 // ══════════════════════════════════════════════
+const tabHtml = read('public/index.html')
+console.log('\n── 결과 화면 탭 ──')
+const panelOf = id => sandbox.document.getElementById('rtab-' + id)
+const hiddenOf = id => { const e = panelOf(id); return e && e.cls ? e.cls.has('hidden') : null }
+ok('index.html 에 탭 3개와 패널 3개가 있음', () => {
+  for (const t of ['analysis', 'plan', 'track']) {
+    assert.ok(tabHtml.includes('id="rtab-' + t + '"'), '패널 없음: ' + t)
+    assert.ok(tabHtml.includes('id="rtab-btn-' + t + '"'), '버튼 없음: ' + t)
+  }
+  assert.ok(tabHtml.includes("setResultTab('track')"), '탭 전환 핸들러 없음')
+})
+ok('섹션이 의도한 탭에 들어가 있음', () => {
+  const cut = (a, bEnd) => tabHtml.slice(tabHtml.indexOf(a), tabHtml.indexOf(bEnd))
+  const analysis = cut('id="rtab-analysis"', 'id="rtab-plan"')
+  const plan     = cut('id="rtab-plan"', 'id="rtab-track"')
+  const track    = tabHtml.slice(tabHtml.indexOf('id="rtab-track"'))
+  for (const id of ['key-summary', 'pdi-ring', 'guide-section', 'pfs-score-section', 'phyto-score-section', 'detail-analysis'])
+    assert.ok(analysis.includes('id="' + id + '"'), '나의 분석 탭에 없음: ' + id)
+  for (const id of ['product-recommendations', 'mealplan-section'])
+    assert.ok(plan.includes('id="' + id + '"'), '제품·식단 탭에 없음: ' + id)
+  assert.ok(track.includes('id="monitor-section"'), '체중 변화 탭에 monitor-section 없음')
+  assert.ok(tabHtml.indexOf('id="rtab-track"') > tabHtml.indexOf('id="rtab-plan"'), '체중 변화가 마지막 탭이 아님')
+})
+ok('탭 전환이 패널 표시를 바꿈', () => {
+  vm.runInContext("setResultTab('plan')", ctx)
+  assert.equal(hiddenOf('plan'), false, '제품·식단 탭이 숨겨짐')
+  assert.equal(hiddenOf('analysis'), true, '나의 분석 탭이 안 숨겨짐')
+  assert.equal(hiddenOf('track'), true)
+  vm.runInContext("setResultTab('track')", ctx)
+  assert.equal(hiddenOf('track'), false)
+  assert.equal(hiddenOf('plan'), true)
+  vm.runInContext("setResultTab('analysis')", ctx)
+  assert.equal(hiddenOf('analysis'), false)
+  vm.runInContext("setResultTab('없는탭')", ctx)
+  assert.equal(hiddenOf('analysis'), false, '잘못된 탭 이름에 반응함')
+})
+ok('식단 추천받기를 누르면 제품·식단 탭으로 이동', () => {
+  // 실천 기록이 있으면 확인 창이 뜨는데 테스트의 confirm 은 false 를 반환하므로 먼저 비운다
+  vm.runInContext("tracker.log = {}; setResultTab('analysis'); requestMealPlan();", ctx)
+  assert.equal($('resultTab'), 'plan')
+  assert.equal(hiddenOf('plan'), false)
+})
+
+
 console.log('\n── 화면 조작 ──')
 const htmlSrc = read('public/index.html')
 const inlineHandlers = [...new Set([...htmlSrc.matchAll(/on\w+="(\w+)\(/g)].map(m => m[1]))]

@@ -407,6 +407,33 @@ function submitProfile() {
   goToStep(2);
 }
 
+// ── 결과 화면 탭 ─────────────────────────────
+//   analysis : PDI·체중 유형·목표 칼로리·파이토케미컬 분석
+//   plan     : 구독 세트 + 30일 식단
+//   track    : 체중 변화·실천 기록 (구독 이후 단계라 마지막)
+const RESULT_TABS = ['analysis', 'plan', 'track'];
+let resultTab = 'analysis';
+
+function setResultTab(id) {
+  if (!RESULT_TABS.includes(id)) return;
+  resultTab = id;
+  for (const t of RESULT_TABS) {
+    const panel = document.getElementById('rtab-' + t);
+    const btn   = document.getElementById('rtab-btn-' + t);
+    if (panel) panel.classList.toggle('hidden', t !== id);
+    if (btn) {
+      btn.classList.toggle('active', t === id);
+      btn.setAttribute('aria-selected', String(t === id));
+    }
+  }
+  // 상세 분석·차트는 보이는 상태에서만 좌표가 잡힌다
+  const detail = document.getElementById('detail-analysis');
+  if (id === 'analysis' && detail && detail.open && pdiResult) renderDetailAnalysis(pdiResult);
+  if (id === 'track') drawWeightChart();
+  const sec = document.getElementById('assessment');
+  if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function goToStep(n) {
   const cur = document.getElementById('step-' + currentStep);
   const next = document.getElementById('step-' + n);
@@ -1049,6 +1076,7 @@ function requestMealPlan() {
   tracker.startDate = isoToday();
   tracker.log = {};
   buildMealPlan(true);
+  setResultTab('plan');
   const el = document.getElementById('mealplan-section');
   if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -1144,6 +1172,7 @@ function displayResults() {
   renderPhytoScore(r.phytoScore, isSurvey);
   renderMealPlan();
   renderMonitor();
+  setResultTab(resultTab);
 
   // 상세 분석은 펼쳐져 있을 때만 그림
   const detail = document.getElementById('detail-analysis');
@@ -2523,6 +2552,7 @@ function initPlanFoodList() {
 function restartAssessment() {
   addedMeals = [];
   subCart = null;
+  resultTab = 'analysis';
   for (const k of Object.keys(surveyAnswers)) delete surveyAnswers[k];
   selectedGoals.clear();
   for (const g of HEALTH_GOALS) if (g.base) selectedGoals.add(g.id);
