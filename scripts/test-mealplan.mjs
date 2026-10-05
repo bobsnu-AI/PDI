@@ -343,6 +343,71 @@ ok('최적화가 초기해보다 개선', () => {
   assert.ok(after > before, '개선 없음')
 })
 
+console.log('\n── 구독량에 맞춘 설계 일수 ──')
+ok('설계 일수 = max(두유 회분, 파이토+프로틴바 회분) · 최대 30일', () => {
+  const sd = $('subscriptionDays')
+  const cases = [
+    [{ soymilk: ['A', 'A'], phyto: ['가', '가'], bar: ['나', '나', '나'] }, 30],  // 48 / 58 → 30
+    [{ soymilk: ['A'], phyto: ['가'], bar: ['나', '나'] }, 30],                  // 24 / 34 → 30
+    [{ soymilk: ['A'], phyto: [], bar: ['나'] }, 24],                            // 24 / 10 → 24
+    [{ soymilk: ['A'], phyto: [], bar: [] }, 24],                                // 24 /  0 → 24
+    [{ soymilk: [], phyto: ['가'], bar: [] }, 14],                               //  0 / 14 → 14
+    [{ soymilk: [], phyto: [], bar: ['나'] }, 10],                               //  0 / 10 → 10
+    [{ soymilk: ['G'], phyto: [], bar: ['나'] }, 10],                            // 10 / 10 → 10
+    [{ soymilk: [], phyto: [], bar: [] }, 0],
+  ]
+  for (const [cart, want] of cases) {
+    assert.equal(sd(cart, 30), want, JSON.stringify(cart) + ' → ' + sd(cart, 30) + '일 (기대 ' + want + ')')
+  }
+})
+ok('설계한 일수만 만들고, 그 안에 제품 없는 날이 없음', () => {
+  const cases = [
+    ['두유2·파이토2·바3', { soymilk: ['A', 'A'], phyto: ['가', '가'], bar: ['나', '나', '나'], addon: [] }, 30],
+    ['두유1·파이토1·바2', { soymilk: ['A'], phyto: ['가'], bar: ['나', '나'], addon: [] }, 30],
+    ['두유1·바1',        { soymilk: ['A'], phyto: [], bar: ['나'], addon: [] }, 24],
+    ['두유1만',          { soymilk: ['A'], phyto: [], bar: [], addon: [] }, 24],
+    ['파이토1만',        { soymilk: [], phyto: ['가'], bar: [], addon: [] }, 14],
+    ['바1만',           { soymilk: [], phyto: [], bar: ['나'], addon: [] }, 10],
+  ]
+  for (const [label, cart, wantDays] of cases) {
+    const p = $('generateMealPlan')({ profile, targets, cart, days: 30, allergies: new Set() })
+    assert.ok(!p.error, label + ': ' + p.error)
+    assert.equal(p.days.length, wantDays, label + ' 설계 일수 ' + p.days.length + ' (기대 ' + wantDays + ')')
+    assert.equal(p.meta.days, wantDays)
+    assert.equal(p.meta.coverage.plainDays, 0, label + ' 에 제품 없는 날 ' + p.meta.coverage.plainDays + '일')
+    assert.equal(p.meta.leftover.soymilk + p.meta.leftover.phyto + p.meta.leftover.bar, 0, label + ' 제품이 남음')
+    // 모든 날에 제품이 하나라도 들어갔는지 직접 확인
+    for (const d of p.days) {
+      const has = d.meals.some(m => m.kind === 'product' || m.extras) || !!d.snack
+      assert.ok(has, label + ' Day ' + d.day + ' 에 밥스누 제품이 없음')
+    }
+    // 목표 칼로리는 일수와 무관하게 유지되어야 함
+    const r = p.meta.avgKcal / p.meta.targetKcal
+    assert.ok(r > 0.92 && r < 1.08, label + ' 평균 칼로리 ' + p.meta.avgKcal + ' (ratio ' + r.toFixed(2) + ')')
+    console.log('    ' + label.padEnd(18) + p.days.length + '일 · 저녁대체 ' + p.meta.coverage.replaceDays
+      + '일 · 평균 ' + p.meta.avgKcal + ' kcal')
+  }
+})
+ok('30일 미만이면 채우는 방법을 안내', () => {
+  const short = $('generateMealPlan')({ profile, targets, cart: { soymilk: ['A'], phyto: [], bar: ['나'], addon: [] }, days: 30, allergies: new Set() })
+  const sf = short.meta.shortfall
+  assert.ok(sf, '부족 안내가 없음')
+  // 안내한 팩 수를 실제로 담으면 30일이 되어야 함
+  const sd = $('subscriptionDays')
+  assert.equal(sd({ soymilk: Array(1 + sf.soymilkPacks).fill('A'), phyto: [], bar: ['나'] }, 30), 30, '두유 안내 팩 수로 30일이 안 됨')
+  assert.equal(sd({ soymilk: ['A'], phyto: Array(sf.phytoPacks).fill('가'), bar: ['나'] }, 30), 30, '파이토 안내 팩 수로 30일이 안 됨')
+  assert.equal(sd({ soymilk: ['A'], phyto: [], bar: Array(1 + sf.barPacks).fill('나') }, 30), 30, '프로틴바 안내 팩 수로 30일이 안 됨')
+  // 30일을 채운 구성에는 안내가 없어야 함
+  const full = $('generateMealPlan')({ profile, targets, cart: { soymilk: ['A', 'A'], phyto: ['가', '가'], bar: ['나', '나', '나'], addon: [] }, days: 30, allergies: new Set() })
+  assert.equal(full.meta.shortfall, null, '30일을 채웠는데 부족 안내가 나옴')
+  console.log('    두유1·바1 → 24일 · 안내: 두유 ' + sf.soymilkPacks + '팩 / 파이토 ' + sf.phytoPacks + '팩 / 프로틴바 ' + sf.barPacks + '팩')
+})
+ok('제품이 하나도 없으면 식단을 만들지 않음', () => {
+  const p = $('generateMealPlan')({ profile, targets, cart: { soymilk: [], phyto: [], bar: [], addon: [] }, days: 30, allergies: new Set() })
+  assert.ok(p.error && p.error.includes('1개 이상'), '빈 구성인데 오류가 아님: ' + JSON.stringify(p.error))
+})
+
+
 console.log('\n── 실천 기록 · 체중 모니터링 ──')
 vm.runInContext('trackerLoad(); tracker.profile = ' + JSON.stringify({ ...profile, allergies: [] }) + ';', ctx)
 const logWeight = $('logWeight')

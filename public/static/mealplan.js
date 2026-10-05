@@ -201,6 +201,45 @@ const REPLACE_PRIORITY = ['dinner', 'breakfast', 'lunch'];
 // 곁들임 배치 순서 — 대체되지 않은 끼니부터
 const EXTRA_PRIORITY = ['breakfast', 'lunch', 'snack'];
 
+// 구독한 제품으로 설계할 수 있는 일수
+//   하루에 제품 1회분 이상이 들어가도록 설계하므로,
+//   두유 회분 수와 (파이토 + 프로틴바) 회분 수 중 큰 쪽이 상한입니다.
+//   (끼니 대체는 두유 1 + 파이토나 프로틴바 1 을 한 쌍으로 쓰고, 남는 쪽은 곁들임으로 들어감)
+function subscriptionDays(cart, maxDays) {
+  const servingsOf = kind => (cart[kind] || []).reduce((s, code) => {
+    const p = CATALOG_BY_CODE[code];
+    return s + (p ? packServings(p) : 0);
+  }, 0);
+  const soymilk = servingsOf('soymilk');
+  const other   = servingsOf('phyto') + servingsOf('bar');
+  return Math.max(0, Math.min(maxDays || 30, Math.max(soymilk, other)));
+}
+
+// 30일을 채우려면 무엇을 더 담아야 하는지 (안내용)
+function daysShortfallHint(cart, maxDays) {
+  const cap = maxDays || 30;
+  const servingsOf = kind => (cart[kind] || []).reduce((s, code) => {
+    const p = CATALOG_BY_CODE[code];
+    return s + (p ? packServings(p) : 0);
+  }, 0);
+  const soymilk = servingsOf('soymilk');
+  const other   = servingsOf('phyto') + servingsOf('bar');
+  const need = cap - Math.max(soymilk, other);
+  if (need <= 0) return null;
+
+  // 설계 일수 = max(두유 회분, 파이토+프로틴바 회분) 이므로,
+  // 어느 한쪽을 cap 까지 끌어올리면 cap 일을 채울 수 있습니다
+  const soymilkPack = CATALOG_BY_CODE[(cart.soymilk || [])[0]] || CATALOG_BY_CODE['A'];
+  const packsFor = (pack, have) => Math.ceil((cap - have) / packServings(pack));
+  return {
+    need,
+    soymilkName:  soymilkPack.name,
+    soymilkPacks: packsFor(soymilkPack, soymilk),
+    phytoPacks:   packsFor(CATALOG_BY_CODE['가'], other),
+    barPacks:     packsFor(CATALOG_BY_CODE['나'], other),
+  };
+}
+
 function productServingNutrients(items) {
   const nut = new Float64Array(PLAN_NUT_KEYS.length);
   let kcal = 0, prfKcal = 0;
@@ -266,9 +305,14 @@ function planProductMeals(cart, days, rng) {
   }
 
   // ── (2) 남는 제품을 곁들임으로 — 아침 → 점심 → 간식 ──
-  // (day, 끼니) 자리를 순서대로 만들어 두고 제품을 하나씩 채운다
+  // 자리 순서: 제품이 아직 하나도 없는 날을 먼저 채운다.
+  //   (그래야 설계한 일수 안에 밥스누 제품이 없는 날이 남지 않음)
+  const hasProduct = d => !!(meals[d] && Object.keys(meals[d]).length);
   const slots = [];
-  for (const type of EXTRA_PRIORITY) for (let d = 0; d < days; d++) slots.push({ d, type });
+  for (const type of EXTRA_PRIORITY) {
+    for (let d = 0; d < days; d++) if (!hasProduct(d)) slots.push({ d, type });
+    for (let d = 0; d < days; d++) if (hasProduct(d)) slots.push({ d, type });
+  }
   let si = 0;
   const extraCount = { breakfast: 0, lunch: 0, snack: 0 };
   const place = name => {
@@ -302,6 +346,10 @@ function planProductMeals(cart, days, rng) {
       extraCount,                          // 곁들임으로 넣은 횟수 (아침·점심·간식)
       totalServings: stock.soymilk + stock.phyto + stock.bar,
       placed: replaceDays * 2 + extraCount.breakfast + extraCount.lunch + extraCount.snack,
+      // 제품이 하나도 안 들어간 날 (설계 일수 안에서) — 0 이어야 정상
+      plainDays: Array.from({ length: days }, (_, d) =>
+        !(meals[d] && Object.keys(meals[d]).length) && !(extras[d] && Object.keys(extras[d]).length) && !snacks[d]
+      ).filter(Boolean).length,
     },
     leftover: { soymilk: Math.max(0, soymilk), phyto: Math.max(0, phyto), bar: Math.max(0, bar) },
   };
@@ -652,7 +700,10 @@ class SPEA2DietOptimizer {
 //   반환: { days:[...], score, meta }
 // ══════════════════════════════════════════════
 function generateMealPlan({ profile, targets, cart, days, allergies, seed, onProgress }) {
-  days = days || 30;
+  // days 는 상한. 실제 설계 일수는 구독량이 커버하는 만큼만 (남는 날을 일반 식단으로 채우지 않음)
+  const maxDays = days || 30;
+  days = subscriptionDays(cart, maxDays);
+  if (days < 1) return { error: '제품을 1개 이상 담으면 식단을 설계할 수 있습니다.' };
   const rng = makeRng(seed != null ? seed : hashSeed(JSON.stringify([profile.gender, profile.age, profile.height, profile.weight, targets.targetKcal])));
 
   const pools = buildSlotPools({ allergies, rng, cap: 150 });
@@ -739,6 +790,8 @@ function generateMealPlan({ profile, targets, cart, days, allergies, seed, onPro
     score: { nutrition: +nutrition.toFixed(1), pdi: +pdi.toFixed(1), diversity: +diversity.toFixed(1), harmony: +harmony.toFixed(1) },
     meta: {
       generations: result.generations, elapsedMs: result.elapsedMs, archiveSize: result.archiveSize,
+      days, maxDays,
+      shortfall: daysShortfallHint(cart, maxDays),
       poolSizes: Object.fromEntries(SLOT_IDS.map(s => [s, pools[s].length])),
       productMealDays: Object.keys(products.meals).length,
       coverage: products.coverage,
