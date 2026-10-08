@@ -271,9 +271,10 @@ function renderMealPlan() {
   const m = plan.meta, sc = plan.score;
   const lastFrom = Math.max(1, plan.days.length - planPage() + 1);
 
-  const scoreTile = (label, v, color) =>
+  const scoreTile = (label, v, color, sub) =>
     '<div class="bg-gray-50 rounded-xl px-3 py-2 min-w-0"><div class="text-xs text-gray-500">' + label + '</div>'
-    + '<div class="text-lg font-black" style="color:' + color + '">' + v + '</div></div>';
+    + '<div class="text-lg font-black" style="color:' + color + '">' + v + '</div>'
+    + (sub ? '<div class="text-xs text-gray-400">' + sub + '</div>' : '') + '</div>';
 
   const dayCards = plan.days.slice(planViewFrom - 1, planViewFrom - 1 + planPage()).map(d => {
     const isToday = d.day === today;
@@ -349,11 +350,11 @@ function renderMealPlan() {
 
     + '<div class="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-4">'
     + scoreTile('영양 균형', sc.nutrition, '#10B981')
-    + scoreTile('PDI 달성도', sc.pdi, '#059669')
+    + scoreTile('PDI 달성도', sc.pdi, '#059669', '목표 ' + m.pdiOptTarget + '%')
     + scoreTile('메뉴 다양성', sc.diversity, '#8B5CF6')
     + scoreTile('메뉴 궁합', sc.harmony, '#2563EB')
     + scoreTile('평균 칼로리', m.avgKcal, '#374151')
-    + scoreTile('평균 PDI', m.avgPDI + '%', '#374151')
+    + scoreTile('평균 PDI', m.avgPDI + '%', '#374151', '임계 40% 이상')
     + '</div>'
     + '<div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 mb-3 text-xs text-emerald-900">'
     + '<b>밥스누 제품 배치</b> · 구독한 ' + m.coverage.totalServings + '회분을 ' + plan.days.length + '일에 나눠 넣었습니다<br>'

@@ -293,6 +293,46 @@ ok('대체 조합이 (두유+파이토) 또는 (두유+프로틴바+과일)', ()
     else assert.equal(pm.items.length, 3)
   }
 })
+ok('PDI 목적함수가 포화되지 않고 경쟁함', () => {
+  // 임상 임계값(40%)과 최적화 목표를 분리 — 40% 를 목표로 쓰면 점수가 100 에 붙어 기울기가 사라진다
+  assert.equal($('PDI_TARGET'), 40, '임상 임계값이 바뀜')
+  assert.ok($('PDI_OPT_TARGET') > 40, '최적화 목표가 임계값보다 커야 함')
+  const cases = [
+    ['여 35세 162/68', { gender: 'female', age: 35, height: 162, weight: 68, activity: 'low' }],
+    ['남 45세 175/95', { gender: 'male', age: 45, height: 175, weight: 95, activity: 'low' }],
+    ['남 25세 180/70', { gender: 'male', age: 25, height: 180, weight: 70, activity: 'very_active' }],
+    ['여 60세 155/45', { gender: 'female', age: 60, height: 155, weight: 45, activity: 'sedentary' }],
+  ]
+  const cart = { soymilk: ['A', 'A'], phyto: ['가', '가'], bar: ['나', '나', '나'], addon: [] }
+  for (const [label, prof] of cases) {
+    const t = $('nutritionTargets')(prof)
+    const p = $('generateMealPlan')({ profile: prof, targets: t, cart, days: 30, allergies: new Set() })
+    assert.ok(p.score.pdi < 100, label + ' PDI 점수가 100 에 포화됨 (기울기 없음)')
+    assert.ok(p.score.pdi > 50, label + ' PDI 점수가 너무 낮음: ' + p.score.pdi)
+    // 실측 PDI 는 임계값 40% 를 넉넉히 넘어야 함
+    assert.ok(p.meta.avgPDI > 40, label + ' 실측 PDI ' + p.meta.avgPDI + '% 가 임계값 미달')
+    assert.equal(p.meta.pdiOptTarget, $('PDI_OPT_TARGET'))
+  }
+  console.log('    PDI 목표 ' + $('PDI_OPT_TARGET') + '% (임계 ' + $('PDI_TARGET') + '%) · 점수 '
+    + cases.map(([l, prof]) => {
+        const t = $('nutritionTargets')(prof)
+        return $('generateMealPlan')({ profile: prof, targets: t, cart, days: 30, allergies: new Set() }).score.pdi
+      }).join(' / '))
+})
+ok('음식의 PRF 비율이 100% 를 넘지 않음', () => {
+  // 분자(PRF 식재료 kcal)와 분모(열량)를 같은 출처로 맞췄는지 — 전에는 반올림 때문에 107% 까지 나왔음
+  const pools = $('buildSlotPools')({ allergies: new Set(), rng: $('makeRng')(11), cap: 60 })
+  let worst = 0, worstName = ''
+  for (const slot of $('SLOT_IDS')) {
+    for (const c of pools[slot]) {
+      if (!(c.kcal > 0)) continue
+      const r = c.prfKcal / c.kcal
+      if (r > worst) { worst = r; worstName = c.name }
+    }
+  }
+  assert.ok(worst <= 1.0001, '최고 PRF 비율 ' + (worst * 100).toFixed(1) + '% (' + worstName + ')')
+  console.log('    최고 PRF 비율 ' + (worst * 100).toFixed(1) + '% (' + worstName + ')')
+})
 ok('평가 점수 4개 모두 0~100 범위', () => {
   for (const v of Object.values(plan.score)) assert.ok(Number.isFinite(v) && v >= 0 && v <= 100, String(v))
 })

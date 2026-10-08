@@ -50,8 +50,15 @@ const SLOT_CLASS_CODES = {
 // 다이어트 식단 제외 (분류로 걸러지지 않는 고열량 조리법)
 const DIET_EXCLUDE_RE = /라면|돈까스|까스|탕수|크림|마요|피자|버거|깐풍|유린기|족발|보쌈|곱창|대창|막창|양념치킨|후라이드/;
 
-// PDI 목표치 (Gamba et al. 2023 CoLaus 코호트 근거)
+// PDI 임상 임계값 — 화면의 PDI 평가·등급에 쓰는 기준 (Gamba et al. 2023 CoLaus 코호트)
 const PDI_TARGET = 40;
+
+// PDI 최적화 목표 — 위 임계값과 분리된 값입니다.
+//   40% 는 「질병 위험이 낮아지는 하한」이라 이 서비스의 식단은 아무 압력 없이도 65~74% 가 나옵니다.
+//   그래서 40% 를 최적화 목표로 쓰면 점수가 100 에 붙어 기울기가 사라지고, 4목적 중 하나가 낭비됩니다.
+//   측정값으로 목표를 정했습니다 — PDI 만 최적화하면 83.5%, 영양+PDI 2목적이면 78.7% 가 상한이므로
+//   80% 를 목표로 두면 끝까지 경쟁이 유지됩니다.
+const PDI_OPT_TARGET = 80;
 
 // 최적화에 쓰는 영양소 축 (Python nutrient_constraints 의 5종 + 나트륨·당류)
 const PLAN_NUT_KEYS = ['energy', 'carb', 'protein', 'fat', 'fiber', 'sodium', 'sugar'];
@@ -98,16 +105,20 @@ function makeCandidate(name, slot) {
   const nut = new Float64Array(PLAN_NUT_KEYS.length);
   for (let i = 0; i < PLAN_NUT_KEYS.length; i++) nut[i] = n[PLAN_NUT_KEYS[i]] || 0;
 
-  let prfKcal = 0, keyIng = '', keyG = -1;
+  // 열량은 식재료 합으로 계산합니다 — PRF 비율의 분자(PRF 식재료 kcal)와 분모를 같은 출처로 맞춰야
+  // 비율이 100% 를 넘지 않습니다. (레시피 DB 선언 총열량과는 반올림 때문에 1 kcal 안쪽으로 차이가 납니다.
+  //  식재료 합은 영양소 추정값 nut[energy] 과도 같은 기준입니다)
+  let kcalSum = 0, prfKcal = 0, keyIng = '', keyG = -1;
   const phytos = {};
   for (const ing of analysis.ingredients) {
+    kcalSum += ing.kcal || 0;
     if (ing.prf) prfKcal += ing.kcal || 0;
     if (typeof ing.grams === 'number' && ing.grams > keyG && ing.cat !== 'spices' && ing.cat !== 'oils') {
       keyG = ing.grams; keyIng = ing.name;
     }
     for (const [k, v] of Object.entries(ing.phytos || {})) phytos[k] = (phytos[k] || 0) + v;
   }
-  return { name, slot, kcal: analysis.totalCal, prfKcal, nut, keyIng: keyIng || name, phytos, analysis };
+  return { name, slot, kcal: kcalSum, prfKcal, nut, keyIng: keyIng || name, phytos, analysis };
 }
 
 // 음식명 → 구성 항목 (분류코드 기준 · 해당 없으면 null)
@@ -475,7 +486,7 @@ class SPEA2DietOptimizer {
       kcal += this.fixed.snackKcal[d] || 0;
       prf  += this.fixed.snackPrf[d] || 0;
       const pdi = kcal > 0 ? (prf / kcal) * 100 : 0;
-      total += Math.min(100, pdi / PDI_TARGET * 100);
+      total += Math.min(100, pdi / PDI_OPT_TARGET * 100);
     }
     return total / this.days;
   }
@@ -791,6 +802,7 @@ function generateMealPlan({ profile, targets, cart, days, allergies, seed, onPro
     meta: {
       generations: result.generations, elapsedMs: result.elapsedMs, archiveSize: result.archiveSize,
       days, maxDays,
+      pdiOptTarget: PDI_OPT_TARGET,
       shortfall: daysShortfallHint(cart, maxDays),
       poolSizes: Object.fromEntries(SLOT_IDS.map(s => [s, pools[s].length])),
       productMealDays: Object.keys(products.meals).length,
