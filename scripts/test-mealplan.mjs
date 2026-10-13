@@ -982,6 +982,22 @@ ok('달 이동이 동작', () => {
 console.log('\n── 페이지 이동 ──')
 const pageOf = id => sandbox.document.getElementById('page-' + id)
 const hiddenOf = id => { const e = pageOf(id); return e && e.cls ? e.cls.has('hidden') : null }
+ok('서비스 흐름이 네 단계 순환 패널로만 소개됨', () => {
+  for (let i = 0; i < 4; i++) {
+    assert.ok(htmlSrc.includes('id="flow-' + i + '"'), '단계 패널 없음: ' + i)
+    assert.ok(htmlSrc.includes('id="flowdot-' + i + '"'), '단계 점 없음: ' + i)
+  }
+  for (const t of ['설문', '진단', '추천과 설계', '섭취와 기록', '2단계부터 다시'])
+    assert.ok(htmlSrc.includes(t), '누락: ' + t)
+  // 길게 늘어놓던 소개·계산 근거 카드는 없앴다
+  for (const t of ['분석 가능한 음식', '레시피 데이터베이스', '에너지필요추정량(EER)', '숫자가 어디서 나왔는지'])
+    assert.ok(!htmlSrc.includes(t), '삭제 안 됨: ' + t)
+  // 네 단계를 돌면 처음으로 돌아온다
+  vm.runInContext('setFlow(0); shiftFlow(1); shiftFlow(1); shiftFlow(1); shiftFlow(1);', ctx)
+  assert.equal($('flowIndex'), 0, '마지막에서 처음으로 안 돌아옴')
+  vm.runInContext('shiftFlow(-1);', ctx)
+  assert.equal($('flowIndex'), 3, '처음에서 마지막으로 안 돌아감')
+})
 ok('index.html 에 페이지 6개가 있고 상단·하단 고정이 없음', () => {
   for (const p of ['home', 'intake', 'result', 'plan', 'log', 'pay'])
     assert.ok(htmlSrc.includes('id="page-' + p + '"'), '페이지 없음: ' + p)

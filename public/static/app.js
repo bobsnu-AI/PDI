@@ -328,7 +328,30 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // 첫 진입 — 기록이 있으면 결과 페이지부터, 처음이면 서비스 소개부터
   showPage((location.hash || '').slice(1) || (pdiResult ? 'result' : 'home'));
+
+  // 서비스 흐름 패널 자동 넘김 (직접 넘기면 멈춘다)
+  setInterval(() => {
+    if (flowAuto && currentPage === 'home') setFlow(flowIndex + 1, true);
+  }, 4500);
 });
+
+// ── 서비스 흐름 패널 — 네 단계를 돌아가며 보여준다 ──
+const FLOW_STEPS = 4;
+let flowIndex = 0;
+let flowAuto = true;          // 직접 넘기면 자동 넘김을 멈춘다
+
+function setFlow(i, auto) {
+  if (!auto) flowAuto = false;
+  flowIndex = (i + FLOW_STEPS) % FLOW_STEPS;
+  for (let n = 0; n < FLOW_STEPS; n++) {
+    const panel = document.getElementById('flow-' + n);
+    if (panel) panel.classList.toggle('hidden', n !== flowIndex);
+    const dot = document.getElementById('flowdot-' + n);
+    if (dot) dot.classList.toggle('active', n === flowIndex);
+  }
+}
+
+function shiftFlow(n) { setFlow(flowIndex + n); }
 
 // ══════════════════════════════════════════════
 // NAVIGATION

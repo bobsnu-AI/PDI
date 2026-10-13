@@ -80,6 +80,9 @@
   .nav-btn:hover { color:var(--deep); background:var(--tint); }
   .nav-btn.active { color:var(--deep); background:var(--tint); font-weight:700; }
   /* 받는 범위 선택 카드 — 전역 알약 모양에서 제외 */
+  /* 흐름 패널의 점 */
+  .flow-dot { padding:.35rem .75rem; border-radius:9999px; color:var(--muted); background:#fff; border:1px solid var(--line); }
+  .flow-dot.active { color:#fff; background:var(--deep); border-color:var(--deep); font-weight:700; }
   .planmode { border:1px solid var(--line); border-radius:1.5rem !important; background:#fff; }
   .planmode:hover { border-color:var(--sage); }
   .planmode.active { border-color:var(--deep); background:var(--tint); }
@@ -169,17 +172,17 @@
       </div>
       <div class="flex justify-center">
         <div class="bg-emerald-900/50 backdrop-blur rounded-3xl p-7 max-w-sm w-full">
-          <p class="text-emerald-300 text-xs mb-1">이렇게 받습니다</p>
-          <h3 class="text-white font-bold text-lg mb-5">나의 식단 계획 <span class="text-emerald-400 text-xs font-medium">예시</span></h3>
+          <p class="text-emerald-300 text-xs mb-1">예시 · 35세 여성 162 cm 68 kg</p>
+          <h3 class="text-white font-bold text-lg mb-5">이런 결과를 받습니다</h3>
           <div class="bg-emerald-800/60 rounded-2xl p-4 mb-3">
             <div class="flex items-end justify-between">
               <div>
-                <p class="text-emerald-300 text-xs">현재</p>
+                <p class="text-emerald-300 text-xs">지금 체중</p>
                 <p class="text-white font-black text-2xl">68.0<span class="text-sm font-medium"> kg</span></p>
               </div>
               <div class="text-emerald-400 pb-1">→</div>
               <div class="text-right">
-                <p class="text-emerald-300 text-xs">목표 (BMI 22)</p>
+                <p class="text-emerald-300 text-xs">목표 체중</p>
                 <p class="text-emerald-400 font-black text-2xl">57.7<span class="text-sm font-medium"> kg</span></p>
               </div>
             </div>
@@ -190,51 +193,69 @@
               <span class="text-white font-bold text-sm">1,642 kcal</span>
             </div>
             <div class="flex items-center justify-between bg-emerald-800/40 rounded-xl px-4 py-2.5">
-              <span class="text-emerald-200 text-sm">주당 예상 변화</span>
-              <span class="text-white font-bold text-sm">−0.45 kg</span>
+              <span class="text-emerald-200 text-sm">일주일 예상 감량</span>
+              <span class="text-white font-bold text-sm">0.45 kg</span>
             </div>
             <div class="flex items-center justify-between bg-emerald-800/40 rounded-xl px-4 py-2.5">
               <span class="text-emerald-200 text-sm">식단 설계</span>
               <span class="text-white font-bold text-sm">30일</span>
             </div>
           </div>
-          <p class="text-emerald-400 text-[11px] mt-4 leading-relaxed">35세 여성 162 cm 기준 예시입니다.</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 서비스 소개 -->
+<!-- 서비스 흐름 (순환) -->
 <section id="service" class="py-16 bg-white border-b">
-  <div class="max-w-6xl mx-auto px-4">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl font-black text-gray-900">이렇게 진행합니다</h2>
+  <div class="max-w-3xl mx-auto px-4">
+    <div class="text-center mb-10">
+      <h2 class="text-3xl font-black text-gray-900 mb-2">이렇게 돌아갑니다</h2>
+      <p class="text-gray-500 text-sm">기록이 쌓이면 추천이 다시 맞춰집니다</p>
     </div>
-    <div class="grid md:grid-cols-3 gap-6">
-      <div class="bg-white rounded-3xl p-7 card-hover" style="border:1px solid var(--line)">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center font-black">1</div>
-          <span class="text-emerald-700 text-xs font-bold bg-emerald-100 rounded-full px-3 py-1">2분</span>
+
+    <div class="rounded-3xl p-6 sm:p-10" style="border:1px solid var(--line)">
+      <div class="flex items-center gap-3 sm:gap-6">
+        <button onclick="shiftFlow(-1)" class="w-10 h-10 flex-shrink-0 text-gray-400 hover:text-emerald-700 hover:bg-gray-50 text-xl" aria-label="이전">‹</button>
+        <div class="flex-1 min-w-0 text-center">
+          <div id="flow-0" class="flow-panel">
+            <div class="text-5xl mb-3">📝</div>
+            <div class="text-emerald-700 text-xs font-bold mb-1">1단계</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">설문</h3>
+            <p class="text-gray-500 text-sm">키·체중과 평소 식습관을 묻습니다</p>
+          </div>
+          <div id="flow-1" class="flow-panel hidden">
+            <div class="text-5xl mb-3">🔍</div>
+            <div class="text-emerald-700 text-xs font-bold mb-1">2단계</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">진단</h3>
+            <p class="text-gray-500 text-sm">하루 목표 칼로리와 부족한 영양이 나옵니다</p>
+          </div>
+          <div id="flow-2" class="flow-panel hidden">
+            <div class="text-5xl mb-3">🍱</div>
+            <div class="text-emerald-700 text-xs font-bold mb-1">3단계</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">추천과 설계</h3>
+            <p class="text-gray-500 text-sm">제품 구성과 30일 식단을 짜 드립니다</p>
+          </div>
+          <div id="flow-3" class="flow-panel hidden">
+            <div class="text-5xl mb-3">✍️</div>
+            <div class="text-emerald-700 text-xs font-bold mb-1">4단계</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">섭취와 기록</h3>
+            <p class="text-gray-500 text-sm">먹은 것과 체중을 기록하면 <b class="text-emerald-700">2단계부터 다시</b> 맞춰 드립니다</p>
+          </div>
         </div>
-        <h3 class="text-lg font-bold text-gray-900 mb-2">진단</h3>
-        <p class="text-gray-600 text-sm leading-relaxed">키·체중과 평소 식습관을 입력하면 하루 목표 칼로리가 나옵니다.</p>
+        <button onclick="shiftFlow(1)" class="w-10 h-10 flex-shrink-0 text-gray-400 hover:text-emerald-700 hover:bg-gray-50 text-xl" aria-label="다음">›</button>
       </div>
-      <div class="bg-white rounded-3xl p-7 card-hover" style="border:1px solid var(--line)">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center font-black">2</div>
-          <span class="text-emerald-700 text-xs font-bold bg-emerald-100 rounded-full px-3 py-1">30일</span>
-        </div>
-        <h3 class="text-lg font-bold text-gray-900 mb-2">식단</h3>
-        <p class="text-gray-600 text-sm leading-relaxed">목표 칼로리를 끼니로 나누고, 함께 먹을 밥스누 제품을 골라 드립니다.</p>
-      </div>
-      <div class="bg-white rounded-3xl p-7 card-hover" style="border:1px solid var(--line)">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center font-black">3</div>
-          <span class="text-emerald-700 text-xs font-bold bg-emerald-100 rounded-full px-3 py-1">매일</span>
-        </div>
-        <h3 class="text-lg font-bold text-gray-900 mb-2">기록</h3>
-        <p class="text-gray-600 text-sm leading-relaxed">먹은 것과 체중을 기록하면 목표를 다시 맞춰 드립니다.</p>
+
+      <div class="flex flex-wrap justify-center items-center gap-1.5 mt-8 text-xs">
+        <button id="flowdot-0" onclick="setFlow(0)" class="flow-dot active">설문</button>
+        <span class="text-gray-300">›</span>
+        <button id="flowdot-1" onclick="setFlow(1)" class="flow-dot">진단</button>
+        <span class="text-gray-300">›</span>
+        <button id="flowdot-2" onclick="setFlow(2)" class="flow-dot">추천·설계</button>
+        <span class="text-gray-300">›</span>
+        <button id="flowdot-3" onclick="setFlow(3)" class="flow-dot">기록</button>
+        <span class="text-emerald-600 font-bold ml-1">↻ 다시 진단</span>
       </div>
     </div>
   </div>
@@ -252,62 +273,17 @@
   </div>
 </section>
 
-<!-- 계산 근거 -->
-<section id="science" class="py-16 bg-gray-50">
-  <div class="max-w-6xl mx-auto px-4">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl font-black text-gray-900 mb-4">계산 기준</h2>
-      <p class="text-gray-600 max-w-2xl mx-auto">화면의 모든 숫자는 아래 기준으로 계산합니다</p>
-    </div>
-    <div class="grid md:grid-cols-2 gap-6">
-      <div class="bg-white rounded-2xl p-6 card-hover" style="border:1px solid var(--line)">
-        <div class="flex items-start gap-4">
-          <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-fire text-emerald-700 text-sm"></i></div>
-          <div>
-            <div class="text-xs text-gray-400 mb-1">2020 한국인 영양소 섭취기준</div>
-            <div class="font-bold text-gray-900 text-sm mb-2">하루 목표 칼로리</div>
-            <div class="text-gray-600 text-sm">성별·나이·키·체중·활동량으로 필요 열량을 구하고, 감량 폭은 필요량의 25%를 넘지 않게 제한합니다.</div>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white rounded-2xl p-6 card-hover" style="border:1px solid var(--line)">
-        <div class="flex items-start gap-4">
-          <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-scale-balanced text-blue-700 text-sm"></i></div>
-          <div>
-            <div class="text-xs text-gray-400 mb-1">에너지적정비율 · 충분섭취량 · 만성질환위험감소섭취량</div>
-            <div class="font-bold text-gray-900 text-sm mb-2">영양 기준 9개 항목</div>
-            <div class="text-gray-600 text-sm">탄수화물·단백질·지방 비율과 식이섬유·당류·포화지방·나트륨 기준을 식단에 그대로 적용합니다.</div>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white rounded-2xl p-6 card-hover" style="border:1px solid var(--line)">
-        <div class="flex items-start gap-4">
-          <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-chart-line text-purple-700 text-sm"></i></div>
-          <div>
-            <div class="text-xs text-gray-400 mb-1">체지방 1 kg ≈ 7,700 kcal</div>
-            <div class="font-bold text-gray-900 text-sm mb-2">체중 변화 예측과 재조정</div>
-            <div class="text-gray-600 text-sm">7일 이상 기록이 모이면 실제 변화와 비교해 목표를 다시 계산합니다. 한 번에 ±300 kcal까지만 조정합니다.</div>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white rounded-2xl p-6 card-hover" style="border:1px solid var(--line)">
-        <div class="flex items-start gap-4">
-          <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-utensils text-orange-700 text-sm"></i></div>
-          <div>
-            <div class="text-xs text-gray-400 mb-1">메뉴 데이터베이스</div>
-            <div class="font-bold text-gray-900 text-sm mb-2">식단 설계 방식</div>
-            <div class="text-gray-600 text-sm">칼로리·영양 균형·메뉴 다양성을 함께 보고 끼니를 고릅니다.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="bg-white rounded-2xl p-6 mt-6 border border-gray-200">
-      <p class="text-gray-500 text-sm leading-relaxed">
-        <i class="fas fa-circle-info text-gray-400 mr-1.5"></i>
-        본 서비스는 건강 정보 제공을 목적으로 하며 의학적 진단이나 치료를 대체하지 않습니다.
-        질환이 있거나 약을 복용 중이라면 식단을 바꾸기 전에 의료진과 상의해 주세요.
-      </p>
-    </div>
+<!-- 계산 기준 -->
+<section id="science" class="py-12 bg-gray-50">
+  <div class="max-w-3xl mx-auto px-4 text-center">
+    <p class="text-gray-600 text-sm leading-relaxed">
+      하루 목표 칼로리와 영양 기준은 <b class="text-gray-800">2020 한국인 영양소 섭취기준</b>으로 계산하고,
+      체중 변화는 체지방 1 kg을 7,700 kcal로 환산합니다.
+    </p>
+    <p class="text-gray-400 text-xs mt-4 leading-relaxed">
+      건강 정보 제공이 목적이며 의학적 진단이나 치료를 대체하지 않습니다.
+      질환이 있거나 약을 복용 중이라면 식단을 바꾸기 전에 의료진과 상의해 주세요.
+    </p>
   </div>
 </section>
 </div>
