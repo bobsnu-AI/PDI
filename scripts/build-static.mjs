@@ -20,4 +20,5 @@ const out = html.replace(found[0], () => inlined)
 
 mkdirSync(new URL('../dist-static/', import.meta.url), { recursive: true })
 writeFileSync(new URL('../dist-static/index.html', import.meta.url), out)
-console.log(`dist-static/index.html (${(out.length / 1024 / 1024).toFixed(1)} MB)`)
+// out.length 는 UTF-16 코드 단위라 한글이 섞이면 실제 파일 크기와 다름 → 바이트로 계산
+console.log(`dist-static/index.html (${(Buffer.byteLength(out, 'utf8') / 1024 / 1024).toFixed(1)} MB)`)

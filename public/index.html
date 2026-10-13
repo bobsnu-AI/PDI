@@ -3,32 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>밥스누 PDI 웰니스 솔루션</title>
+  <title>밥스누 체중관리 — 서울대학교 식의학유전체실</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // ── 디자인 토큰 — NutriWell 레퍼런스(세이지 그린·따뜻한 오프화이트) ──
+    //   기존 화면이 emerald-* / gray-* 클래스를 쓰고 있어, 팔레트 자체를 갈아끼워
+    //   한곳에서 전체 색을 바꿉니다. 클래스 이름은 그대로 두고 색만 달라집니다.
+    tailwind.config = { theme: { extend: { colors: {
+      emerald: {
+        50:  '#F4F8F5', 100: '#E8F2EA', 200: '#D3E3D6', 300: '#B3CDB8',
+        400: '#8FB296', 500: '#6B8E73', 600: '#5C7D64', 700: '#2C5530',
+        800: '#234426', 900: '#1A331D', 950: '#0F1F11',
+      },
+      gray: {
+        50:  '#FAF9F7', 100: '#F2F0EC', 200: '#E6E3DD', 300: '#D2CEC6',
+        400: '#A8A49C', 500: '#8A8680', 600: '#6B6862', 700: '#4F4D48',
+        800: '#36352F', 900: '#23221E', 950: '#141310',
+      },
+    } } } };
+  </script>
   <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
-    body { font-family: 'Noto Sans KR', sans-serif; }
-    .gradient-green { background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%); }
-    .pdi-ring { transition: stroke-dasharray 1.2s ease-in-out; }
-    .food-chip { transition: all 0.2s; cursor: pointer; }
-    .food-chip:hover { transform: scale(1.05); }
-    .tab-btn { transition: all 0.2s; }
-    .tab-btn.active { background: #065f46; color: white; border-color: #065f46; }
-    .phyto-bar { transition: width 0.8s ease-out; }
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+    :root {
+      --deep:   #2C5530;   /* 제목·큰 숫자 */
+      --sage:   #6B8E73;   /* 버튼·아이콘·강조 */
+      --muted:  #8A9F8E;   /* 보조 설명 */
+      --tint:   #E8F2EA;   /* 옅은 초록 배경 */
+      --cream:  #F9F7F4;   /* 따뜻한 오프화이트 섹션 */
+      --line:   rgba(107, 142, 115, 0.2);   /* 카드 테두리 */
+    }
+
+    body { font-family: 'Noto Sans KR', sans-serif; background: #FEFEFE; color: #4F4D48; }
+
+    /* 레퍼런스는 제목이 굵지 않고 크고 가볍습니다 — font-black/bold 를 전역으로 눌러줍니다 */
+    h1, h2, .text-4xl, .text-5xl { font-weight: 400 !important; letter-spacing: -0.02em; color: var(--deep); }
+    h1.font-black, h2.font-black, .text-4xl.font-black, .text-5xl.font-black { font-weight: 400 !important; }
+    h3, .text-3xl { font-weight: 500; letter-spacing: -0.01em; }
+
+    /* 버튼은 전부 알약 모양 */
+    button, .btn, a.inline-flex, button.rounded-xl, button.rounded-2xl { border-radius: 9999px !important; }
+    /* 수량 ± 같은 작은 정사각 버튼은 원형이어도 자연스러워 그대로 둡니다 */
+
+    /* 카드 — 그림자 대신 얇은 테두리 */
     .card-hover { transition: all 0.2s; }
-    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .card-hover:hover { transform: translateY(-2px); border-color: var(--sage); }
+    .shadow-md, .shadow-lg, .shadow-sm, .shadow { box-shadow: none !important; border: 1px solid var(--line); }
+
+    .gradient-green { background: linear-gradient(135deg, #2C5530 0%, #3E6B44 60%, #6B8E73 100%); }
+    .hero-bg { background: linear-gradient(140deg, #F4F8F5 0%, #E8F2EA 55%, #DCEADF 100%); color: var(--deep); }
+    /* 히어로가 밝아졌으므로 그 안의 흰 글자를 어두운 초록으로 */
+    .hero-bg .text-white, .hero-bg h1 { color: var(--deep) !important; }
+    .hero-bg .text-emerald-100 { color: #5B5953 !important; }      /* 본문 */
+    .hero-bg .text-emerald-300 { color: var(--muted) !important; }  /* 작은 라벨 */
+    .hero-bg .text-emerald-400 { color: var(--sage) !important; }   /* 제목 강조 줄 */
+    .hero-bg .text-emerald-200 { color: #5B5953 !important; }       /* 카드 항목명 */
+    .hero-bg .bg-emerald-800 { background: #FFFFFF !important; border: 1px solid var(--line); }
+    .hero-bg .bg-emerald-800 span { color: var(--sage) !important; }
+    .hero-bg .bg-emerald-900\/50 { background: #FFFFFF !important; border: 1px solid var(--line); }
+    .hero-bg .bg-emerald-800\/60, .hero-bg .bg-emerald-800\/40 { background: var(--tint) !important; }
+    .hero-bg .border-emerald-400 { border-color: var(--sage) !important; }
+
+    .food-chip { transition: all 0.2s; cursor: pointer; }
+    .food-chip:hover { transform: scale(1.03); }
+    .tab-btn { transition: all 0.2s; }
+    .tab-btn.active { background: var(--sage); color: white; border-color: var(--sage); }
+    .phyto-bar { transition: width 0.8s ease-out; }
     .animate-fade-in { animation: fadeIn 0.5s ease-in; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .pulse-green { animation: pulseGreen 2s infinite; }
-    @keyframes pulseGreen { 0%, 100% { box-shadow: 0 0 0 0 rgba(6, 78, 59, 0.4); } 50% { box-shadow: 0 0 0 10px rgba(6, 78, 59, 0); } }
-    .hero-bg { background: linear-gradient(135deg, #022c22 0%, #064e3b 40%, #065f46 70%, #047857 100%); }
-    .nav-link:hover { color: #10b981; }
-    .selected-chip { border-color: #059669 !important; background-color: #f0fdf4 !important; }
-    .result-tab { color: #6B7280; background: transparent; }
-    .result-tab:hover { background: #F3F4F6; }
-    .result-tab.active { background: #065f46; color: #fff; }
+    /* 레퍼런스에는 깜빡이는 요소가 없어 맥동 효과를 뺍니다 */
+    .pulse-green { animation: none; }
+  /* 페이지 이동 바 */
+  .nav-btn { color:var(--muted); padding:.5rem .7rem; font-weight:500; white-space:nowrap; }
+  .nav-btn:hover { color:var(--deep); background:var(--tint); }
+  .nav-btn.active { color:var(--deep); background:var(--tint); font-weight:700; }
+  /* 받는 범위 선택 카드 — 전역 알약 모양에서 제외 */
+  .planmode { border:1px solid var(--line); border-radius:1.5rem !important; background:#fff; }
+  .planmode:hover { border-color:var(--sage); }
+  .planmode.active { border-color:var(--deep); background:var(--tint); }
+    /* 계산 근거 카드의 아이콘은 레퍼런스처럼 단색 세이지로 (파랑·보라·주황 제거) */
+    #science .bg-blue-100, #science .bg-purple-100, #science .bg-orange-100,
+    #science .bg-emerald-100 { background: var(--tint) !important; }
+    #science .text-blue-700, #science .text-purple-700, #science .text-orange-700,
+    #science .text-emerald-700 { color: var(--sage) !important; }
+
+    .nav-link:hover { color: var(--sage); }
+    .selected-chip { border-color: var(--sage) !important; background-color: var(--tint) !important; }
+    .result-tab { color: var(--muted); background: transparent; }
+    .result-tab:hover { background: var(--cream); }
+    .result-tab.active { background: var(--sage); color: #fff; }
 
     /* ── 모바일 ────────────────────────────── */
     /* 페이지 전체가 좌우로 밀리지 않게 (내부 요소는 자기 컨테이너에서만 스크롤) */
@@ -47,125 +112,240 @@
     }
   </style>
 </head>
-<body class="bg-gray-50">
 
-<!-- Navigation -->
-<nav class="bg-white shadow-sm sticky top-0 z-50">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between h-16 items-center">
-      <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded-full gradient-green flex items-center justify-center">
-          <span class="text-white font-black text-sm">밥</span>
+<body>
+
+
+<!-- 페이지 이동 바 (고정하지 않음) -->
+<nav class="bg-white border-b" style="border-color:var(--line)">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex justify-between h-16 items-center gap-2">
+      <button onclick="goPage('home')" class="flex items-center space-x-3 flex-shrink-0">
+        <div class="w-9 h-9 rounded-full bg-emerald-700 flex items-center justify-center">
+          <span class="text-white font-bold text-sm">밥</span>
         </div>
-        <span class="text-xl font-bold text-gray-900">밥스누 <span class="text-emerald-700">PDI</span></span>
-      </div>
-      <div class="hidden md:flex items-center space-x-6">
-        <a href="#service" class="nav-link text-gray-600 text-sm font-medium transition-colors">서비스 소개</a>
-        <a href="#assessment" class="nav-link text-gray-600 text-sm font-medium transition-colors">PDI 평가</a>
-        <a href="#b2c" class="nav-link text-gray-600 text-sm font-medium transition-colors">개인 구독</a>
-        <a href="#b2b" class="nav-link text-gray-600 text-sm font-medium transition-colors">기관 식단</a>
-        <button onclick="scrollToAssessment()" class="bg-emerald-700 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-emerald-800 transition">지금 평가하기</button>
+        <div class="leading-tight text-left">
+          <span class="text-lg font-bold text-gray-900">밥스누 <span class="text-emerald-700">체중관리</span></span>
+          <span class="hidden sm:block text-[11px] text-gray-400">서울대학교 식의학유전체실</span>
+        </div>
+      </button>
+      <div class="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm">
+        <button id="nav-home"   onclick="goPage('home')"   class="nav-btn">서비스 소개</button>
+        <button id="nav-result" onclick="goPage('result')" class="nav-btn">나의 분석</button>
+        <button id="nav-plan"   onclick="goPage('plan')"   class="nav-btn">제품·식단</button>
+        <button id="nav-log"    onclick="goPage('log')"    class="nav-btn">기록</button>
       </div>
     </div>
   </div>
 </nav>
 
+<!-- ══ 페이지: 서비스 소개 (첫 진입) ══ -->
+<div id="page-home" class="page">
 <!-- Hero Section -->
 <section class="hero-bg text-white py-20 px-4">
   <div class="max-w-6xl mx-auto">
     <div class="grid md:grid-cols-2 gap-12 items-center">
       <div>
         <div class="inline-flex items-center bg-emerald-800 rounded-full px-4 py-1.5 mb-6">
-          <span class="text-emerald-300 text-xs font-medium">🌿 그린바이오 기반 맞춤형 웰니스</span>
+          <span class="text-emerald-300 text-xs font-medium">🎓 서울대학교 식의학유전체실 연구 기반</span>
         </div>
         <h1 class="text-4xl md:text-5xl font-black leading-tight mb-6">
-          당신의 식단 속<br>
-          <span class="text-emerald-400">파이토케미컬</span>을<br>
-          분석합니다
+          굶지 않고<br>
+          <span class="text-emerald-400">먹는 것부터</span><br>
+          바꾸는 체중 관리
         </h1>
         <p class="text-emerald-100 text-lg mb-8 leading-relaxed">
-          PDI(Phytoceutical Dietary Index)로 식물성 화학물질 섭취를 평가하고,<br>
-          부족한 영양을 채우는 밥스누 제품과 최적 식단을 추천받으세요.
+          지금 식습관을 진단해 목표 체중까지 필요한 하루 칼로리를 계산하고,<br class="hidden md:block">
+          그에 맞는 30일 식단과 밥스누 제품 구독을 설계합니다.
         </p>
         <div class="flex flex-wrap gap-4">
-          <button onclick="scrollToAssessment()" class="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-full text-lg font-bold transition pulse-green">
-            <i class="fas fa-leaf mr-2"></i>무료 PDI 평가 시작
+          <button onclick="startService()" class="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-full text-lg font-bold transition">
+            <i class="fas fa-weight-scale mr-2"></i>무료 체중 진단 시작
           </button>
           <a href="#service" class="border border-emerald-400 text-emerald-300 px-8 py-4 rounded-full text-lg font-medium hover:bg-emerald-800 transition">
-            더 알아보기 <i class="fas fa-arrow-down ml-2"></i>
+            어떻게 하나요? <i class="fas fa-arrow-down ml-2"></i>
           </a>
         </div>
+        <p class="text-emerald-400 text-xs mt-5">가입·결제 없이 진단까지 약 2분 · 기록은 내 기기에만 저장됩니다</p>
       </div>
       <div class="flex justify-center">
-        <div class="bg-emerald-900/50 backdrop-blur rounded-3xl p-8 max-w-sm w-full">
-          <div class="text-center mb-6">
-            <div class="text-6xl mb-3">🌱</div>
-            <h3 class="text-white font-bold text-xl">하나의 엔진, 두 개의 흐름</h3>
-            <p class="text-emerald-300 text-sm mt-2">같은 알고리즘으로 개인과 기관 모두에게</p>
-          </div>
-          <div class="space-y-3">
-            <div class="bg-emerald-800/60 rounded-xl p-4">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-emerald-300 text-xs">B2C 개인</p>
-                  <p class="text-white font-semibold">제품 구독 서비스</p>
-                </div>
-                <span class="text-2xl">🛒</span>
+        <div class="bg-emerald-900/50 backdrop-blur rounded-3xl p-7 max-w-sm w-full">
+          <p class="text-emerald-300 text-xs mb-1">진단하면 이렇게 받습니다</p>
+          <h3 class="text-white font-bold text-lg mb-5">나의 체중 관리 계획 <span class="text-emerald-400 text-xs font-medium">예시</span></h3>
+          <div class="bg-emerald-800/60 rounded-2xl p-4 mb-3">
+            <div class="flex items-end justify-between">
+              <div>
+                <p class="text-emerald-300 text-xs">현재</p>
+                <p class="text-white font-black text-2xl">68.0<span class="text-sm font-medium"> kg</span></p>
               </div>
-            </div>
-            <div class="flex items-center justify-center">
-              <div class="text-emerald-400 text-xs font-medium bg-emerald-800 rounded-full px-3 py-1">공통 PDI 알고리즘</div>
-            </div>
-            <div class="bg-emerald-800/60 rounded-xl p-4">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-emerald-300 text-xs">B2B 기관</p>
-                  <p class="text-white font-semibold">식단 설계 서비스</p>
-                </div>
-                <span class="text-2xl">🏥</span>
+              <div class="text-emerald-400 pb-1">→</div>
+              <div class="text-right">
+                <p class="text-emerald-300 text-xs">목표 (BMI 22)</p>
+                <p class="text-emerald-400 font-black text-2xl">57.7<span class="text-sm font-medium"> kg</span></p>
               </div>
             </div>
           </div>
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between bg-emerald-800/40 rounded-xl px-4 py-2.5">
+              <span class="text-emerald-200 text-sm">하루 목표 칼로리</span>
+              <span class="text-white font-bold text-sm">1,642 kcal</span>
+            </div>
+            <div class="flex items-center justify-between bg-emerald-800/40 rounded-xl px-4 py-2.5">
+              <span class="text-emerald-200 text-sm">주당 예상 변화</span>
+              <span class="text-white font-bold text-sm">−0.45 kg</span>
+            </div>
+            <div class="flex items-center justify-between bg-emerald-800/40 rounded-xl px-4 py-2.5">
+              <span class="text-emerald-200 text-sm">설계되는 식단</span>
+              <span class="text-white font-bold text-sm">30일 · 90끼</span>
+            </div>
+          </div>
+          <p class="text-emerald-400 text-[11px] mt-4 leading-relaxed">35세 여성 162 cm · 활동량 낮음 기준으로 계산한 예시입니다. 실제 값은 진단 결과에 따라 달라집니다.</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Key Metrics -->
-<section id="service" class="py-12 bg-white border-b">
+<!-- 서비스 소개 -->
+<section id="service" class="py-16 bg-white border-b">
   <div class="max-w-6xl mx-auto px-4">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-black text-gray-900 mb-4">진단 · 식단 · 기록, 세 단계로 관리합니다</h2>
+      <p class="text-gray-600 max-w-2xl mx-auto">먹는 양을 무작정 줄이는 대신, 지금 식습관에서 무엇을 바꾸면 되는지 계산해 알려드립니다</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6 mb-14">
+      <div class="bg-white rounded-3xl p-7 card-hover" style="border:1px solid var(--line)">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center font-black">1</div>
+          <span class="text-emerald-700 text-xs font-bold bg-emerald-100 rounded-full px-3 py-1">약 2분</span>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">식습관 진단</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">성별·나이·키·체중과 평소 식습관을 입력하면 체중 유형과 하루 목표 칼로리, 목표 체중까지의 예상 기간을 계산합니다.</p>
+      </div>
+      <div class="bg-white rounded-3xl p-7 card-hover" style="border:1px solid var(--line)">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center font-black">2</div>
+          <span class="text-emerald-700 text-xs font-bold bg-emerald-100 rounded-full px-3 py-1">30일 설계</span>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">식단과 구독 설계</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">목표 칼로리에 맞춘 끼니별 식단을 짜고, 부족한 영양을 채우는 밥스누 제품 구성과 구독 금액을 함께 제시합니다.</p>
+      </div>
+      <div class="bg-white rounded-3xl p-7 card-hover" style="border:1px solid var(--line)">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center font-black">3</div>
+          <span class="text-emerald-700 text-xs font-bold bg-emerald-100 rounded-full px-3 py-1">매일</span>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">기록과 목표 재조정</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">끼니와 체중을 기록하면 실제 감량 속도를 계획과 비교해, 너무 느리거나 빠를 때 목표 칼로리를 다시 계산해 드립니다.</p>
+      </div>
+    </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-      <div class="p-6">
-        <div class="text-4xl font-black text-emerald-700">40%</div>
-        <div class="text-gray-700 font-medium text-sm mt-1">PDI 목표치</div>
-        <div class="text-gray-400 text-xs mt-0.5">Gamba et al. 2023, CoLaus n=3,879</div>
+      <div class="p-6 rounded-2xl bg-white" style="border:1px solid var(--line)">
+        <div class="text-3xl md:text-4xl font-black text-emerald-700">14,714</div>
+        <div class="text-gray-700 font-medium text-sm mt-1">분석 가능한 음식</div>
+        <div class="text-gray-400 text-xs mt-0.5">레시피 데이터베이스</div>
       </div>
-      <div class="p-6">
-        <div class="text-4xl font-black text-emerald-700">12+</div>
-        <div class="text-gray-700 font-medium text-sm mt-1">파이토케미컬 계열</div>
-        <div class="text-gray-400 text-xs mt-0.5">분석 및 평가</div>
+      <div class="p-6 rounded-2xl bg-white" style="border:1px solid var(--line)">
+        <div class="text-3xl md:text-4xl font-black text-emerald-700">90끼</div>
+        <div class="text-gray-700 font-medium text-sm mt-1">설계되는 식단</div>
+        <div class="text-gray-400 text-xs mt-0.5">최대 30일 · 하루 3끼</div>
       </div>
-      <div class="p-6">
-        <div class="text-4xl font-black text-emerald-700">100종</div>
-        <div class="text-gray-700 font-medium text-sm mt-1">파이토케미컬 소재</div>
-        <div class="text-gray-400 text-xs mt-0.5">파이토100 제품군</div>
+      <div class="p-6 rounded-2xl bg-white" style="border:1px solid var(--line)">
+        <div class="text-3xl md:text-4xl font-black text-emerald-700">15종</div>
+        <div class="text-gray-700 font-medium text-sm mt-1">밥스누 제품</div>
+        <div class="text-gray-400 text-xs mt-0.5">두유 · 파이토100 · 프로틴바 등</div>
       </div>
-      <div class="p-6">
-        <div class="text-4xl font-black text-emerald-700">22%↓</div>
-        <div class="text-gray-700 font-medium text-sm mt-1">복부비만 감소</div>
-        <div class="text-gray-400 text-xs mt-0.5">높은 DPI군 대비</div>
+      <div class="p-6 rounded-2xl bg-white" style="border:1px solid var(--line)">
+        <div class="text-3xl md:text-4xl font-black text-emerald-700">KDRI</div>
+        <div class="text-gray-700 font-medium text-sm mt-1">영양 기준</div>
+        <div class="text-gray-400 text-xs mt-0.5">2020 한국인 영양소 섭취기준</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- PDI Assessment Section -->
-<section id="assessment" class="py-16 bg-gray-50">
+<!-- 제품 구독 -->
+<section id="products" class="py-16 bg-white">
   <div class="max-w-6xl mx-auto px-4">
     <div class="text-center mb-12">
-      <h2 class="text-3xl font-black text-gray-900 mb-4">PDI 식단 평가</h2>
-      <p class="text-gray-600 max-w-2xl mx-auto">오늘 드신 음식을 선택하면 파이토케미컬 섭취 현황과 맞춤 추천을 받아보실 수 있습니다</p>
+      <h2 class="text-3xl font-black text-gray-900 mb-4">한 끼를 대신하는 밥스누 제품</h2>
+      <p class="text-gray-600 max-w-2xl mx-auto">
+        칼로리를 줄이면 영양도 같이 줄어듭니다. 저녁 한 끼를 제품으로 대신해 칼로리는 낮추고
+        단백질·칼슘은 채우도록 구성합니다. 진단 결과에 따라 품목과 수량이 달라집니다.
+      </p>
+    </div>
+    <div id="product-grid" class="grid md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+    <p class="text-center text-gray-400 text-xs mt-8">제품 열량과 영양성분은 제품소개서 영양정보 표시란의 값입니다. 알레르기 품목은 진단 시 선택하면 추천에서 제외됩니다.</p>
+  </div>
+</section>
+
+<!-- 계산 근거 -->
+<section id="science" class="py-16 bg-gray-50">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-black text-gray-900 mb-4">숫자가 어디서 나왔는지 밝힙니다</h2>
+      <p class="text-gray-600 max-w-2xl mx-auto">서울대학교 식의학유전체실에서 설계한 계산 기준입니다. 화면에 보이는 모든 수치는 아래 공개 기준으로 산출합니다</p>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-white rounded-2xl p-6 card-hover" style="border:1px solid var(--line)">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-fire text-emerald-700 text-sm"></i></div>
+          <div>
+            <div class="text-xs text-gray-400 mb-1">2020 한국인 영양소 섭취기준</div>
+            <div class="font-bold text-gray-900 text-sm mb-2">하루 목표 칼로리</div>
+            <div class="text-gray-600 text-sm">에너지필요추정량(EER)을 성별·나이·키·체중·활동량으로 계산하고, BMI로 나눈 체중 유형에 따라 조정합니다. 감량 폭은 필요량의 25%를 넘지 않도록 제한합니다.</div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl p-6 card-hover" style="border:1px solid var(--line)">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-scale-balanced text-blue-700 text-sm"></i></div>
+          <div>
+            <div class="text-xs text-gray-400 mb-1">에너지적정비율 · 충분섭취량 · 만성질환위험감소섭취량</div>
+            <div class="font-bold text-gray-900 text-sm mb-2">영양 기준 9개 항목</div>
+            <div class="text-gray-600 text-sm">탄수화물·단백질·지방 비율과 식이섬유·당류·포화지방·트랜스지방·콜레스테롤·나트륨 기준을 적용합니다. 화면 표시용이 아니라 식단을 짜는 제약 조건으로 씁니다.</div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl p-6 card-hover" style="border:1px solid var(--line)">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-chart-line text-purple-700 text-sm"></i></div>
+          <div>
+            <div class="text-xs text-gray-400 mb-1">체지방 1 kg ≈ 7,700 kcal</div>
+            <div class="font-bold text-gray-900 text-sm mb-2">체중 변화 예측과 재조정</div>
+            <div class="text-gray-600 text-sm">목표 칼로리와 필요량의 차이로 주당 예상 변화를 계산합니다. 7일 이상 기록이 모이면 실제 변화와 비교해 목표를 다시 계산하며, 한 번에 ±300 kcal까지만 조정합니다.</div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl p-6 card-hover" style="border:1px solid var(--line)">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-utensils text-orange-700 text-sm"></i></div>
+          <div>
+            <div class="text-xs text-gray-400 mb-1">레시피 14,714건 · 식재료 6,536종</div>
+            <div class="font-bold text-gray-900 text-sm mb-2">식단 설계 방식</div>
+            <div class="text-gray-600 text-sm">칼로리·영양 균형·식단 다양성을 동시에 고려해 식단을 고릅니다. 한 가지만 맞추고 나머지를 포기하지 않도록 네 기준을 함께 평가합니다.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl p-6 mt-6 border border-gray-200">
+      <p class="text-gray-500 text-sm leading-relaxed">
+        <i class="fas fa-circle-info text-gray-400 mr-1.5"></i>
+        본 서비스는 건강 정보 제공을 목적으로 하며 의학적 진단이나 치료를 대체하지 않습니다.
+        질환이 있거나 약을 복용 중이라면 식단을 바꾸기 전에 의료진과 상의해 주세요.
+      </p>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ══ 페이지: 진단 정보 입력 ══ -->
+<div id="page-intake" class="page hidden">
+<section id="assessment" class="py-12 md:py-16 bg-gray-50">
+  <div class="max-w-4xl mx-auto px-4">
+    <div class="text-center mb-10">
+      <h2 class="text-3xl mb-3">체중 진단 시작</h2>
+      <p class="text-gray-500 max-w-xl mx-auto text-sm">세 단계만 입력하시면 하루 목표 칼로리와 관리 계획을 계산해 드립니다. 입력한 내용은 내 기기에만 저장됩니다</p>
     </div>
 
     <!-- Steps Indicator -->
@@ -184,11 +364,6 @@
         <div id="step-3-dot" class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold">3</div>
         <span id="step-3-label" class="text-sm font-medium text-gray-500">관리 목표</span>
       </div>
-      <div class="text-gray-300 mx-1">→</div>
-      <div id="step-4-indicator" class="flex items-center gap-2">
-        <div id="step-4-dot" class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold">4</div>
-        <span id="step-4-label" class="text-sm font-medium text-gray-500">결과</span>
-      </div>
     </div>
 
     <!-- Step 1: Profile -->
@@ -206,7 +381,7 @@
         </div>
         <div>
           <label for="profile-age" class="block text-sm font-medium text-gray-700 mb-2">나이 <span class="text-gray-400 font-normal">(세)</span> <span class="text-red-400">*</span></label>
-          <input id="profile-age" type="number" inputmode="numeric" min="3" max="120" step="1" placeholder="예: 35" oninput="updateProfilePreview()"
+          <input id="profile-age" type="number" inputmode="numeric" min="3" max="120" step="1" placeholder="예: 35"
             class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
         </div>
         <div>
@@ -220,31 +395,24 @@
         </div>
         <div>
           <label for="profile-height" class="block text-sm font-medium text-gray-700 mb-2">키 <span class="text-gray-400 font-normal">(cm)</span> <span class="text-red-400">*</span></label>
-          <input id="profile-height" type="number" inputmode="decimal" min="80" max="230" step="0.1" placeholder="예: 165" oninput="updateProfilePreview()"
+          <input id="profile-height" type="number" inputmode="decimal" min="80" max="230" step="0.1" placeholder="예: 165"
             class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
         </div>
         <div>
           <label for="profile-weight" class="block text-sm font-medium text-gray-700 mb-2">체중 <span class="text-gray-400 font-normal">(kg)</span> <span class="text-red-400">*</span></label>
-          <input id="profile-weight" type="number" inputmode="decimal" min="10" max="300" step="0.1" placeholder="예: 60" oninput="updateProfilePreview()"
+          <input id="profile-weight" type="number" inputmode="decimal" min="10" max="300" step="0.1" placeholder="예: 60"
             class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
         </div>
         <div>
-          <label for="profile-waist" class="block text-sm font-medium text-gray-700 mb-2">허리둘레 <span class="text-gray-400 font-normal">(cm · 선택)</span></label>
-          <input id="profile-waist" type="number" inputmode="decimal" min="40" max="200" step="0.1" placeholder="예: 80" oninput="updateProfilePreview()"
-            class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
-        </div>
-        <div>
-          <label for="profile-prev-weight" class="block text-sm font-medium text-gray-700 mb-2">이전 체중 <span class="text-gray-400 font-normal">(kg · 선택)</span></label>
-          <input id="profile-prev-weight" type="number" inputmode="decimal" min="10" max="300" step="0.1" placeholder="체중 변화 추세"
-            class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
+          <label for="profile-waist" class="block text-sm font-medium text-gray-700 mb-2">바지 사이즈 <span class="text-gray-400 font-normal">(인치 · 선택)</span></label>
+          <select id="profile-waist" class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
+            <option value="">모르겠어요</option>
+          </select>
+          <p class="text-xs text-gray-400 mt-1">평소 입는 바지의 허리 사이즈를 골라주세요</p>
         </div>
         <div class="col-span-2">
           <label for="profile-activity" class="block text-sm font-medium text-gray-700 mb-2">활동량</label>
-          <select id="profile-activity" onchange="updateProfilePreview()" class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800"></select>
-        </div>
-        <!-- 기준 칼로리 미리보기 -->
-        <div id="profile-preview" class="col-span-2 bg-emerald-50 rounded-xl px-4 py-3 text-sm text-emerald-800 flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span class="text-emerald-600">나이·키·체중을 입력하면 기준 칼로리가 표시됩니다</span>
+          <select id="profile-activity" class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800"></select>
         </div>
       </div>
 
@@ -281,7 +449,7 @@
       <!-- 설문 -->
       <div id="panel-survey">
         <div id="survey-questions" class="space-y-4"></div>
-        <p class="text-xs text-gray-400 mt-4">※ 서울대 식이평가 설문 구조 반영 전 가안 문항입니다. 응답은 대표 음식으로 환산해 점수를 예측합니다.</p>
+        <p class="text-xs text-gray-400 mt-4">※ 서울대학교병원 식생활문진표를 바탕으로 한 문항입니다. 응답은 대표 음식으로 환산해 계산합니다.</p>
       </div>
 
       <!-- 식사 기록 -->
@@ -364,332 +532,143 @@
         </button>
       </div>
     </div>
+  </div>
+</section>
+</div>
 
-    <!-- Step 4: Results -->
-    <div id="step-4" class="hidden animate-fade-in">
-      <!-- 핵심 요약: 기준 대비 칼로리 · PDI · 파이토 다양성 · 단백질 · 식이섬유 -->
-      <!-- 결과 탭 -->
-      <div class="sticky top-16 z-40 flex gap-1 sm:gap-2 mb-6 bg-white rounded-2xl shadow-sm p-1.5 sm:p-2" role="tablist">
-        <button id="rtab-btn-analysis" role="tab" onclick="setResultTab('analysis')"
-          class="result-tab flex-1 min-w-0 px-2 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition leading-tight">
-          <span class="block sm:inline">📊</span><span class="block sm:inline sm:ml-1">나의 분석</span></button>
-        <button id="rtab-btn-plan" role="tab" onclick="setResultTab('plan')"
-          class="result-tab flex-1 min-w-0 px-2 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition leading-tight">
-          <span class="block sm:inline">🛒</span><span class="block sm:inline sm:ml-1">제품<span class="hidden sm:inline"> · </span><span class="sm:hidden">·</span>식단</span></button>
-        <button id="rtab-btn-track" role="tab" onclick="setResultTab('track')"
-          class="result-tab flex-1 min-w-0 px-2 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition leading-tight">
-          <span class="block sm:inline">📈</span><span class="block sm:inline sm:ml-1">체중<span class="hidden sm:inline"> 변화</span><span class="sm:hidden">·실천</span></span></button>
+<!-- ══ 페이지: 나의 분석 ══ -->
+<div id="page-result" class="page hidden">
+<section class="py-12 md:py-16 bg-gray-50">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="mb-8">
+      <h2 class="text-3xl mb-2">나의 분석</h2>
+      <p class="text-gray-500 text-sm">입력하신 정보로 계산한 하루 목표치와 관리 방법입니다</p>
+    </div>
+    <div class="grid lg:grid-cols-3 gap-5 md:gap-6 items-start">
+      <!-- 본문: ① 목표치 ② 관리 팁 ③ 주의사항 -->
+      <div class="lg:col-span-2 space-y-5">
+        <div id="target-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
+        <div id="tips-section"   class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
+        <div id="guide-section"  class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
+        <div id="key-summary"    class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
       </div>
-
-      <div id="rtab-analysis" role="tabpanel">
-      <div id="key-summary" class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6"></div>
-      <!-- 주의사항 & 관리 가이드 -->
-      <!-- PDI Score Card -->
-      <div class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6">
-        <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
-          <div>
-            <h3 class="text-xl font-bold text-gray-900">📊 PDI 평가 <span id="pdi-basis-badge" class="align-middle ml-1 text-xs font-bold px-2 py-0.5 rounded-full"></span></h3>
-            <p id="pdi-basis-note" class="text-xs text-gray-500 mt-1"></p>
-          </div>
-          <div class="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2 text-xs text-emerald-800 leading-relaxed max-w-md">
-            <span class="font-bold">📐 계산 방법 (McCarty, 2004)</span><br>
-            PDI = PRF 식품군 칼로리 ÷ 총 칼로리 × 100<br>
-            <span class="text-emerald-600">PRF: 통곡물·두류·채소·과일·견과·식물성오일·차류</span><br>
-            <span class="text-emerald-500 text-xs">목표 40% 근거: Gamba et al. 2023, CoLaus n=3,879</span>
-          </div>
+      <!-- 사이드: 제품 추천 받기 -->
+      <aside class="space-y-4">
+        <div class="bg-emerald-700 rounded-3xl p-6 md:p-7 text-white">
+          <h3 class="text-xl font-bold mb-2 text-white">제품 추천 받기</h3>
+          <p class="text-emerald-100 text-sm leading-relaxed mb-5">부족한 영양을 채우고 칼로리는 낮추는 밥스누 제품 구성을 보여드립니다</p>
+          <div id="side-pick" class="space-y-2 mb-5"></div>
+          <button onclick="goPage('plan')" class="w-full bg-white text-emerald-800 py-4 font-bold text-base">
+            추천 구성 보기 <i class="fas fa-arrow-right ml-1"></i>
+          </button>
         </div>
-        <div class="grid md:grid-cols-3 gap-8">
-          <div class="flex flex-col items-center">
-            <div class="relative w-44 h-44">
-              <svg viewBox="0 0 120 120" class="w-full h-full" style="transform: rotate(-90deg)">
-                <circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="12"/>
-                <circle id="pdi-ring" cx="60" cy="60" r="50" fill="none" stroke="#065f46" stroke-width="12"
-                  stroke-dasharray="0 314" stroke-linecap="round" class="pdi-ring"/>
-              </svg>
-              <div class="absolute inset-0 flex flex-col items-center justify-center">
-                <div id="pdi-score-display" class="text-4xl font-black text-emerald-800">0%</div>
-                <div class="text-xs text-gray-500 mt-1">PDI 점수</div>
-              </div>
-            </div>
-            <div class="mt-4 text-center">
-              <div id="pdi-grade-badge" class="inline-flex items-center px-4 py-2 rounded-full text-white font-bold text-sm bg-gray-400">평가 중</div>
-              <div class="mt-2 text-sm text-gray-400">목표: 40% · 출처: CoLaus 연구</div>
-            </div>
-          </div>
-          <div class="md:col-span-2 grid grid-cols-2 gap-4 content-start">
-            <div id="stat-total-cal" class="bg-gray-50 rounded-2xl p-4">
-              <div class="text-sm text-gray-500 mb-1">총 칼로리</div>
-              <div id="total-cal" class="text-2xl font-black text-gray-900">0 kcal</div>
-            </div>
-            <div id="stat-prf-cal" class="bg-emerald-50 rounded-2xl p-4">
-              <div class="text-sm text-gray-500 mb-1">PRF 칼로리</div>
-              <div id="prf-cal" class="text-2xl font-black text-emerald-700">0 kcal</div>
-            </div>
-            <div class="bg-blue-50 rounded-2xl p-4">
-              <div class="text-sm text-gray-500 mb-1">파이토케미컬 다양성</div>
-              <div id="diversity-score" class="text-2xl font-black text-blue-700">0/12</div>
-            </div>
-            <div class="bg-purple-50 rounded-2xl p-4">
-              <div class="text-sm text-gray-500 mb-1">섭취 식품군</div>
-              <div id="food-cat-count" class="text-2xl font-black text-purple-700">0가지</div>
-            </div>
-          </div>
+        <div class="bg-white rounded-3xl p-6" style="border:1px solid var(--line)">
+          <h3 class="text-base font-bold text-gray-900 mb-1">오늘 기록하기</h3>
+          <p class="text-gray-500 text-xs leading-relaxed mb-4">체중과 식사를 기록하면 목표 칼로리를 다시 계산해 드립니다</p>
+          <button onclick="goPage('log')" class="w-full border-2 border-emerald-700 text-emerald-700 py-3 font-medium text-sm">기록 페이지로</button>
         </div>
-      </div>
-      <div id="guide-section" class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6"></div>
-      <!-- PFS Diet Score -->
-      <div id="pfs-score-section" class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6"></div>
-      <!-- Phyto Score -->
-      <div id="phyto-score-section" class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6"></div>
-      <!-- 상세 분석 (식품군 구성 · 식재료 분해) — 필요할 때만 펼쳐보기 -->
-      <details id="detail-analysis" class="bg-white rounded-2xl md:rounded-3xl shadow-lg mb-4 md:mb-6 group">
-        <summary class="cursor-pointer list-none p-6 md:p-8 flex items-center justify-between">
-          <div>
-            <h3 class="text-xl font-bold text-gray-900">🔍 상세 분석</h3>
-            <p class="text-gray-500 text-sm mt-1">식품군별 칼로리 구성 · 음식 → 식재료 → 파이토케미컬 연결</p>
-          </div>
-          <i class="fas fa-chevron-down text-gray-400 transition group-open:rotate-180"></i>
-        </summary>
-        <div class="px-6 md:px-8 pb-8">
-          <h4 class="text-lg font-bold text-gray-900 mb-4">📈 식품군별 칼로리 구성</h4>
-          <div class="grid md:grid-cols-2 gap-8 items-center mb-10">
-            <div class="max-w-xs mx-auto w-full">
-              <canvas id="category-chart" width="300" height="300"></canvas>
-            </div>
-            <div id="category-legend" class="space-y-3"></div>
-          </div>
-          <h4 class="text-lg font-bold text-gray-900 mb-1">🥢 식재료 분해 분석</h4>
-          <p class="text-gray-500 text-sm mb-4">레시피 → 식재료 분해 → 식품군 매핑 → 파이토케미컬 매핑</p>
-          <!-- 모바일: 단계별 목록 / 데스크톱(768px 이상): 생키 다이어그램 -->
-          <div id="flow-list" class="md:hidden"></div>
-          <div class="hidden md:block overflow-x-auto -mx-2 px-2"><div id="ingredient-breakdown" class="min-w-[640px]"></div></div>
-        </div>
-      </details>
-      </div>
+        <button onclick="restartAssessment()" class="w-full text-gray-400 text-xs underline py-2">처음부터 다시 진단하기</button>
+      </aside>
+    </div>
+  </div>
+</section>
+</div>
 
-      <div id="rtab-plan" class="hidden" role="tabpanel">
-      <!-- 구독 세트 (수량 조정 · 할인가) -->
-      <div class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6">
-        <h3 class="text-xl font-bold text-gray-900 mb-1">🛒 맞춤 구독 세트</h3>
-        <p class="text-gray-500 text-sm mb-6">두유·파이토100·프로틴바 수량을 조정하면 할인율과 결제 금액이 바뀝니다</p>
-        <div id="product-recommendations" class="space-y-5"></div>
-      </div>
-      <!-- 30일 맞춤 식단 (SPEA2 최적화) + 이행 기록 -->
-      <div id="mealplan-section" class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6"></div>
-      <!-- 체중 변화 · 모니터링 -->
-      </div>
-
-      <div id="rtab-track" class="hidden" role="tabpanel">
-      <div id="monitor-section" class="bg-white rounded-2xl md:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 md:mb-6"></div>
-      </div>
-
-      <div class="text-center pb-4 flex flex-wrap justify-center gap-3">
-        <button onclick="restartAssessment()" class="border-2 border-emerald-700 text-emerald-700 px-8 py-3 rounded-xl font-medium hover:bg-emerald-50 transition">
-          <i class="fas fa-redo mr-2"></i>다시 평가하기
+<!-- ══ 페이지: 제품·식단 ══ -->
+<div id="page-plan" class="page hidden">
+<section class="py-12 md:py-16 bg-gray-50">
+  <div class="max-w-5xl mx-auto px-4">
+    <button onclick="goPage('result')" class="text-gray-500 text-sm mb-5"><i class="fas fa-arrow-left mr-1.5"></i>나의 분석으로</button>
+    <div class="mb-8">
+      <h2 class="text-3xl mb-2">제품 추천과 식단</h2>
+      <p class="text-gray-500 text-sm">진단 결과에 맞춘 구독 구성입니다. 수량을 바꾸시면 금액이 달라집니다</p>
+    </div>
+    <div class="bg-white rounded-3xl p-5 sm:p-6 md:p-8 mb-5">
+      <h3 class="text-xl font-bold text-gray-900 mb-1">맞춤 구독 세트</h3>
+      <p class="text-gray-500 text-sm mb-6">두유·파이토100·프로틴바 수량을 조정하면 할인율과 결제 금액이 바뀝니다</p>
+      <div id="product-recommendations" class="space-y-5"></div>
+    </div>
+    <div class="bg-white rounded-3xl p-5 sm:p-6 md:p-8 mb-5">
+      <h3 class="text-xl font-bold text-gray-900 mb-1">어디까지 받으시겠어요?</h3>
+      <p class="text-gray-500 text-sm mb-4">언제든 바꾸실 수 있습니다</p>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <button id="planmode-guide" onclick="setPlanMode('guide')" class="planmode text-left p-4 sm:p-5">
+          <div class="font-bold text-gray-900 text-sm mb-1">칼로리 가이드</div>
+          <div class="text-xs text-gray-500 leading-relaxed">하루 목표 칼로리를 끼니로 나누고, 제품을 어느 끼니에 드실지 알려드립니다. 메뉴는 직접 고르세요</div>
         </button>
-        <button onclick="goToStep(2); setInputMode('log')" class="bg-emerald-700 text-white px-8 py-3 rounded-xl font-medium hover:bg-emerald-800 transition">
-          <i class="fas fa-utensils mr-2"></i>식사 기록하고 정확도 높이기
+        <button id="planmode-plan" onclick="setPlanMode('plan')" class="planmode text-left p-4 sm:p-5">
+          <div class="font-bold text-gray-900 text-sm mb-1">30일 식단까지</div>
+          <div class="text-xs text-gray-500 leading-relaxed">위에 더해 30일 치 끼니 메뉴를 짜 드리고, 먹었는지 날마다 기록할 수 있습니다</div>
         </button>
       </div>
     </div>
+    <div id="mealplan-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
   </div>
 </section>
+</div>
 
-<!-- B2C Products Section -->
-<section id="b2c" class="py-16 bg-white">
-  <div class="max-w-6xl mx-auto px-4">
-    <div class="text-center mb-12">
-      <div class="inline-flex items-center bg-emerald-100 rounded-full px-4 py-2 mb-4">
-        <span class="text-emerald-700 text-sm font-medium">🛒 B2C 개인 구독 서비스</span>
-      </div>
-      <h2 class="text-3xl font-black text-gray-900 mb-4">건강 목적별 맞춤 제품</h2>
-      <p class="text-gray-600 max-w-2xl mx-auto">PDI 평가 결과에 기반하여 당신에게 부족한 파이토케미컬을 채우는 밥스누 제품을 구독하세요</p>
+<!-- ══ 페이지: 구독 시작 (시연용) ══ -->
+<div id="page-pay" class="page hidden">
+<section class="py-12 md:py-16 bg-gray-50">
+  <div class="max-w-5xl mx-auto px-4">
+    <button onclick="goPage('plan')" class="text-gray-500 text-sm mb-5"><i class="fas fa-arrow-left mr-1.5"></i>제품·식단으로</button>
+    <div class="mb-8">
+      <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 mb-3">시연용 화면 · 실제 결제는 되지 않습니다</span>
+      <h2 class="text-3xl mb-2">구독 시작하기</h2>
+      <p class="text-gray-500 text-sm">구독을 시작하시면 30일 식단 전체가 열립니다</p>
     </div>
-    <div class="flex flex-wrap justify-center gap-3 mb-10">
-      <span class="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium">🏥 건강검진센터 S-다이어트</span>
-      <span class="bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium">🤱 아이보리 영유아·산모</span>
-      <span class="bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-medium">👦 냠냠키즈 어린이 성장</span>
-    </div>
-    <div id="product-grid" class="grid md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+    <div id="pay-section"></div>
   </div>
 </section>
+</div>
 
-<!-- B2B Section -->
-<section id="b2b" class="py-16 bg-gray-50">
-  <div class="max-w-6xl mx-auto px-4">
-    <div class="text-center mb-12">
-      <div class="inline-flex items-center bg-blue-100 rounded-full px-4 py-2 mb-4">
-        <span class="text-blue-700 text-sm font-medium">🏢 B2B 기관 식단 설계 서비스</span>
-      </div>
-      <h2 class="text-3xl font-black text-gray-900 mb-4">기관별 맞춤 식단 설계</h2>
-      <p class="text-gray-600 max-w-2xl mx-auto">집단 유형별 PDI·영양·기능성 기준과 원가 절감을 고려한 최적화된 식단을 설계합니다</p>
+<!-- ══ 페이지: 기록 ══ -->
+<div id="page-log" class="page hidden">
+<section class="py-12 md:py-16 bg-gray-50">
+  <div class="max-w-5xl mx-auto px-4">
+    <div class="mb-8">
+      <h2 class="text-3xl mb-2">기록</h2>
+      <p class="text-gray-500 text-sm">체중과 식사를 기록하면 실제 변화를 계획과 비교해, 너무 느리거나 빠를 때 목표 칼로리를 다시 계산해 드립니다</p>
     </div>
-    <div class="grid md:grid-cols-3 gap-6 mb-10">
-      <div class="bg-white rounded-3xl shadow-md p-8 card-hover">
-        <div class="text-4xl mb-4">👴</div>
-        <h3 class="text-xl font-bold text-gray-900 mb-1">초이스엔</h3>
-        <p class="text-emerald-600 text-sm font-medium mb-3">요양원 · 시니어 식단</p>
-        <p class="text-gray-600 text-sm mb-4">당뇨·인지기능 특화 PDI 기반 급식 설계. 이소플라본·사포닌 강화 시니어 맞춤 식단.</p>
-        <div class="space-y-2">
-          <div class="flex items-center text-sm text-gray-600"><i class="fas fa-check text-emerald-500 mr-2"></i>혈당 관리 최적화</div>
-          <div class="flex items-center text-sm text-gray-600"><i class="fas fa-check text-emerald-500 mr-2"></i>인지기능 지원 식단</div>
-          <div class="flex items-center text-sm text-gray-600"><i class="fas fa-check text-emerald-500 mr-2"></i>근감소 예방 단백질 설계</div>
-        </div>
-      </div>
-      <div class="bg-white rounded-3xl shadow-md p-8 card-hover">
-        <div class="text-4xl mb-4">🤱</div>
-        <h3 class="text-xl font-bold text-gray-900 mb-1">아이앤나</h3>
-        <p class="text-blue-600 text-sm font-medium mb-3">산후조리원 · 산모 식단</p>
-        <p class="text-gray-600 text-sm mb-4">산모 회복과 영양 보충에 최적화된 이소플라본·리그난 기반 식단 설계.</p>
-        <div class="space-y-2">
-          <div class="flex items-center text-sm text-gray-600"><i class="fas fa-check text-blue-500 mr-2"></i>산후 회복 영양 설계</div>
-          <div class="flex items-center text-sm text-gray-600"><i class="fas fa-check text-blue-500 mr-2"></i>모유수유 지원</div>
-          <div class="flex items-center text-sm text-gray-600"><i class="fas fa-check text-blue-500 mr-2"></i>골건강 여성 특화</div>
-        </div>
-      </div>
-      <div class="bg-white rounded-3xl shadow-md p-8 card-hover">
-        <div class="text-4xl mb-4">👧</div>
-        <h3 class="text-xl font-bold text-gray-900 mb-1">문원</h3>
-        <p class="text-orange-600 text-sm font-medium mb-3">어린이집 · 어린이 식단</p>
-        <p class="text-gray-600 text-sm mb-4">성장 발달을 지원하는 카로티노이드·안토시아닌 풍부 어린이 맞춤 급식.</p>
-        <div class="space-y-2">
-          <div class="flex items-center text-sm text-gray-600"><i class="fas fa-check text-orange-500 mr-2"></i>성장 발달 최적화</div>
-          <div class="flex items-center text-sm text-gray-600"><i class="fas fa-check text-orange-500 mr-2"></i>면역력 강화 설계</div>
-          <div class="flex items-center text-sm text-gray-600"><i class="fas fa-check text-orange-500 mr-2"></i>알레르기 식품 관리</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- B2B Flow -->
-    <div class="bg-white rounded-3xl shadow-md p-8">
-      <h3 class="text-xl font-bold text-gray-900 mb-6 text-center">B2B 서비스 흐름</h3>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-        <div class="p-4">
-          <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <i class="fas fa-database text-emerald-700"></i>
-          </div>
-          <div class="font-bold text-sm text-gray-900">데이터 수집</div>
-          <div class="text-xs text-gray-500 mt-1">집단 유형·급식 운영·예산</div>
-        </div>
-        <div class="p-4">
-          <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <i class="fas fa-chart-pie text-blue-700"></i>
-          </div>
-          <div class="font-bold text-sm text-gray-900">PDI 분석</div>
-          <div class="text-xs text-gray-500 mt-1">집단 PDI 점수 산출·최적화</div>
-        </div>
-        <div class="p-4">
-          <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <i class="fas fa-utensils text-purple-700"></i>
-          </div>
-          <div class="font-bold text-sm text-gray-900">식단 설계</div>
-          <div class="text-xs text-gray-500 mt-1">최적화 급식 메뉴 개발</div>
-        </div>
-        <div class="p-4">
-          <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <i class="fas fa-shopping-cart text-orange-700"></i>
-          </div>
-          <div class="font-bold text-sm text-gray-900">제품 공급</div>
-          <div class="text-xs text-gray-500 mt-1">식단 결합 제품 정기 납품</div>
-        </div>
-      </div>
-    </div>
+    <div id="diary-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8 mb-5"></div>
+    <div id="monitor-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
   </div>
 </section>
-
-<!-- Science Section -->
-<section class="py-16 bg-white">
-  <div class="max-w-6xl mx-auto px-4">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl font-black text-gray-900 mb-4">과학적 근거</h2>
-      <p class="text-gray-600">국제 학술 연구에 기반한 PDI(파이토케미컬 식사 지수) 시스템</p>
-    </div>
-    <div class="grid md:grid-cols-2 gap-6">
-      <div class="bg-gray-50 rounded-2xl p-6 card-hover">
-        <div class="flex items-start gap-4">
-          <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-file-alt text-emerald-700 text-sm"></i></div>
-          <div>
-            <div class="text-xs text-gray-400 mb-1">McCarty (2004) Med Hypotheses</div>
-            <div class="font-bold text-gray-900 text-sm mb-2">PDI 지수의 원형</div>
-            <div class="text-gray-600 text-sm">DPI = PRF 유래 kcal ÷ 총 kcal × 100. 서비스별 조정 가능한 제안 지수로 밥스누 PDI의 기반</div>
-          </div>
-        </div>
-      </div>
-      <div class="bg-gray-50 rounded-2xl p-6 card-hover">
-        <div class="flex items-start gap-4">
-          <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-file-alt text-blue-700 text-sm"></i></div>
-          <div>
-            <div class="text-xs text-gray-400 mb-1">Gamba et al. (2023) NMCD · CoLaus n=3,879</div>
-            <div class="font-bold text-gray-900 text-sm mb-2">목표치 40% 근거</div>
-            <div class="text-gray-600 text-sm">높은 DPI ↔ 낮은 BMI·인슐린·hs-CRP. 복부비만 22% 감소. PRF 에너지 40% 가이드라인 제시</div>
-          </div>
-        </div>
-      </div>
-      <div class="bg-gray-50 rounded-2xl p-6 card-hover">
-        <div class="flex items-start gap-4">
-          <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-file-alt text-purple-700 text-sm"></i></div>
-          <div>
-            <div class="text-xs text-gray-400 mb-1">Kim &amp; Park (2020) Nutr Res Pract</div>
-            <div class="font-bold text-gray-900 text-sm mb-2">국내 한국형 근거</div>
-            <div class="text-gray-600 text-sm">KNHANES 기반 한국형 PRF 정의. 대사증후군·복부비만·고혈압과 역상관 확인</div>
-          </div>
-        </div>
-      </div>
-      <div class="bg-gray-50 rounded-2xl p-6 card-hover">
-        <div class="flex items-start gap-4">
-          <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-flask text-orange-700 text-sm"></i></div>
-          <div>
-            <div class="text-xs text-gray-400 mb-1">Dreosti (2000) Asia Pac J Clin Nutr</div>
-            <div class="font-bold text-gray-900 text-sm mb-2">식품군 기반 지수 설계 원칙</div>
-            <div class="text-gray-600 text-sm">파이토케미컬에는 RDI 부여 불가. 식품 기반 지수(IPPI)가 현실적 대안 - PDI 설계 원칙의 근거</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+</div>
 
 <!-- Footer -->
 <footer class="gradient-green text-white py-12">
   <div class="max-w-6xl mx-auto px-4">
-    <div class="grid md:grid-cols-4 gap-8">
+    <div class="grid md:grid-cols-3 gap-8">
       <div>
         <div class="flex items-center space-x-3 mb-4">
           <div class="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center">
             <span class="text-white font-bold text-sm">밥</span>
           </div>
-          <span class="text-xl font-bold">밥스누 PDI</span>
+          <span class="text-xl font-bold">밥스누 체중관리</span>
         </div>
-        <p class="text-emerald-300 text-sm leading-relaxed">그린바이오 기반 맞춤형 웰니스 솔루션. 파이토케미컬 과학으로 당신의 건강을 설계합니다.</p>
+        <p class="text-emerald-300 text-sm leading-relaxed">서울대학교 식의학유전체실 연구를 바탕으로, 먹는 것부터 바꾸는 체중 관리를 설계합니다.</p>
       </div>
       <div>
         <h4 class="font-bold mb-4">서비스</h4>
         <ul class="space-y-2 text-emerald-300 text-sm">
-          <li>PDI 개인 평가</li>
-          <li>B2C 제품 구독</li>
-          <li>B2B 식단 설계</li>
-          <li>파이토케미컬 분석</li>
+          <li><button onclick="goPage('result')" class="hover:text-white transition">식습관 진단과 목표 칼로리</button></li>
+          <li><button onclick="goPage('plan')" class="hover:text-white transition">30일 맞춤 식단</button></li>
+          <li><button onclick="goPage('home', 'products')" class="hover:text-white transition">밥스누 제품 구독</button></li>
+          <li><button onclick="goPage('log')" class="hover:text-white transition">끼니 기록과 체중 추적</button></li>
         </ul>
       </div>
       <div>
-        <h4 class="font-bold mb-4">B2C 서비스</h4>
+        <h4 class="font-bold mb-4">계산 기준</h4>
         <ul class="space-y-2 text-emerald-300 text-sm">
-          <li>건강검진센터 S-다이어트</li>
-          <li>아이보리 영유아·산모</li>
-          <li>냠냠키즈 어린이 성장</li>
-        </ul>
-      </div>
-      <div>
-        <h4 class="font-bold mb-4">B2B 파트너</h4>
-        <ul class="space-y-2 text-emerald-300 text-sm">
-          <li>초이스엔 (요양원)</li>
-          <li>아이앤나 (산후조리원)</li>
-          <li>문원 어린이집</li>
+          <li><button onclick="goPage('home', 'science')" class="hover:text-white transition">2020 한국인 영양소 섭취기준</button></li>
+          <li><button onclick="goPage('home', 'science')" class="hover:text-white transition">체중 변화 산출 방식</button></li>
+          <li><button onclick="goPage('home', 'science')" class="hover:text-white transition">식단 설계 방식</button></li>
         </ul>
       </div>
     </div>
     <div class="border-t border-emerald-700 mt-8 pt-6 text-center text-emerald-400 text-xs">
-      <p>© 2024 밥스누 PDI 웰니스 솔루션. 본 서비스는 건강 정보 제공 목적이며 의학적 진단을 대체하지 않습니다.</p>
+      <p>© 2026 밥스누 · 서울대학교 식의학유전체실. 본 서비스는 건강 정보 제공 목적이며 의학적 진단을 대체하지 않습니다.</p>
       <p class="mt-1">건강기능식품 표시·광고 기준에 따라 일부 표현이 제한될 수 있습니다.</p>
     </div>
   </div>

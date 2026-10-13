@@ -263,11 +263,13 @@ function subscriptionQuote(cart) {
 //   protein: 단백질 부족 시 대체 추천
 //   gut    : 장 건강 — 두유 대체
 //   sugar / bone / fatigue : 혈당·뼈건강·피로회복 — 추가 구성품
-const PDI_BANDS = [
-  { id: 'lt20',  name: '20% 미만', max: 20 },
-  { id: '20_30', name: '20~30%',   max: 30 },
-  { id: '30_40', name: '30~40%',   max: 40 },
-  { id: 'gte40', name: '40% 이상', max: Infinity },
+// 식생활 등급 — 서울대병원 식생활문진표 11문항 중 Ideal 문항 수로 판정 (app.js 의 DIET_GRADES)
+//   엑셀 Sheet3 의 PDI 4구간을 대체함. PDI 는 추천에서 사용하지 않음
+//   종전 PDI 구간 → 등급 대응: 20% 미만 → 개선 필요 / 30~40% → 보통 / 40% 이상 → 우수
+const GRADE_BANDS = [
+  { id: 'poor',  name: '개선 필요' },
+  { id: 'inter', name: '보통' },
+  { id: 'ideal', name: '우수' },
 ];
 const AGE_BANDS = [
   { id: '10', name: '10대',      max: 20 },
@@ -276,92 +278,88 @@ const AGE_BANDS = [
   { id: '50', name: '50대 이상', max: Infinity },
 ];
 
-// [pdiBand, bodyAxis, ageBand, grain, veg, main, calcium, protein, gut, sugar, bone, fatigue]
+// [grade, bodyAxis, ageBand, grain, veg, main, calcium, protein, gut, sugar, bone, fatigue]
 const WEIGHT_MGMT_RULES = [
-  ['lt20',  'normal', '10', ['나'],      ['가'],      'B', 'E', 'C', 'D', '1', '2', '4'],
-  ['lt20',  'over',   '10', ['가', '나'], ['가', '나'], 'B', 'E', 'C', 'D', '1', '2', '4'],
-  ['lt20',  'normal', '20', ['나'],      ['가'],      'C', 'E', 'C', 'D', '1', '2', '4'],
-  ['lt20',  'over',   '20', ['가', '나'], ['가', '나'], 'C', 'E', 'C', 'D', '1', '2', '4'],
-  ['lt20',  'normal', '40', ['나'],      ['가'],      'E', 'H', 'C', 'D', '3', '2', '4'],
-  ['lt20',  'over',   '40', ['가', '나'], ['가', '나'], 'I', 'H', 'C', 'D', '3', '2', '4'],
-  ['lt20',  'normal', '50', ['나'],      ['가'],      'H', 'H', 'C', 'D', '3', '2', '4'],
-  ['lt20',  'over',   '50', ['가', '나'], ['가', '나'], 'I', 'H', 'C', 'D', '3', '2', '4'],
-  ['20_30', 'normal', '10', ['나'],      ['가'],      'C', 'E', 'C', 'D', '1', '2', '4'],
-  ['20_30', 'over',   '10', ['가', '나'], ['가', '나'], 'C', 'E', 'C', 'D', '1', '2', '4'],
-  ['20_30', 'normal', '20', ['나'],      ['가'],      'C', 'E', 'C', 'D', '1', '2', '4'],
-  ['20_30', 'over',   '20', ['가', '나'], ['가', '나'], 'I', 'E', 'C', 'D', '1', '2', '4'],
-  ['20_30', 'normal', '40', ['나'],      ['가'],      'E', 'H', 'C', 'D', '3', '2', '4'],
-  ['20_30', 'over',   '40', ['가', '나'], ['가', '나'], 'I', 'H', 'C', 'D', '3', '2', '4'],
-  ['20_30', 'normal', '50', ['나'],      ['가'],      'H', 'H', 'C', 'D', '3', '2', '4'],
-  ['20_30', 'over',   '50', ['가', '나'], ['가', '나'], 'I', 'H', 'C', 'D', '3', '2', '4'],
-  ['30_40', 'normal', '10', ['나'],      ['가'],      'C', 'E', 'C', 'D', '1', '2', '4'],
-  ['30_40', 'over',   '10', ['나'],      ['가'],      'D', 'E', 'C', 'D', '1', '2', '4'],
-  ['30_40', 'normal', '20', ['나'],      ['가'],      'C', 'E', 'C', 'D', '1', '2', '4'],
-  ['30_40', 'over',   '20', ['나'],      ['가'],      'D', 'E', 'C', 'D', '1', '2', '4'],
-  ['30_40', 'normal', '40', ['나'],      ['가'],      'E', 'H', 'C', 'D', '3', '2', '4'],
-  ['30_40', 'over',   '40', ['가'],      ['가'],      'E', 'H', 'C', 'D', '3', '2', '4'],
-  ['30_40', 'normal', '50', ['나'],      ['가'],      'H', 'H', 'C', 'D', '3', '2', '4'],
-  ['30_40', 'over',   '50', ['가'],      ['가'],      'H', 'H', 'C', 'D', '3', '2', '4'],
-  ['gte40', 'normal', '10', [],          [],          'C', 'E', 'C', 'D', '1', '2', '4'],
-  ['gte40', 'over',   '10', ['나'],      ['가'],      'D', 'E', 'C', 'D', '1', '2', '4'],
-  ['gte40', 'normal', '20', [],          [],          'C', 'E', 'C', 'D', '1', '2', '4'],
-  ['gte40', 'over',   '20', ['나'],      ['가'],      'D', 'E', 'C', 'D', '1', '2', '4'],
-  ['gte40', 'normal', '40', [],          [],          'E', 'H', 'C', 'D', '3', '2', '4'],
-  ['gte40', 'over',   '40', ['나'],      ['가'],      'E', 'H', 'C', 'D', '3', '2', '4'],
-  ['gte40', 'normal', '50', [],          [],          'H', 'H', 'C', 'D', '3', '2', '4'],
-  ['gte40', 'over',   '50', ['나'],      ['가'],      'H', 'H', 'C', 'D', '3', '2', '4'],
+  ['poor',  'normal', '10', ['나'],      ['가'],      'B', 'E', 'C', 'D', '1', '2', '4'],
+  ['poor',  'over',   '10', ['가', '나'], ['가', '나'], 'B', 'E', 'C', 'D', '1', '2', '4'],
+  ['poor',  'normal', '20', ['나'],      ['가'],      'C', 'E', 'C', 'D', '1', '2', '4'],
+  ['poor',  'over',   '20', ['가', '나'], ['가', '나'], 'C', 'E', 'C', 'D', '1', '2', '4'],
+  ['poor',  'normal', '40', ['나'],      ['가'],      'E', 'H', 'C', 'D', '3', '2', '4'],
+  ['poor',  'over',   '40', ['가', '나'], ['가', '나'], 'I', 'H', 'C', 'D', '3', '2', '4'],
+  ['poor',  'normal', '50', ['나'],      ['가'],      'H', 'H', 'C', 'D', '3', '2', '4'],
+  ['poor',  'over',   '50', ['가', '나'], ['가', '나'], 'I', 'H', 'C', 'D', '3', '2', '4'],
+  ['inter', 'normal', '10', ['나'],      ['가'],      'C', 'E', 'C', 'D', '1', '2', '4'],
+  ['inter', 'over',   '10', ['나'],      ['가'],      'D', 'E', 'C', 'D', '1', '2', '4'],
+  ['inter', 'normal', '20', ['나'],      ['가'],      'C', 'E', 'C', 'D', '1', '2', '4'],
+  ['inter', 'over',   '20', ['나'],      ['가'],      'D', 'E', 'C', 'D', '1', '2', '4'],
+  ['inter', 'normal', '40', ['나'],      ['가'],      'E', 'H', 'C', 'D', '3', '2', '4'],
+  ['inter', 'over',   '40', ['가'],      ['가'],      'E', 'H', 'C', 'D', '3', '2', '4'],
+  ['inter', 'normal', '50', ['나'],      ['가'],      'H', 'H', 'C', 'D', '3', '2', '4'],
+  ['inter', 'over',   '50', ['가'],      ['가'],      'H', 'H', 'C', 'D', '3', '2', '4'],
+  ['ideal', 'normal', '10', [],          [],          'C', 'E', 'C', 'D', '1', '2', '4'],
+  ['ideal', 'over',   '10', ['나'],      ['가'],      'D', 'E', 'C', 'D', '1', '2', '4'],
+  ['ideal', 'normal', '20', [],          [],          'C', 'E', 'C', 'D', '1', '2', '4'],
+  ['ideal', 'over',   '20', ['나'],      ['가'],      'D', 'E', 'C', 'D', '1', '2', '4'],
+  ['ideal', 'normal', '40', [],          [],          'E', 'H', 'C', 'D', '3', '2', '4'],
+  ['ideal', 'over',   '40', ['나'],      ['가'],      'E', 'H', 'C', 'D', '3', '2', '4'],
+  ['ideal', 'normal', '50', [],          [],          'H', 'H', 'C', 'D', '3', '2', '4'],
+  ['ideal', 'over',   '50', ['나'],      ['가'],      'H', 'H', 'C', 'D', '3', '2', '4'],
 ].map(r => ({
-  pdiBand: r[0], bodyAxis: r[1], ageBand: r[2],
+  grade: r[0], bodyAxis: r[1], ageBand: r[2],
   grain: r[3], veg: r[4], main: r[5], calcium: r[6], protein: r[7],
   gut: r[8], sugar: r[9], bone: r[10], fatigue: r[11],
 }));
 
-function pdiBandOf(pdi)  { return (PDI_BANDS.find(b => pdi < b.max) || PDI_BANDS[3]).id; }
-function ageBandOf(age)  { return (AGE_BANDS.find(b => age < b.max) || AGE_BANDS[3]).id; }
+function ageBandOf(age) { return (AGE_BANDS.find(b => age < b.max) || AGE_BANDS[3]).id; }
 
 // 목표별 추가 구성품 매핑 (장 건강은 두유 대체이므로 addon 이 아님)
 const GOAL_RULE_KEY = { blood_sugar: 'sugar', bone: 'bone', fatigue: 'fatigue' };
 
 // ──────────────────────────────────────────────
-// recommendSubscription({ pdi, bmi, age, lacks, goals, allergies })
+// recommendSubscription({ grade, bmi, age, lacks, goals, allergies })
+//   grade  : 'poor' | 'inter' | 'ideal'  — 서울대병원 식생활문진표 등급
 //   lacks  : { wholeGrain, veg, calcium, protein }  (boolean)
 //   goals  : Set<'weight'|'gut'|'blood_sugar'|'bone'|'fatigue'>
-//   반환: { rule, cart, reasons, excluded }
+//   반환: { rule, bodyType, cart, reasons, excluded }
+//   reasons 의 why 는 화면에 칩으로 그대로 보이므로 짧은 말(예: 「채소 섭취 부족」)만 넣는다.
+//   설명이 필요 없는 기본 구성에는 사유를 달지 않는다
 // ──────────────────────────────────────────────
-function recommendSubscription({ pdi, bmi, age, lacks, goals, allergies }) {
+function recommendSubscription({ grade, bmi, age, lacks, goals, allergies }) {
   const bodyType = classifyBodyType(bmi);
+  const bodyAxis = bodyTypeAxis(bodyType.id);
   const rule = WEIGHT_MGMT_RULES.find(r =>
-    r.pdiBand === pdiBandOf(pdi) && r.bodyAxis === bodyTypeAxis(bodyType.id) && r.ageBand === ageBandOf(age)
+    r.grade === (grade || 'inter') && r.bodyAxis === bodyAxis && r.ageBand === ageBandOf(age)
   ) || WEIGHT_MGMT_RULES[0];
 
   const reasons = [];
-  const push = (code, why) => { if (code) reasons.push({ code, why }); };
 
-  // 1) 두유 — 기본은 연령별 추천, 부족 영양소가 있으면 대체
+  // 1) 두유 — 기본은 연령·체중에 맞춘 추천, 부족한 영양소가 있으면 대체
+  //    기본 추천에는 사유를 달지 않는다 (설명할 것이 없음)
   let soymilkCode = rule.main;
-  push(soymilkCode, AGE_BANDS.find(a => a.id === rule.ageBand).name + ' 기본 추천 · PDI ' + PDI_BANDS.find(b => b.id === rule.pdiBand).name + ' / ' + bodyType.name);
   if (goals.has('gut') && rule.gut !== soymilkCode) {
     soymilkCode = rule.gut;
-    reasons.push({ code: soymilkCode, why: '장 건강 목표 → 두유 대체' });
+    reasons.push({ code: soymilkCode, why: '장 건강' });
   } else if (lacks.protein && rule.protein !== soymilkCode) {
     soymilkCode = rule.protein;
-    reasons.push({ code: soymilkCode, why: '단백질 부족 → 대체 추천' });
+    reasons.push({ code: soymilkCode, why: '단백질 섭취 부족' });
   }
 
   // 2) 파이토100 / 프로틴바 — 통곡물·채소 부족 여부로 결정
-  //    통곡물·채소 모두 부족하면 엑셀 「우선 순위」 열(grain)을 따름
-  let picks;
-  if (lacks.wholeGrain && lacks.veg)      { picks = rule.grain; reasons.push({ code: picks.join('·'), why: '통곡물·채소 모두 부족 → 우선순위 구성' }); }
-  else if (lacks.wholeGrain)              { picks = rule.grain; reasons.push({ code: picks.join('·'), why: '통곡물 섭취 부족' }); }
-  else if (lacks.veg)                     { picks = rule.veg;   reasons.push({ code: picks.join('·'), why: '채소 섭취 부족' }); }
-  else                                    { picks = rule.grain.length ? rule.grain : ['가']; reasons.push({ code: picks.join('·'), why: '기본 구성' }); }
+  //    통곡물·채소가 모두 부족하면 엑셀 「우선 순위」 열(grain)을 따른다
+  let picks, pickWhy;
+  if (lacks.wholeGrain && lacks.veg) { picks = rule.grain; pickWhy = '통곡물·채소 섭취 부족'; }
+  else if (lacks.wholeGrain)         { picks = rule.grain; pickWhy = '통곡물 섭취 부족'; }
+  else if (lacks.veg)                { picks = rule.veg;   pickWhy = '채소 섭취 부족'; }
+  else                               { picks = rule.grain; pickWhy = null; }
+  if (picks.length && pickWhy) reasons.push({ code: picks.join('·'), why: pickWhy });
 
   // 3) 추가 구성품 — 선택한 건강 목적별
+  const GOAL_WHY = { blood_sugar: '혈당 관리', bone: '뼈 건강', fatigue: '피로 회복' };
   const addonCodes = [];
   for (const [goalId, key] of Object.entries(GOAL_RULE_KEY)) {
     if (goals.has(goalId) && !addonCodes.includes(rule[key])) {
       addonCodes.push(rule[key]);
-      reasons.push({ code: rule[key], why: (HEALTH_GOALS.find(g => g.id === goalId) || {}).name + ' 목표 → 추가 구성품' });
+      reasons.push({ code: rule[key], why: GOAL_WHY[goalId] });
     }
   }
 
@@ -379,20 +377,22 @@ function recommendSubscription({ pdi, bmi, age, lacks, goals, allergies }) {
   const bar   = picks.filter(c => c === '나').filter(keep);
   const addon = addonCodes.filter(keep);
 
-  // 최소 권장 수량까지 채우기 (두유 1 · 파이토 1 · 프로틴바 2 = 15% 할인 기준)
+  // 5) 수량 — 부족 판정에서 고른 품목만 담는다.
+  //    종전에는 picks 와 무관하게 파이토 2 · 바 3 을 늘 담아 부족 판정이 구성에 반영되지 않았음
+  //    두유만 2팩, 고른 보조 제품은 최소 권장 수량(파이토 1 · 바 2 = 15% 할인 기준)으로 담는다
   const cart = {
     soymilk: soymilk.length ? [soymilk[0], soymilk[0]] : [],
-    phyto:   phyto.length   ? ['가', '가'] : (keep('가') ? ['가', '가'] : []),
-    bar:     bar.length     ? ['나', '나', '나'] : (keep('나') ? ['나', '나', '나'] : []),
+    phyto:   phyto.length ? ['가'] : [],
+    bar:     bar.length   ? ['나', '나'] : [],
     addon,
   };
 
-  // 5) 대두 알레르기 — 두유 A~I 와 프로틴바가 모두 약콩(대두) 제품이라 전부 제외됩니다.
+  // 6) 대두 알레르기 — 두유 A~I 와 프로틴바가 모두 약콩(대두) 제품이라 전부 제외됩니다.
   //    이 경우 파이토100 만 추천합니다.
   //    ※ 파이토100 원재료에도 유기농 약콩이 들어 있어(제품소개서) 섭취 전 확인이 필요합니다.
   if (!cart.soymilk.length && !cart.bar.length) {
     cart.phyto = ['가', '가'];
-    reasons.push({ code: '가', why: '대두 알레르기로 두유·프로틴바 제외 → 파이토100 단독 구성' });
+    reasons.push({ code: '가', why: '대두 알레르기' });
   }
 
   return {

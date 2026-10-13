@@ -5,6 +5,7 @@ import assert from 'node:assert/strict'
 import vm from 'node:vm'
 
 const read = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8')
+const htmlSrc = read('public/index.html')
 
 // 브라우저 전용 전역 최소 스텁 (app.js 는 로드 시 document.addEventListener 만 호출)
 const noop = () => {}
@@ -12,6 +13,8 @@ const sandbox = {
   console,
   document: { addEventListener: noop, getElementById: () => null },
   localStorage: { getItem: () => null, setItem: noop, removeItem: noop },
+  location: { hash: '' },
+  window: { addEventListener: noop, matchMedia: () => ({ matches: true }), scrollTo: noop },
   Chart: undefined,
   setTimeout: (fn) => { fn(); return 0 },   // 최적화를 동기 실행해 결과를 바로 검사
   clearTimeout: noop,
@@ -133,47 +136,109 @@ ok('BMI 23.5 → 과체중', () => assert.equal(bt(23.5).name, '과체중'))
 ok('BMI 27 → 비만',     () => assert.equal(bt(27).name, '비만'))
 ok('BMI 32 → 고도비만', () => assert.equal(bt(32).name, '고도비만'))
 
-console.log('\n── 추천 룰테이블 (엑셀 Sheet3 31~64행) ──')
-ok('룰 32행 전부 적재', () => assert.equal($('WEIGHT_MGMT_RULES').length, 32))
+console.log('\n── 추천 룰테이블 (식생활 등급 3 × 체중 2 × 연령 4) ──')
+ok('룰 24행 전부 적재', () => assert.equal($('WEIGHT_MGMT_RULES').length, 24))
 const recommend = $('recommendSubscription')
-ok('PDI 15% · BMI 26 · 35세 → 두유 C · 파이토+프로틴바', () => {
-  const r = recommend({ pdi: 15, bmi: 26, age: 35, lacks: {}, goals: new Set(['weight']), allergies: new Set() })
+ok('개선 필요 · BMI 26 · 35세 → 두유 C · 파이토+프로틴바', () => {
+  const r = recommend({ grade: 'poor', bmi: 26, age: 35, lacks: {}, goals: new Set(['weight']), allergies: new Set() })
   assert.equal(r.rule.main, 'C')
   assert.equal(r.bodyType.name, '비만')
   assert.equal(r.cart.soymilk.join(','), 'C,C')
-  assert.equal(r.cart.phyto.length, 2)
-  assert.equal(r.cart.bar.length, 3)
+  assert.equal(r.cart.phyto.length, 1)
+  assert.equal(r.cart.bar.length, 2)
+})
+ok('부족 판정이 구성에 반영됨 — 채소만 부족하면 파이토100 만', () => {
+  // 보통 등급 40대 과체중: grain ['가'] / veg ['가'] → 어느 쪽이든 파이토, 프로틴바는 없음
+  const r = recommend({ grade: 'inter', bmi: 26, age: 45, lacks: { veg: true }, goals: new Set(['weight']), allergies: new Set() })
+  assert.equal(r.cart.phyto.length, 1)
+  assert.equal(r.cart.bar.length, 0, '채소 부족에는 프로틴바를 담지 않음')
+})
+ok('우수 등급 · 정상 체중 → 보조 제품 없이 두유만', () => {
+  const r = recommend({ grade: 'ideal', bmi: 21, age: 35, lacks: {}, goals: new Set(['weight']), allergies: new Set() })
+  assert.equal(r.cart.phyto.length, 0)
+  assert.equal(r.cart.bar.length, 0)
+  assert.ok(r.cart.soymilk.length > 0)
+})
+ok('식생활 등급이 바뀌면 구성이 바뀜', () => {
+  const mk = grade => recommend({ grade, bmi: 21, age: 35, lacks: {}, goals: new Set(['weight']), allergies: new Set() })
+  const poor = mk('poor'), ideal = mk('ideal')
+  assert.notEqual(poor.cart.phyto.length + poor.cart.bar.length, ideal.cart.phyto.length + ideal.cart.bar.length)
 })
 ok('단백질 부족 → C(고단백) 로 대체', () => {
-  const r = recommend({ pdi: 15, bmi: 21, age: 15, lacks: { protein: true }, goals: new Set(['weight']), allergies: new Set() })
+  const r = recommend({ grade: 'poor', bmi: 21, age: 15, lacks: { protein: true }, goals: new Set(['weight']), allergies: new Set() })
   assert.equal(r.cart.soymilk[0], 'C')
 })
 ok('칼슘 축은 추천에 영향 없음 (판정 제거)', () => {
-  const base = recommend({ pdi: 15, bmi: 21, age: 15, lacks: {}, goals: new Set(['weight']), allergies: new Set() })
-  const withCa = recommend({ pdi: 15, bmi: 21, age: 15, lacks: { calcium: true }, goals: new Set(['weight']), allergies: new Set() })
+  const base   = recommend({ grade: 'poor', bmi: 21, age: 15, lacks: {}, goals: new Set(['weight']), allergies: new Set() })
+  const withCa = recommend({ grade: 'poor', bmi: 21, age: 15, lacks: { calcium: true }, goals: new Set(['weight']), allergies: new Set() })
   assert.equal(withCa.cart.soymilk.join(','), base.cart.soymilk.join(','))
 })
 ok('장 건강 목표 → D(포스트바이오틱스) 로 대체', () => {
-  const r = recommend({ pdi: 25, bmi: 21, age: 35, lacks: {}, goals: new Set(['weight', 'gut']), allergies: new Set() })
+  const r = recommend({ grade: 'poor', bmi: 21, age: 35, lacks: {}, goals: new Set(['weight', 'gut']), allergies: new Set() })
   assert.equal(r.cart.soymilk[0], 'D')
 })
 ok('뼈건강·피로 목표 → 추가 구성품 2·4', () => {
-  const r = recommend({ pdi: 25, bmi: 21, age: 35, lacks: {}, goals: new Set(['weight', 'bone', 'fatigue']), allergies: new Set() })
+  const r = recommend({ grade: 'poor', bmi: 21, age: 35, lacks: {}, goals: new Set(['weight', 'bone', 'fatigue']), allergies: new Set() })
   assert.equal([...r.cart.addon].sort().join(','), '2,4')
 })
 ok('대두 알레르기 → 두유·프로틴바 제외하고 파이토100만 추천', () => {
-  const r = recommend({ pdi: 15, bmi: 26, age: 35, lacks: {}, goals: new Set(['weight']), allergies: new Set(['soy']) })
+  const r = recommend({ grade: 'poor', bmi: 26, age: 35, lacks: {}, goals: new Set(['weight']), allergies: new Set(['soy']) })
   assert.equal(r.cart.soymilk.length, 0)
   assert.equal(r.cart.bar.length, 0)
   assert.equal(r.cart.phyto.join(','), '가,가')
   assert.ok(r.excluded.length > 0)
 })
 ok('땅콩 알레르기 → 프로틴바만 제외', () => {
-  const r = recommend({ pdi: 15, bmi: 26, age: 35, lacks: {}, goals: new Set(['weight']), allergies: new Set(['peanut']) })
+  const r = recommend({ grade: 'poor', bmi: 26, age: 35, lacks: {}, goals: new Set(['weight']), allergies: new Set(['peanut']) })
   assert.equal(r.cart.bar.length, 0)
   assert.ok(r.cart.soymilk.length > 0, '두유는 남아야 함')
 })
+ok('추천 사유는 짧은 말만 — 기본 구성에는 사유를 달지 않음', () => {
+  const r = recommend({ grade: 'poor', bmi: 26, age: 35, lacks: { veg: true }, goals: new Set(['weight']), allergies: new Set() })
+  assert.ok(r.reasons.some(x => x.why === '채소 섭취 부족'), '채소 부족 사유가 없음')
+  for (const x of r.reasons) {
+    assert.ok(x.why.length <= 14, '사유가 너무 김: ' + x.why)
+    assert.ok(!/PDI|기본 추천|습니다/.test(x.why), '군더더기가 들어감: ' + x.why)
+  }
+})
+ok('부족한 것도 목표도 없으면 사유를 아예 달지 않음', () => {
+  const r = recommend({ grade: 'inter', bmi: 21, age: 35, lacks: {}, goals: new Set(['weight']), allergies: new Set() })
+  assert.equal(r.reasons.length, 0)
+})
 
+console.log('\n── 서울대병원 식생활문진표 설문 ──')
+const SQ = $('SURVEY_QUESTIONS'), assess = $('surveyAssessment')
+ok('11문항 적재', () => assert.equal(SQ.length, 11))
+ok('모든 문항에 Ideal(5점) 선택지가 하나씩 있음', () => {
+  for (const q of SQ) assert.equal(q.options.filter(o => o[1] === 5).length, 1, q.id)
+})
+ok('전부 Ideal → 우수', () => {
+  const ans = {}
+  for (const q of SQ) ans[q.id] = q.options.findIndex(o => o[1] === 5)
+  const a = assess(ans)
+  assert.equal(a.idealCount, 11)
+  assert.equal(a.grade.id, 'ideal')
+  assert.equal(a.score, 55)
+})
+ok('전부 Poor → 개선 필요', () => {
+  const ans = {}
+  for (const q of SQ) ans[q.id] = q.options.findIndex(o => o[1] === 1)
+  const a = assess(ans)
+  assert.equal(a.idealCount, 0)
+  assert.equal(a.grade.id, 'poor')
+})
+ok('Ideal 5개 → 보통', () => {
+  const ans = {}
+  SQ.forEach((q, i) => { ans[q.id] = q.options.findIndex(o => o[1] === (i < 5 ? 5 : 1)) })
+  assert.equal(assess(ans).grade.id, 'inter')
+})
+ok('곡류·채소·단백질 문항이 부족 판정으로 이어짐', () => {
+  const ans = {}
+  for (const q of SQ) ans[q.id] = q.options.findIndex(o => o[1] === 5)
+  assert.equal(JSON.stringify(assess(ans).lacks), JSON.stringify({ wholeGrain: false, veg: false, protein: false }))
+  ans.veg = SQ.find(q => q.id === 'veg').options.findIndex(o => o[1] === 1)
+  assert.equal(assess(ans).lacks.veg, true)
+})
 console.log('\n── 권장 영양 섭취량 ──')
 const profile = { gender: 'female', age: 35, height: 162, weight: 68, prevWeight: 69, activity: 'low' }
 const targets = $('nutritionTargets')(profile)
@@ -518,8 +583,9 @@ vm.runInContext(`
   document.getElementById('profile-age').value = '35';
   document.getElementById('profile-height').value = '162';
   document.getElementById('profile-weight').value = '68';
-  document.getElementById('profile-waist').value = '88';
-  document.getElementById('profile-prev-weight').value = '69';
+  document.getElementById('profile-waist').value = '35';   // 바지 35인치 ≒ 허리 88.9 cm
+  renderWaistOptions();
+  document.getElementById('profile-waist').value = '35';
   document.getElementById('profile-activity').value = 'low';
   SURVEY_QUESTIONS.forEach(q => answerSurvey(q.id, 0));
   selectedGoals.add('gut'); selectedGoals.add('bone');
@@ -547,102 +613,142 @@ const html = id => els.get(id) ? els.get(id)._html : ''
 ok('구독 세트 렌더 (추천 근거·수량·가격)', () => {
   const h = html('product-recommendations')
   assert.ok(h.length > 2000, 'len=' + h.length)
-  for (const s of ['체중 관리자 추천 룰', '구독 구성', '결제 금액', '정가', '할인 근거', '추가 구성품'])
+  for (const s of ['이렇게 골랐어요', '구독 구성', '결제 금액', '정가', '최대 25%', '추가 구성품'])
     assert.ok(h.includes(s), '누락: ' + s)
+  // 내부 용어·할인 근거 설명은 화면에 나오지 않아야 한다
+  for (const s of ['추천 룰', '할인 근거', 'PDI', '엑셀', 'Sheet3'])
+    assert.ok(!h.includes(s), '내부 용어 노출: ' + s)
   assert.ok(!h.includes('부족: 칼슘') && !h.includes('충족: 칼슘'), '칼슘 판정이 남아 있음')
   assert.ok(/\d{1,3}(,\d{3})*원/.test(h), '금액 표기 없음')
-  assert.ok(h.includes('requestMealPlan'), '식단 추천받기 버튼이 구독 패널에 없음')
+  assert.ok(!h.includes('requestMealPlan'), '가이드 버전인데 식단 추천 버튼이 보임')
   assert.ok(!h.includes('undefined') && !h.includes('NaN'), 'undefined/NaN 포함')
 })
-ok('가이드 렌더 (체중 유형·권장 영양 섭취량)', () => {
-  const h = html('guide-section')
-  for (const s of ['체중 유형', '권장 영양 섭취량', '목표 칼로리', '표준 체중', '탄수화물', '나트륨'])
+ok('① 목표치가 먼저 — 기준 칼로리·BMI·복부비만·영양소 목표치', () => {
+  const h = html('target-section')
+  for (const s of ['하루 목표치', '목표 칼로리', 'BMI', '복부비만', '표준 체중',
+                   '탄수화물', '단백질', '지방', '식이섬유', '당류', '포화지방', '나트륨'])
     assert.ok(h.includes(s), '누락: ' + s)
   assert.ok(!h.includes('undefined') && !h.includes('NaN'))
+  // 바지 사이즈를 입력했으면 복부비만 판정이 나와야 한다
+  assert.ok(h.includes('해당'), '복부비만 판정이 없음')
 })
-ok('설문 기반에서는 PDI·단백질만 보이고 양 의존 지표는 숨김', () => {
-  const ks = html('key-summary')
-  assert.ok(ks.length > 500, 'key-summary len=' + ks.length)
-  // 보여야 하는 것
-  for (const s of ['📊 PDI', '💪 단백질', '파이토케미컬 다양성'])
-    assert.ok(ks.includes(s), '누락: ' + s)
-  assert.ok(ks.includes('📝 설문 기반 예측치'), '설문 배지 없음')
-  // 숨겨야 하는 것 — 타일 라벨 기준 (안내 문구에 이름이 언급되는 건 정상)
-  for (const s of ['섭취 칼로리 / 기준 칼로리', '🌾 식이섬유', '🥗 PFS 식단 점수', 'Basic '])
-    assert.ok(!ks.includes(s), '설문인데 노출됨: ' + s)
-  // PFS 섹션은 아예 비어 있어야 함
-  assert.equal(html('pfs-score-section'), '', 'PFS 섹션이 그려짐')
-  // 파이토 섹션은 계열 구성만 (mg·DRV 없음)
-  const ph = html('phyto-score-section')
-  assert.ok(ph.length > 500, 'phyto len=' + ph.length)
-  assert.ok(ph.includes('파이토케미컬 구성'), '설문용 제목이 아님')
-  assert.ok(!ph.includes('DRV 달성률') && !ph.includes('/ 100점'), '설문인데 mg 기반 점수 노출')
+ok('② 목표 관리 팁 · ③ 주의사항이 따로 그려짐', () => {
+  const tips = html('tips-section'), guide = html('guide-section')
+  assert.ok(tips.includes('목표 관리 팁'), '관리 팁 제목 없음')
+  assert.ok(tips.includes('체중 관리'), '기본 목표(체중 관리) 팁이 없음')
+  assert.ok(guide.includes('주의사항'), '주의사항 제목 없음')
+  // 목표치는 주의사항 카드에서 빠져야 한다 (중복 표시 금지)
+  assert.ok(!guide.includes('권장 영양 섭취량') && !guide.includes('체중 유형'), '주의사항에 목표치가 남아 있음')
 })
-ok('설문 상세 분석은 문항 → 식품군 → 파이토케미컬로 이어짐', () => {
-  vm.runInContext('renderIngredientBreakdown(pdiResult);', ctx)
-  const h = html('ingredient-breakdown')
-  assert.ok(h.length > 1000, 'len=' + h.length)
-  assert.ok(h.includes('📝 설문 문항'), '1열이 설문 문항이 아님')
-  assert.ok(h.includes('식품군'), '2열이 식품군이 아님')
-  assert.ok(!h.includes('🍽 음식') && !h.includes('식재료 (식품군)'), '설문인데 음식·식재료 열이 그려짐')
-  // 식품을 만든 문항만 1열에 나오고, 각 문항의 라벨·선택한 답이 함께 보여야 함
-  const flow0 = $('buildSurveyFlow')($('pdiResult'))
-  assert.ok(flow0.col1.length >= 2, '1열 문항 ' + flow0.col1.length + '개')
-  for (const node of flow0.col1) {
-    assert.ok(h.includes(node.name), '문항 누락: ' + node.name)
-    assert.ok(node.sub.length > 0, node.name + ' 의 선택한 답이 비어 있음')
-  }
-  assert.ok(h.includes('밥 종류'), '밥 문항은 항상 있어야 함')
-  // 개별 식재료(백미·소금 등)가 노출되면 안 됨
-  for (const s of ['백미', '소금', '진간장', '고추장'])
-    assert.ok(!h.includes('data-id="' + s + '"'), '설문인데 식재료 노출: ' + s)
-  // 식품군 노드는 FOOD_CATEGORIES 이름으로
-  assert.ok(h.includes('통곡물') || h.includes('채소·나물·해조'), '식품군 이름 없음')
-  const flow = $('buildSurveyFlow')($('pdiResult'))
-  console.log('    문항 ' + flow.col1.length + '개 → 식품군 ' + flow.col2.length + '개 → 파이토케미컬 '
-    + new Set(Object.values(flow.col2ToPhyto).flat()).size + '계열')
-  console.log('    식품군: ' + flow.col2.map(c => c.icon + c.name + ' ' + c.note).join(' · '))
+ok('삭제된 화면이 index.html 에 남아 있지 않음', () => {
+  for (const id of ['pdi-ring', 'detail-analysis', 'phyto-score-section', 'pfs-score-section',
+                    'category-chart', 'ingredient-breakdown', 'flow-list', 'rtab-analysis'])
+    assert.ok(!htmlSrc.includes('id="' + id + '"'), '삭제 안 됨: ' + id)
+  // 처음 보는 사람이 알 수 없는 말이 화면에 남아 있지 않아야 한다
+  for (const w of ['PDI', 'PFS', '파이토케미컬 다양성'])
+    assert.ok(!htmlSrc.includes(w), '내부 용어 노출: ' + w)
 })
-ok('양념·기름은 설문 상세 분석에서 제외', () => {
-  const flow = $('buildSurveyFlow')($('pdiResult'))
-  for (const c of flow.col2) assert.ok(c.cat !== 'spices' && c.cat !== 'oils', '제외 안 됨: ' + c.name)
+ok('식사를 기록하지 않았으면 섭취량 기반 요약을 띄우지 않음', () => {
+  const sum = sandbox.document.getElementById('key-summary')
+  assert.equal(sum.cls.has('hidden'), true, '설문만 했는데 기록 요약이 보임')
 })
 ok('차류 식품군 보정 — 녹차가 PRF 로 계산됨', () => {
   const ING = $('INGREDIENTS')
   assert.equal(ING['녹차잎'].cat, 'tea')
   assert.equal(ING['녹차잎'].prf, true)
   assert.ok($('INGREDIENT_CAT_FIXED') > 0, '보정된 식재료가 없음')
-  // 녹차를 더 마시면 PDI 가 올라가야 함 (보정 전에는 내려갔음)
-  const Q = $('SURVEY_QUESTIONS'), build = $('buildSurveyDiet'), calc = $('calculatePDI')
-  const pdiFor = i => {
-    const a = {}; Q.forEach(q => { a[q.id] = q.options[1][1] })
-    a.tea = Q.find(q => q.id === 'tea').options[i][1]
-    return calc(build(a)).pdiScore
-  }
-  assert.ok(pdiFor(2) > pdiFor(0), '녹차를 마셔도 PDI 가 오르지 않음')
-  console.log('    보정 식재료 ' + $('INGREDIENT_CAT_FIXED') + '개 · 녹차 안 마심 '
-    + pdiFor(0).toFixed(1) + '% → 2잔 이상 ' + pdiFor(2).toFixed(1) + '%')
+  // 녹차를 곁들이면 PDI 가 올라가야 함 (보정 전에는 내려갔음)
+  // 식생활문진표에는 차 문항이 없어 식단에 직접 넣어 확인한다
+  const analyze = $('analyzeFood'), custom = $('buildCustomAnalysis'), calc = $('calculatePDI')
+  // 기준 음식은 PRF 가 아닌 것으로 — 밥류는 식재료 DB 에서 전부 PRF 라 PDI 가 100% 로 포화됨
+  const rice = { name: '계란말이', meal: 'lunch', portion: 1, analysis: analyze('계란말이') }
+  const tea  = { name: '녹차 한 잔', meal: 'snack', portion: 1, analysis: custom('녹차 한 잔', { '녹차잎': 2 }) }
+  const before = calc([rice]).pdiScore, after = calc([rice, tea]).pdiScore
+  assert.ok(after > before, '녹차를 곁들여도 PDI 가 오르지 않음')
+  console.log('    보정 식재료 ' + $('INGREDIENT_CAT_FIXED') + '개 · 녹차 없음 '
+    + before.toFixed(1) + '% → 녹차 1잔 ' + after.toFixed(1) + '%')
 })
 
-ok('식사 기록 기반에서는 전체 지표가 보임', () => {
+ok('식사를 기록하면 기록 요약이 보임', () => {
   vm.runInContext(`
     addedMeals = [];
     addMeal('잡곡밥'); addMeal('된장찌개'); addMeal('제육볶음'); addMeal('배추김치'); addMeal('시금치나물');
     calculateAndShow();
   `, ctx)
   const ks = html('key-summary')
-  assert.ok(ks.includes('🍽 오늘 식사 기록 기반'), '기록 배지 없음')
-  for (const s of ['섭취 칼로리 / 기준 칼로리', '🌾 식이섬유', '🥗 PFS 식단 점수'])
+  assert.equal(sandbox.document.getElementById('key-summary').cls.has('hidden'), false, '기록했는데 요약이 숨겨짐')
+  for (const s of ['기록한 식사 요약', '먹은 칼로리 / 기준 칼로리', '단백질', '식이섬유'])
     assert.ok(ks.includes(s), '기록인데 누락: ' + s)
-  assert.ok(html('pfs-score-section').length > 500, 'PFS 섹션이 안 그려짐')
-  assert.ok(html('phyto-score-section').includes('DRV 달성률'), '파이토 DRV 달성률 없음')
-  vm.runInContext('renderIngredientBreakdown(pdiResult);', ctx)
-  const ib = html('ingredient-breakdown')
-  assert.ok(ib.includes('🍽 음식'), '기록인데 음식 열이 없음')
-  assert.ok(ib.includes('식재료 (식품군)'), '기록인데 식재료 열이 없음')
+  assert.ok(!ks.includes('PDI') && !ks.includes('PFS'), '요약에 내부 용어가 남아 있음')
+  assert.ok(!ks.includes('undefined') && !ks.includes('NaN'))
   // 설문 상태로 되돌림 (뒤 검사들이 설문 기준으로 이어짐)
   vm.runInContext('addedMeals = []; calculateAndShow();', ctx)
-  assert.ok(html('key-summary').includes('📝 설문 기반 예측치'))
+})
+
+console.log('\n── 받는 범위 (칼로리 가이드 / 30일 식단) ──')
+ok('기본값은 칼로리 가이드', () => {
+  assert.equal($('planMode')(), 'guide')
+  assert.equal($('tracker').planMode, 'guide')
+})
+ok('가이드 버전 — 끼니별 칼로리와 제품 배분까지만', () => {
+  vm.runInContext('renderMealPlan();', ctx)
+  const h = html('mealplan-section')
+  assert.ok(h.length > 1500, 'len=' + h.length)
+  for (const s of ['30일 체중 관리 가이드', '아침', '점심', '저녁', '일반식',
+                   '제품을 이렇게 나눠 드세요', '일반식은 이렇게'])
+    assert.ok(h.includes(s), '누락: ' + s)
+  // 메뉴는 짜지 않는다
+  for (const s of ['Day 1', '먹었어요', '안 먹음'])
+    assert.ok(!h.includes(s), '가이드인데 식단이 나옴: ' + s)
+  assert.ok(!h.includes('undefined') && !h.includes('NaN'))
+})
+ok('끼니 칼로리 합이 하루 목표와 맞음', () => {
+  const g = $('guidePlacement')()
+  const total = $('pdiResult').targets.targetKcal
+  const share = $('GUIDE_MEAL_SHARE')
+  // 제품이 저녁을 대신하면 남는 칼로리를 아침·점심에 나눠 주므로 합은 그대로다
+  const kcal = {}
+  for (const t of Object.keys(share)) kcal[t] = total * share[t]
+  if (g && g.replaceDays && g.replacedKcal) {
+    const freed = kcal[g.replaceType] - g.replacedKcal
+    kcal[g.replaceType] = g.replacedKcal
+    const rest = Object.keys(share).filter(t => t !== g.replaceType)
+    const sum = rest.reduce((a, t) => a + share[t], 0)
+    for (const t of rest) kcal[t] += freed * (share[t] / sum)
+  }
+  const sum = Object.values(kcal).reduce((a, b) => a + b, 0)
+  assert.ok(Math.abs(sum - total) < 1, '끼니 합 ' + Math.round(sum) + ' ≠ 목표 ' + total)
+  console.log('    ' + Object.entries(kcal).map(([t, v]) => t + ' ' + Math.round(v)).join(' · ') + ' = ' + total + ' kcal')
+})
+ok('제품을 어느 끼니에 넣을지 알려줌', () => {
+  const g = $('guidePlacement')()
+  assert.ok(g, '구독 구성이 있는데 배치가 비어 있음')
+  assert.ok(g.days > 0 && g.days <= 30, '설계 일수 ' + g.days)
+  assert.equal(g.replaceType, 'dinner', '대체 끼니가 저녁이 아님')
+  assert.ok(g.replacedItems.length >= 2, '대체 구성이 비어 있음')
+  const h = html('mealplan-section')
+  assert.ok(h.includes('밥스누 제품으로 대신'), '제품 대체 안내 없음')
+  assert.ok(h.includes('하루 ') && h.includes('회'), '하루 몇 회인지 안 나옴')
+  console.log('    저녁 대체 ' + g.replaceDays + '일 · ' + g.replacedItems.join(' + ') + ' ' + g.replacedKcal + ' kcal')
+})
+ok('제품이 없으면 칼로리 가이드만 보여줌', () => {
+  vm.runInContext('const __c = subCart; subCart = null; renderMealPlan(); subCart = __c;', ctx)
+  const h = html('mealplan-section')
+  assert.ok(h.includes('30일 체중 관리 가이드'), '가이드가 사라짐')
+  assert.ok(h.includes('제품을 담으시면'), '제품 안내가 없음')
+  assert.ok(!h.includes('undefined') && !h.includes('NaN'))
+  vm.runInContext('renderMealPlan();', ctx)
+})
+ok('index.html 에 받는 범위 선택이 있음', () => {
+  for (const id of ['planmode-guide', 'planmode-plan'])
+    assert.ok(htmlSrc.includes('id="' + id + '"'), '선택 버튼 없음: ' + id)
+  assert.ok(htmlSrc.includes("setPlanMode('plan')"), '전환 핸들러 없음')
+})
+
+// 여기서부터는 「30일 식단까지」 버전
+vm.runInContext("setPlanMode('plan');", ctx)
+ok('식단 버전으로 바꾸면 구독 패널에 식단 추천 버튼이 생김', () => {
+  assert.ok(html('product-recommendations').includes('requestMealPlan'), '식단 추천 버튼이 없음')
 })
 
 // 30일 식단 + 실천 기록 + 모니터링 (setTimeout 없이 직접 실행)
@@ -696,7 +802,7 @@ ok('없는 음식은 거부', () => {
 ok('모니터링 렌더 (체중 입력·목표 재조정)', () => {
   const h = html('monitor-section')
   assert.ok(h.length > 1500, 'len=' + h.length)
-  for (const s of ['체중 변화', '오늘 체중', '현재 체중', '누적 변화', '식단 실천율', '표준 체중까지'])
+  for (const s of ['체중 변화', '현재 체중', '누적 변화', '식단 실천율', '표준 체중까지'])
     assert.ok(h.includes(s), '누락: ' + s)
   assert.ok(!h.includes('undefined') && !h.includes('NaN'))
 })
@@ -713,6 +819,57 @@ ok('목표 재조정 적용 → 식단 재생성', () => {
 })
 
 
+console.log('\n── 7일 무료 샘플 · 구독 시작 (시연) ──')
+ok('구독 전에는 앞 7일만 열리고 나머지는 잠김', () => {
+  vm.runInContext('tracker.paid = false; planViewFrom = 1; renderMealPlan();', ctx)
+  assert.equal($('openPlanDays')(), 7)
+  const h = html('mealplan-section')
+  assert.ok(h.includes('7일 미리보기'), '미리보기 표시 없음')
+  const cards = [...h.matchAll(/font-black text-gray-900">Day (\d+)</g)].map(m => +m[1])
+  assert.deepEqual(cards, [1, 2, 3, 4, 5, 6, 7], '열린 날이 7일이 아님: ' + cards.join(','))
+  assert.ok(h.includes('구독 후에 열립니다'), '잠금 안내 없음')
+  assert.ok(h.includes("goPage('pay')"), '구독 시작 버튼 없음')
+  // 8일째로 넘기려 해도 열린 범위를 벗어나지 않는다
+  vm.runInContext('setPlanView(8);', ctx)
+  assert.equal($('planViewFrom'), 1)
+})
+ok('요금제 카드 3장 — 배지와 체크리스트', () => {
+  vm.runInContext("goPage('pay');", ctx)
+  const h = html('pay-section')
+  assert.ok(h.length > 1500, 'len=' + h.length)
+  assert.equal((h.match(/월<\/span>/g) || []).length, 3, '카드가 3장이 아님')
+  for (const t of ['가장 많이 고르는 구성', '최적 구독', '최소 권장', '지금 담은 구성',
+                   '30일 체중 관리 가이드', '식단 전체 공개', 'startDemoSubscription'])
+    assert.ok(h.includes(t), '누락: ' + t)
+  assert.ok(!h.includes('undefined') && !h.includes('NaN'))
+})
+ok('시연용이므로 결제 정보를 받는 입력칸이 없음', () => {
+  const h = html('pay-section') + htmlSrc.slice(htmlSrc.indexOf('id="page-pay"'), htmlSrc.indexOf('id="page-log"'))
+  for (const t of ['카드번호', 'card', 'cvc', 'password', 'type="tel"'])
+    assert.ok(!h.toLowerCase().includes(t.toLowerCase()), '결제 정보 입력칸: ' + t)
+  assert.ok(htmlSrc.includes('실제 결제는 되지 않습니다'), '시연 안내가 없음')
+})
+ok('구독을 시작하면 30일 전체가 열림', () => {
+  vm.runInContext('startDemoSubscription();', ctx)
+  assert.equal($('tracker').paid, true)
+  assert.equal($('openPlanDays')(), 30)
+  assert.ok(html('pay-section').includes('구독이 시작되었습니다'), '구독 중 안내 없음')
+  vm.runInContext('setPlanView(8); renderMealPlan();', ctx)
+  const h = html('mealplan-section')
+  assert.ok(h.includes('font-black text-gray-900">Day 8<'), '구독 후에도 Day 8 이 안 열림')
+  assert.ok(!h.includes('구독 후에 열립니다'), '잠금 안내가 남아 있음')
+  // 시연 상태를 되돌려 다음 검사는 미구독 화면으로 본다
+  vm.runInContext('stopDemoSubscription(); planViewFrom = 1; renderMealPlan();', ctx)
+  assert.equal($('tracker').paid, false)
+})
+ok('기록을 쌓으면 선호 음식으로 식단을 짠다는 안내', () => {
+  vm.runInContext('renderDiary();', ctx)
+  const h = html('diary-section')
+  assert.ok(h.includes('자주 드시는 음식으로 식단을 짜 드릴 수 있어요'), '선호도 안내 없음')
+  assert.ok(/지금까지 <b[^>]*>\d+일<\/b> 기록/.test(h), '기록 일수가 안 나옴')
+})
+
+
 // ══════════════════════════════════════════════
 // 화면 조작 점검 — 버튼·입력에 연결된 함수를 전부 실제로 호출해 본다
 // (브라우저에서 클릭했을 때 터지는 오류를 대신 잡는 용도)
@@ -726,43 +883,14 @@ ok('뷰포트·가로 넘침 방지가 설정됨', () => {
   assert.ok(/input, select, textarea \{ font-size: 16px/.test(mobHtml), 'iOS 입력 확대 방지 없음')
 })
 ok('다단 그리드에 모바일 분기가 있음', () => {
-  // 반응형 접두사 없는 3열 이상 그리드는 폰에서 읽을 수 없다
+  // 반응형 접두사 없는 3열 이상 그리드는 폰에서 읽을 수 없다 (달력의 7열은 예외 — 요일은 항상 7개)
   const srcs = ['public/index.html', 'public/static/app.js', 'public/static/tracker.js'].map(read).join('\n')
-  const bad = [...srcs.matchAll(/(?<![a-z]:)grid-cols-([3-9]|1[0-9])\b/g)]
+  const bad = [...srcs.matchAll(/(?<![a-z]:)grid-cols-([3-689]|1[0-9])\b/g)]
     .filter(m => {
       const before = srcs.slice(Math.max(0, m.index - 24), m.index)
       return !/(sm|md|lg|xl):$/.test(before)
     })
   assert.equal(bad.length, 0, '모바일 분기 없는 다단 그리드 ' + bad.length + '개: ' + bad.map(m => m[0]).join(', '))
-})
-ok('결과 탭이 좁은 화면에서 3등분으로 들어감', () => {
-  // min-w-36(144px) x3 = 432px 로는 360px 폰에서 줄바꿈됨 → min-w-0 + 반응형 패딩
-  const tabs = mobHtml.slice(mobHtml.indexOf('role="tablist"'), mobHtml.indexOf('id="rtab-analysis"'))
-  assert.ok(tabs.includes('min-w-0'), '탭에 min-w-0 이 없음')
-  assert.ok(!tabs.includes('min-w-36'), '탭에 고정 최소폭이 남아 있음')
-  assert.ok(tabs.includes('text-xs sm:text-sm'), '탭 글자 크기에 모바일 분기 없음')
-})
-ok('상세 분석은 좁은 화면에서 목록, 넓은 화면에서 다이어그램', () => {
-  assert.ok(mobHtml.includes('id="flow-list"') && mobHtml.includes('md:hidden'), '모바일 목록 컨테이너 없음')
-  const diag = mobHtml.slice(mobHtml.indexOf('id="flow-list"'))
-  assert.ok(/hidden md:block[^>]*overflow-x-auto/.test(diag), '다이어그램이 데스크톱 전용으로 감싸져 있지 않음')
-
-  // 좁은 화면으로 바꾸면 목록이 그려지고 다이어그램은 비워진다
-  sandbox.window = { matchMedia: () => ({ matches: false }), addEventListener: noop }
-  vm.runInContext('renderIngredientBreakdown(pdiResult);', ctx)
-  const list = html('flow-list')
-  assert.ok(list.length > 500, '모바일 목록 len=' + list.length)
-  assert.equal(html('ingredient-breakdown'), '', '좁은 화면인데 다이어그램이 그려짐')
-  for (const s of ['설문 문항', '식품군', '파이토케미컬'])
-    assert.ok(list.includes(s), '목록 누락: ' + s)
-  assert.ok(!list.includes('undefined') && !list.includes('NaN'))
-
-  // 넓은 화면이면 다이어그램도 그린다
-  sandbox.window = { matchMedia: () => ({ matches: true }), addEventListener: noop }
-  vm.runInContext('renderIngredientBreakdown(pdiResult);', ctx)
-  assert.ok(html('ingredient-breakdown').length > 1000, '넓은 화면인데 다이어그램이 없음')
-  assert.ok(html('flow-list').length > 500, '넓은 화면에서도 목록은 유지되어야 함(CSS 로 숨김)')
-  console.log('    모바일 목록 ' + html('flow-list').length + '자 · 데스크톱 다이어그램 ' + html('ingredient-breakdown').length + '자')
 })
 ok('터치 영역이 확보됨 (수량 ± · 끼니 상태 버튼)', () => {
   const app = read('public/static/app.js'), trk = read('public/static/tracker.js')
@@ -772,51 +900,140 @@ ok('터치 영역이 확보됨 (수량 ± · 끼니 상태 버튼)', () => {
 })
 
 
-console.log('\n── 결과 화면 탭 ──')
-const panelOf = id => sandbox.document.getElementById('rtab-' + id)
-const hiddenOf = id => { const e = panelOf(id); return e && e.cls ? e.cls.has('hidden') : null }
-ok('index.html 에 탭 3개와 패널 3개가 있음', () => {
-  for (const t of ['analysis', 'plan', 'track']) {
-    assert.ok(tabHtml.includes('id="rtab-' + t + '"'), '패널 없음: ' + t)
-    assert.ok(tabHtml.includes('id="rtab-btn-' + t + '"'), '버튼 없음: ' + t)
-  }
-  assert.ok(tabHtml.includes("setResultTab('track')"), '탭 전환 핸들러 없음')
+console.log('\n── 날짜별 기록 (달력) ──')
+// 식단이 없어도 날짜별 기록은 되어야 한다
+vm.runInContext("tracker.plan = null; tracker.diary = {}; diaryDate = '2026-10-10'; diaryMonth = '2026-10'; renderDiary();", ctx)
+ok('달력이 그려지고 오늘이 아닌 날짜도 고를 수 있음', () => {
+  const h = html('diary-section')
+  assert.ok(h.length > 1500, 'len=' + h.length)
+  for (const s of ['날짜별 기록', '2026년 10월', '일', '토', '10월 10일'])
+    assert.ok(h.includes(s), '누락: ' + s)
+  // 10월은 31일까지 — 날짜 버튼이 31개
+  const days = [...h.matchAll(/setDiaryDate\('2026-10-\d\d'\)/g)]
+  assert.equal(days.length, 31, '날짜 버튼 ' + days.length + '개')
+  assert.ok(h.includes('식단을 받지') === false)
+  assert.ok(!h.includes('undefined') && !h.includes('NaN'))
 })
-ok('섹션이 의도한 탭에 들어가 있음', () => {
-  const cut = (a, bEnd) => tabHtml.slice(tabHtml.indexOf(a), tabHtml.indexOf(bEnd))
-  const analysis = cut('id="rtab-analysis"', 'id="rtab-plan"')
-  const plan     = cut('id="rtab-plan"', 'id="rtab-track"')
-  const track    = tabHtml.slice(tabHtml.indexOf('id="rtab-track"'))
-  for (const id of ['key-summary', 'pdi-ring', 'guide-section', 'pfs-score-section', 'phyto-score-section', 'detail-analysis'])
-    assert.ok(analysis.includes('id="' + id + '"'), '나의 분석 탭에 없음: ' + id)
+ok('식단이 없어도 음식·체중을 날짜별로 기록', () => {
+  vm.runInContext(`
+    diaryAdd('잡곡밥'); diaryAdd('된장찌개'); diaryAdd('시금치나물');
+    setDiaryDate('2026-10-11'); diaryAdd('라면');
+  `, ctx)
+  const t = $('tracker')
+  assert.equal(t.diary['2026-10-10'].length, 3, '10일 기록 수')
+  assert.equal(t.diary['2026-10-11'].length, 1, '11일 기록 수')
+  assert.equal(t.diary['2026-10-11'][0].name, '라면')
+  // 저장은 이름·끼니·양만 (영양은 그릴 때 계산)
+  assert.deepEqual(Object.keys(t.diary['2026-10-11'][0]).sort(), ['meal', 'name', 'portion'])
+})
+ok('끼니·양 선택이 다시 그려도 유지됨', () => {
+  vm.runInContext("setDiaryDate('2026-10-11'); diaryMeal = 'breakfast'; diaryPortion = 1;", ctx)
+  const sel = $('document').getElementById('diary-meal'), por = $('document').getElementById('diary-portion')
+  sel.value = 'dinner'; por.value = '2'
+  vm.runInContext("diaryAdd('고등어구이');", ctx)
+  assert.equal($('diaryMeal'), 'dinner')
+  assert.equal($('diaryPortion'), 2)
+  const h = html('diary-section')
+  assert.ok(h.includes('value="dinner" selected'), '끼니 선택이 초기화됨')
+  assert.ok(h.includes('value="2" selected'), '양 선택이 초기화됨')
+  vm.runInContext("diaryRemove(1);", ctx)
+})
+ok('없는 음식은 거부하고 안내', () => {
+  vm.runInContext("diaryAdd('존재하지않는음식xyz');", ctx)
+  assert.equal($('tracker').diary['2026-10-11'].length, 1, '없는 음식이 들어감')
+  assert.ok(sandbox.document.getElementById('diary-error').textContent.includes('찾을 수 없습니다'))
+})
+ok('기준 대비 바가 미달·적정·초과를 표시', () => {
+  vm.runInContext("setDiaryDate('2026-10-10');", ctx)
+  const h = html('diary-section')
+  for (const s of ['기준 대비', '칼로리', '탄수화물', '단백질', '지방', '식이섬유', '나트륨', '적정'])
+    assert.ok(h.includes(s), '누락: ' + s)
+  // 밥·국·나물만 먹었으니 칼로리는 목표에 못 미친다
+  assert.ok(h.includes('미달'), '미달 표시가 없음')
+  assert.ok(h.includes('이 날 부족했던 것'), '부족 항목 안내가 없음')
+  assert.ok(h.includes('섭취 부족'), '부족 항목이 비어 있음')
+  assert.ok(!h.includes('undefined') && !h.includes('NaN'))
+})
+ok('기록을 지우면 그 날짜가 사라짐', () => {
+  vm.runInContext("setDiaryDate('2026-10-11'); diaryRemove(0);", ctx)
+  assert.equal($('tracker').diary['2026-10-11'], undefined, '빈 날짜가 남아 있음')
+})
+ok('체중은 날짜별로 기록되고 달력에 표시됨', () => {
+  const el = $('document').getElementById('diary-weight')
+  el.value = '999'
+  vm.runInContext("setDiaryDate('2026-10-10'); submitDiaryWeight();", ctx)
+  assert.ok($('document').getElementById('diary-weight-error').textContent.includes('10–300'), '범위 안내 없음')
+  el.value = '67.2'
+  vm.runInContext('submitDiaryWeight();', ctx)
+  assert.equal(($('tracker').weights.find(w => w.date === '2026-10-10') || {}).kg, 67.2)
+  assert.equal($('weightOf')('2026-10-10'), 67.2)
+})
+ok('달 이동이 동작', () => {
+  vm.runInContext('shiftDiaryMonth(-1);', ctx)
+  assert.equal($('diaryMonth'), '2026-09')
+  assert.ok(html('diary-section').includes('2026년 9월'))
+  vm.runInContext('shiftDiaryMonth(2);', ctx)
+  assert.equal($('diaryMonth'), '2026-11')
+  vm.runInContext("setDiaryDate('2026-10-10');", ctx)
+})
+
+
+console.log('\n── 페이지 이동 ──')
+const pageOf = id => sandbox.document.getElementById('page-' + id)
+const hiddenOf = id => { const e = pageOf(id); return e && e.cls ? e.cls.has('hidden') : null }
+ok('index.html 에 페이지 6개가 있고 상단·하단 고정이 없음', () => {
+  for (const p of ['home', 'intake', 'result', 'plan', 'log', 'pay'])
+    assert.ok(htmlSrc.includes('id="page-' + p + '"'), '페이지 없음: ' + p)
+  assert.ok(!/class="[^"]*sticky/.test(htmlSrc), '고정 영역(sticky)이 남아 있음')
+  assert.ok(!htmlSrc.includes('role="tablist"'), '탭이 남아 있음')
+})
+ok('섹션이 의도한 페이지에 들어가 있음', () => {
+  const cutPage = (a, b) => htmlSrc.slice(htmlSrc.indexOf('id="page-' + a + '"'),
+    b ? htmlSrc.indexOf('id="page-' + b + '"') : undefined)
+  const result = cutPage('result', 'plan'), plan = cutPage('plan', 'log'), log = cutPage('log')
+  // 본문 순서: 목표치 → 관리 팁 → 주의사항
+  for (const id of ['target-section', 'tips-section', 'guide-section', 'side-pick'])
+    assert.ok(result.includes('id="' + id + '"'), '나의 분석 페이지에 없음: ' + id)
+  assert.ok(result.indexOf('target-section') < result.indexOf('tips-section')
+    && result.indexOf('tips-section') < result.indexOf('guide-section'), '결과 순서가 다름')
+  assert.ok(result.includes("goPage('plan')"), '사이드에 제품 추천 받기 버튼이 없음')
   for (const id of ['product-recommendations', 'mealplan-section'])
-    assert.ok(plan.includes('id="' + id + '"'), '제품·식단 탭에 없음: ' + id)
-  assert.ok(track.includes('id="monitor-section"'), '체중 변화 탭에 monitor-section 없음')
-  assert.ok(tabHtml.indexOf('id="rtab-track"') > tabHtml.indexOf('id="rtab-plan"'), '체중 변화가 마지막 탭이 아님')
+    assert.ok(plan.includes('id="' + id + '"'), '제품·식단 페이지에 없음: ' + id)
+  assert.ok(log.includes('id="monitor-section"'), '기록 페이지에 monitor-section 없음')
+  assert.ok(log.includes('id="diary-section"'), '기록 페이지에 달력이 없음')
+  assert.ok(log.indexOf('diary-section') < log.indexOf('monitor-section'), '달력이 체중 그래프보다 아래')
 })
-ok('탭 전환이 패널 표시를 바꿈', () => {
-  vm.runInContext("setResultTab('plan')", ctx)
-  assert.equal(hiddenOf('plan'), false, '제품·식단 탭이 숨겨짐')
-  assert.equal(hiddenOf('analysis'), true, '나의 분석 탭이 안 숨겨짐')
-  assert.equal(hiddenOf('track'), true)
-  vm.runInContext("setResultTab('track')", ctx)
-  assert.equal(hiddenOf('track'), false)
+ok('페이지 이동이 표시를 바꿈', () => {
+  vm.runInContext("goPage('plan')", ctx)
+  assert.equal(hiddenOf('plan'), false, '제품·식단 페이지가 숨겨짐')
+  assert.equal(hiddenOf('result'), true, '나의 분석 페이지가 안 숨겨짐')
+  assert.equal(hiddenOf('home'), true)
+  vm.runInContext("goPage('log')", ctx)
+  assert.equal(hiddenOf('log'), false)
   assert.equal(hiddenOf('plan'), true)
-  vm.runInContext("setResultTab('analysis')", ctx)
-  assert.equal(hiddenOf('analysis'), false)
-  vm.runInContext("setResultTab('없는탭')", ctx)
-  assert.equal(hiddenOf('analysis'), false, '잘못된 탭 이름에 반응함')
+  vm.runInContext("goPage('result')", ctx)
+  assert.equal(hiddenOf('result'), false)
+  vm.runInContext("goPage('없는페이지')", ctx)
+  assert.equal(hiddenOf('home'), false, '잘못된 페이지 이름은 서비스 소개로')
 })
-ok('식단 추천받기를 누르면 제품·식단 탭으로 이동', () => {
+ok('진단 전에는 결과·제품·기록 페이지가 열리지 않음', () => {
+  vm.runInContext('__keepResult = pdiResult; pdiResult = null;', ctx)
+  for (const p of ['result', 'plan', 'log']) {
+    vm.runInContext("goPage('" + p + "')", ctx)
+    assert.equal(hiddenOf('intake'), false, p + ' 로 갔는데 입력 페이지가 안 열림')
+    assert.equal(hiddenOf(p), true, '진단 전인데 ' + p + ' 가 열림')
+  }
+  vm.runInContext('pdiResult = __keepResult;', ctx)
+})
+ok('식단 추천받기를 누르면 제품·식단 페이지로 이동', () => {
   // 실천 기록이 있으면 확인 창이 뜨는데 테스트의 confirm 은 false 를 반환하므로 먼저 비운다
-  vm.runInContext("tracker.log = {}; setResultTab('analysis'); requestMealPlan();", ctx)
-  assert.equal($('resultTab'), 'plan')
+  vm.runInContext("tracker.log = {}; goPage('result'); requestMealPlan();", ctx)
+  assert.equal($('currentPage'), 'plan')
   assert.equal(hiddenOf('plan'), false)
 })
 
 
 console.log('\n── 화면 조작 ──')
-const htmlSrc = read('public/index.html')
 const inlineHandlers = [...new Set([...htmlSrc.matchAll(/on\w+="(\w+)\(/g)].map(m => m[1]))]
 ok('index.html 의 버튼 핸들러가 모두 정의되어 있음', () => {
   for (const h of inlineHandlers) {
@@ -827,7 +1044,8 @@ ok('index.html 의 버튼 핸들러가 모두 정의되어 있음', () => {
 
 // 동적으로 만들어지는 버튼의 핸들러 (렌더된 HTML 의 onclick 에서 추출)
 const renderedHtml = ['product-recommendations', 'mealplan-section', 'monitor-section', 'guide-section',
-  'key-summary', 'pfs-score-section', 'phyto-score-section', 'product-grid', 'health-goals-grid']
+  'key-summary', 'target-section', 'tips-section', 'side-pick', 'product-grid', 'health-goals-grid',
+  'diary-section', 'pay-section']
   .map(id => html(id)).join('')
 const JS_KEYWORDS = new Set(['if', 'for', 'while', 'return', 'typeof', 'new', 'delete', 'void'])
 const dynHandlers = [...new Set([...renderedHtml.matchAll(/onclick="(\w+)\(/g)].map(m => m[1]))]
@@ -865,15 +1083,10 @@ ok('30일 식단 넘기기·실천 기록 버튼이 오류 없이 동작', () =>
   assert.ok(html('mealplan-section').includes('Day 1'))
 })
 
-ok('체중 기록 범위 검증이 동작', () => {
-  const el = $('document').getElementById('weight-input')
-  const de = $('document').getElementById('weight-date')
-  el.value = '999'; de.value = '2026-10-20'
-  vm.runInContext('submitWeight()', ctx)
-  assert.ok($("document").getElementById('weight-error').textContent.includes('10–300'), '범위 오류 안내 없음')
-  el.value = '66.0'
-  vm.runInContext('submitWeight()', ctx)
-  assert.equal($('tracker').weights[$('tracker').weights.length - 1].kg, 66)
+ok('체중 입력칸은 달력 한 곳에만 있음', () => {
+  const trk = read('public/static/tracker.js')
+  assert.ok(!trk.includes('id="weight-input"'), '모니터링에 중복 체중 입력칸이 남아 있음')
+  assert.ok(trk.includes('id="diary-weight"'), '달력에 체중 입력칸이 없음')
 })
 
 ok('목표 재조정·식단 재생성·초기화가 오류 없이 동작', () => {
