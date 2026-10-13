@@ -299,10 +299,23 @@ function guidePlacement() {
   for (const byType of Object.values(place.extras)) for (const [t, bag] of Object.entries(byType)) add(t, bag);
   for (const bag of Object.values(place.snacks)) add('snack', bag);
 
+  // 제품 하나하나가 어느 끼니에 들어가는지 (카드에 끼니 이름을 붙이는 데 쓴다)
+  const soymilkName = (cart.soymilk || []).length ? CATALOG_BY_CODE[cart.soymilk[0]].name : null;
+  const kindOf = (name) => name === soymilkName ? 'soymilk'
+    : (name === PHYTO_NAME ? 'phyto' : (name === BAR_NAME ? 'bar' : null));
+  const where = { soymilk: [], phyto: [], bar: [] };
+  const mark = (kind, label) => { if (kind && !where[kind].includes(label)) where[kind].push(label); };
+  const mealLabel = (t) => (MEAL_TYPES.find(x => x.id === t) || { name: '간식' }).name;
+  for (const byType of [...Object.values(place.meals), ...Object.values(place.extras)])
+    for (const [t, bag] of Object.entries(byType))
+      for (const it of bag.items) mark(kindOf(it.name), mealLabel(t));
+  for (const bag of Object.values(place.snacks))
+    for (const it of bag.items) mark(kindOf(it.name), '간식');
+
   const firstMeal = Object.values(place.meals)[0];
   const replaced = firstMeal ? firstMeal[place.coverage.replaceType] : null;
   return {
-    days, counts, extra,
+    days, counts, extra, where,
     cov: place.coverage,
     leftover: place.leftover,
     replaceType: place.coverage.replaceType,
@@ -310,6 +323,45 @@ function guidePlacement() {
     replacedItems: replaced ? replaced.items.map(i => i.name) : [],
     replacedKcal: replaced ? Math.round(replaced.kcal) : 0,
   };
+}
+
+// 제품 카드 — 담은 제품만 보여준다
+const PRODUCT_VIEW = [
+  { key: 'soymilk', icon: '🥛', name: '두유' },
+  { key: 'phyto',   icon: '💊', name: '파이토100' },
+  { key: 'bar',     icon: '🍫', name: '약콩 프로틴바' },
+];
+
+function productChip(text) {
+  return '<span class="text-xs font-bold px-3 py-1 rounded-full" '
+    + 'style="background:var(--tint);color:var(--deep)">' + text + '</span>';
+}
+
+// 「무엇을 · 하루 몇 번 · 어느 끼니에」 를 카드 한 장에 담는다
+function productGuideHtml(g) {
+  if (!g) return '<div class="bg-gray-50 rounded-2xl p-4 text-sm text-gray-500">'
+    + '위에서 제품을 담으시면 어느 끼니에 나눠 드실지 알려드립니다</div>';
+  const left = g.leftover.soymilk + g.leftover.phyto + g.leftover.bar;
+  const cards = PRODUCT_VIEW.filter(p => g.cov.stock[p.key] > 0).map(p => {
+    const n = g.cov.stock[p.key];
+    const slots = g.where[p.key] || [];
+    return '<div class="rounded-2xl p-4 text-center" style="border:1px solid var(--line)">'
+      + '<div class="text-4xl leading-none mb-2">' + p.icon + '</div>'
+      + '<div class="text-sm font-bold text-gray-900">' + p.name + '</div>'
+      + '<div class="text-xl font-black text-emerald-800 mt-1">' + timesPhrase(n, g.days) + '</div>'
+      + '<div class="text-xs text-gray-400 mb-3">한 달 ' + n + '회분</div>'
+      + '<div class="flex flex-wrap justify-center gap-1">'
+      + (slots.length ? slots.map(productChip).join('')
+                      : '<span class="text-xs text-gray-400">원하는 때에</span>')
+      + '</div></div>';
+  }).join('');
+  return '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">' + cards + '</div>'
+    + '<p class="text-xs text-gray-500 mt-3">'
+    + '구독한 제품으로 <b class="text-gray-800">' + g.days + '일</b>을 채울 수 있습니다'
+    + (g.days < 30 ? ' · 30일을 채우려면 제품을 더 담아주세요' : '')
+    + (left ? ' · 남는 ' + left + '회분은 원하는 날 드세요' : '')
+    + (g.counts.addon ? ' · 추가 구성품은 하루 1회' : '')
+    + '</p>';
 }
 
 function guidePlanHtml() {
@@ -329,6 +381,10 @@ function guidePlanHtml() {
     const sum = rest.reduce((s, t) => s + share[t], 0);
     for (const t of rest) kcal[t] += freed * (share[t] / sum);
   }
+  // 막대 길이는 가장 큰 끼니를 기준으로 (칼로리 차이를 눈으로 보게)
+  const maxKcal = Math.max(...Object.values(kcal), g && g.extra.snack ? g.extra.snack.kcal : 0);
+  const bar = (v) => '<div class="h-2 rounded-full bg-gray-100 overflow-hidden mb-2">'
+    + '<div class="h-full rounded-full" style="width:' + Math.round(v / maxKcal * 100) + '%;background:var(--deep)"></div></div>';
 
   const row = (mt) => {
     const isReplaced = g && g.replaceDays && g.replaceType === mt.id;
@@ -341,16 +397,16 @@ function guidePlanHtml() {
       + '<div class="min-w-0 flex-1">'
       + '<div class="text-lg font-bold text-gray-900 mb-1">' + Math.round(kcal[mt.id]).toLocaleString()
       + '<span class="text-sm font-medium text-gray-400"> kcal</span></div>'
+      + bar(kcal[mt.id])
       + (isReplaced
-          ? '<div class="text-sm text-emerald-800 font-bold">밥스누 제품으로 대신</div>'
-            + '<div class="text-xs text-gray-500 mt-0.5">' + g.replacedItems.join(' + ') + '</div>'
+          ? '<div class="text-sm text-emerald-800 font-bold mb-1.5">밥스누 제품으로 대신</div>'
+            + '<div class="flex flex-wrap gap-1.5">' + g.replacedItems.map(productChip).join('') + '</div>'
             + (g.replaceDays < g.days
-                ? '<div class="text-xs text-gray-400 mt-1">' + g.days + '일 중 ' + g.replaceDays + '일 · 나머지 날은 일반식 '
+                ? '<div class="text-xs text-gray-400 mt-1.5">' + g.days + '일 중 ' + g.replaceDays + '일 · 나머지 날은 일반식 '
                   + Math.round(total * GUIDE_MEAL_SHARE[mt.id]).toLocaleString() + ' kcal</div>' : '')
           : '<div class="text-sm text-gray-800"><b>일반식</b> ' + plain.toLocaleString() + ' kcal</div>'
-            + '<div class="text-xs text-gray-500 mt-0.5">' + plainMealHint(plain) + '</div>')
-      + (ex && !isReplaced
-          ? '<div class="text-xs text-emerald-800 mt-1.5">+ ' + ex.names.join(' · ') + ' ' + ex.kcal + ' kcal</div>' : '')
+            + '<div class="text-xs text-gray-500 mt-0.5">' + plainMealHint(plain) + '</div>'
+            + (ex ? '<div class="flex flex-wrap gap-1.5 mt-1.5">' + ex.names.map(productChip).join('') + '</div>' : ''))
       + '</div></div>';
   };
 
@@ -360,49 +416,21 @@ function guidePlanHtml() {
       + '<div class="text-xs font-bold text-gray-500 mt-1">간식</div></div>'
       + '<div class="min-w-0 flex-1"><div class="text-lg font-bold text-gray-900 mb-1">' + g.extra.snack.kcal
       + '<span class="text-sm font-medium text-gray-400"> kcal</span></div>'
-      + '<div class="text-xs text-emerald-800">' + g.extra.snack.names.join(' · ') + '</div></div></div>'
+      + bar(g.extra.snack.kcal)
+      + '<div class="flex flex-wrap gap-1.5">' + g.extra.snack.names.map(productChip).join('') + '</div></div></div>'
     : '';
-
-  // ── 제품을 어떻게 나눠 먹는지 ──
-  let productHtml;
-  if (!g) {
-    productHtml = '<div class="bg-gray-50 rounded-2xl p-4 text-sm text-gray-500">'
-      + '위에서 제품을 담으시면 어느 끼니에 나눠 드실지 알려드립니다</div>';
-  } else {
-    const stock = g.cov.stock;
-    const line = (icon, name, n) => n > 0
-      ? '<div class="flex items-center justify-between gap-2 py-2 border-b border-gray-100 last:border-0">'
-        + '<span class="text-sm text-gray-700">' + icon + ' ' + name + '</span>'
-        + '<span class="text-sm"><b class="text-gray-900">' + n + '회</b>'
-        + '<span class="text-gray-400"> · ' + timesPhrase(n, g.days) + '</span></span></div>'
-      : '';
-    const left = g.leftover.soymilk + g.leftover.phyto + g.leftover.bar;
-    productHtml =
-      '<div class="rounded-2xl border border-gray-100 p-4 mb-3">'
-      + line('🥛', '두유', stock.soymilk)
-      + line('💊', '밥스누 파이토100', stock.phyto)
-      + line('🍫', '약콩 프로틴바', stock.bar)
-      + '</div>'
-      + '<p class="text-xs text-gray-500">'
-      + (g.cov.plainDays === 0
-          ? '구독한 제품이 <b class="text-gray-800">' + g.days + '일</b> 내내 하루 1회 이상 들어갑니다'
-          : '구독한 제품으로 <b class="text-gray-800">' + g.days + '일</b>을 채울 수 있습니다')
-      + (g.days < 30 ? ' · 30일을 채우려면 제품을 더 담아주세요' : '')
-      + (left ? ' · 남는 제품 ' + left + '회분은 원하는 날 드세요' : '')
-      + (g.counts.addon ? ' · 추가 구성품은 하루 1회' : '')
-      + '</p>';
-  }
 
   return '<h3 class="text-xl font-bold text-gray-900 mb-1">30일 체중 관리 가이드</h3>'
     + '<p class="text-gray-500 text-sm mb-5">하루 <b class="text-gray-800">' + total.toLocaleString() + ' kcal</b> 기준입니다</p>'
 
+    + '<div class="text-sm font-bold text-gray-800 mb-2">끼니마다 이만큼</div>'
     + '<div class="rounded-2xl border border-gray-100 px-4 sm:px-5 mb-6">'
     + MEAL_TYPES.map(row).join('')
     + snack
     + '</div>'
 
     + '<div class="text-sm font-bold text-gray-800 mb-2">제품을 이렇게 나눠 드세요</div>'
-    + productHtml
+    + productGuideHtml(g)
 
     + '<div class="text-sm font-bold text-gray-800 mt-6 mb-2">일반식은 이렇게</div>'
     + '<ul class="space-y-1.5 text-sm text-gray-600">'
@@ -410,13 +438,7 @@ function guidePlanHtml() {
        '흰쌀밥 대신 잡곡밥·현미밥으로 바꾸면 포만감이 오래갑니다',
        '튀김·가공식품과 단 음료는 주 2회 안으로 줄여보세요']
       .map(t => '<li class="flex gap-2"><span class="text-emerald-600">·</span><span>' + t + '</span></li>').join('')
-    + '</ul>'
-
-    + '<div class="mt-6 rounded-2xl bg-gray-50 p-4">'
-    + '<div class="text-sm font-bold text-gray-800 mb-1">메뉴까지 짜 드릴까요?</div>'
-    + '<div class="text-xs text-gray-500 mb-3">위 「30일 식단까지」를 고르시면 끼니마다 먹을 메뉴를 추천해 드립니다</div>'
-    + '<button type="button" onclick="setPlanMode(\'plan\')" class="px-5 py-2.5 bg-emerald-700 text-white text-sm font-bold">30일 식단까지 받기</button>'
-    + '</div>';
+    + '</ul>';
 }
 
 // ══════════════════════════════════════════════
@@ -465,7 +487,6 @@ function payCards() {
 
 function payCardHtml(c, mineKey) {
   const q = subscriptionQuote(c.cart);
-  const days = subscriptionDays(c.cart, 30);
   const on = JSON.stringify(c.cart) === mineKey;
   const check = t => '<li class="flex gap-2 text-xs text-gray-600"><span class="text-emerald-600 font-bold">✓</span><span>' + t + '</span></li>';
   return '<div class="rounded-3xl border-2 p-5 flex flex-col" style="border-color:' + (on ? 'var(--deep)' : 'var(--line)')
@@ -482,7 +503,7 @@ function payCardHtml(c, mineKey) {
         + ' <b class="text-emerald-700">' + q.rate + '% 할인</b>' : '<span class="text-gray-400">할인 없음</span>') + '</div>'
     + '<ul class="space-y-1.5 mb-5">'
     + check('30일 체중 관리 가이드')
-    + check(days + '일 식단 전체 공개')
+    + check('제품을 어느 끼니에 드실지 안내')
     + check('날마다 먹은 것 · 체중 기록')
     + check('제품 ' + Math.round(q.counts.soymilk + q.counts.phyto + q.counts.bar) + '팩 한 달 배송')
     + '</ul>'
@@ -502,9 +523,9 @@ function renderPay() {
   if (isPaid()) {
     el.innerHTML = '<div class="rounded-3xl border-2 p-6 text-center" style="border-color:var(--deep);background:var(--tint)">'
       + '<div class="text-lg font-bold text-emerald-900 mb-1">구독이 시작되었습니다</div>'
-      + '<div class="text-sm text-gray-600 mb-5">30일 식단 전체가 열렸습니다. 날마다 먹은 것을 기록해 보세요</div>'
+      + '<div class="text-sm text-gray-600 mb-5">날마다 먹은 것과 체중을 기록해 보세요</div>'
       + '<div class="flex flex-wrap gap-2 justify-center">'
-      + '<button type="button" onclick="goPage(\'plan\')" class="px-5 py-3 bg-emerald-700 text-white text-sm font-bold">30일 식단 보기</button>'
+      + '<button type="button" onclick="goPage(\'plan\')" class="px-5 py-3 bg-emerald-700 text-white text-sm font-bold">가이드 보기</button>'
       + '<button type="button" onclick="goPage(\'log\')" class="px-5 py-3 border-2 border-emerald-700 text-emerald-700 text-sm font-bold">기록 페이지로</button>'
       + '<button type="button" onclick="stopDemoSubscription()" class="px-5 py-3 border border-gray-200 text-gray-500 text-sm">시연 상태 되돌리기</button>'
       + '</div></div>';
@@ -517,8 +538,8 @@ function renderPay() {
     + '<div class="rounded-2xl bg-white border p-5" style="border-color:var(--line)">'
     + '<div class="text-sm font-bold text-gray-800 mb-2">구독하시면 이렇게 달라집니다</div>'
     + '<ul class="space-y-1.5 text-sm text-gray-600">'
-    + ['지금은 30일 식단 중 앞 ' + SAMPLE_DAYS + '일만 보실 수 있습니다',
-       '구독을 시작하시면 남은 날의 식단이 모두 열립니다',
+    + ['고른 구성에 맞춰 끼니별 칼로리와 제품 배분을 알려드립니다',
+       '날마다 먹은 것과 체중을 기록하면 목표 칼로리를 다시 맞춰 드립니다',
        '제품은 한 달에 한 번 배송되고, 언제든 수량을 바꾸실 수 있습니다']
       .map(t => '<li class="flex gap-2"><span class="text-emerald-600">·</span><span>' + t + '</span></li>').join('')
     + '</ul></div>';

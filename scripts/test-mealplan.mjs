@@ -740,10 +740,38 @@ ok('제품이 없으면 칼로리 가이드만 보여줌', () => {
   assert.ok(!h.includes('undefined') && !h.includes('NaN'))
   vm.runInContext('renderMealPlan();', ctx)
 })
-ok('index.html 에 받는 범위 선택이 있음', () => {
-  for (const id of ['planmode-guide', 'planmode-plan'])
-    assert.ok(htmlSrc.includes('id="' + id + '"'), '선택 버튼 없음: ' + id)
-  assert.ok(htmlSrc.includes("setPlanMode('plan')"), '전환 핸들러 없음')
+ok('30일 식단은 화면에서 제공하지 않음', () => {
+  for (const t of ['planmode-guide', 'planmode-plan', 'setPlanMode', '30일 식단', '30일 맞춤 식단'])
+    assert.ok(!htmlSrc.includes(t), '식단 기능이 화면에 남아 있음: ' + t)
+  const h = html('mealplan-section')
+  assert.ok(!h.includes('setPlanMode') && !h.includes('메뉴까지'), '가이드에 식단 전환 버튼이 남아 있음')
+})
+
+ok('계산 기준 설명이 화면에 없음', () => {
+  for (const t of ['2020 한국인 영양소 섭취기준', '7,700 kcal', 'id="science"'])
+    assert.ok(!htmlSrc.includes(t), '계산 기준 설명이 남아 있음: ' + t)
+  assert.ok(!html('target-section').includes('섭취기준'), '목표치 화면에 계산 기준 설명이 남아 있음')
+  // 의학적 주의사항은 남겨 둔다
+  assert.ok(htmlSrc.includes('의학적 진단을 대체하지 않습니다'), '주의사항이 사라짐')
+})
+
+ok('제품 섭취 가이드가 카드·막대로 보임', () => {
+  const h = html('mealplan-section')
+  const g = $('guidePlacement')()
+  assert.ok(h.includes('끼니마다 이만큼'), '끼니별 칼로리 제목이 없음')
+  // 끼니 칼로리 막대 — 가장 큰 끼니가 100%
+  const widths = [...h.matchAll(/width:(\d+)%/g)].map(m => +m[1])
+  assert.ok(widths.length >= 3, '칼로리 막대가 없음: ' + widths.length)
+  assert.equal(Math.max(...widths), 100, '가장 긴 막대가 100% 가 아님')
+  // 제품 카드 — 담은 품목마다 아이콘·횟수·끼니
+  for (const [key, icon] of [['soymilk', '🥛'], ['phyto', '💊'], ['bar', '🍫']]) {
+    if (!g.cov.stock[key]) continue
+    assert.ok(h.includes(icon), '제품 아이콘이 없음: ' + icon)
+    assert.ok(h.includes('한 달 ' + g.cov.stock[key] + '회분'), key + ' 회분이 안 나옴')
+    assert.ok(g.where[key].length, key + ' 가 어느 끼니에 들어가는지 비어 있음')
+    for (const slot of g.where[key]) assert.ok(h.includes('>' + slot + '</span>'), '끼니 표시 없음: ' + slot)
+  }
+  console.log('    ' + ['soymilk', 'phyto', 'bar'].map(k => k + ' ' + (g.where[k].join('·') || '-')).join(' / '))
 })
 
 // 여기서부터는 「30일 식단까지」 버전
@@ -840,7 +868,7 @@ ok('요금제 카드 3장 — 배지와 체크리스트', () => {
   assert.ok(h.length > 1500, 'len=' + h.length)
   assert.equal((h.match(/월<\/span>/g) || []).length, 3, '카드가 3장이 아님')
   for (const t of ['가장 많이 고르는 구성', '최적 구독', '최소 권장', '지금 담은 구성',
-                   '30일 체중 관리 가이드', '식단 전체 공개', 'startDemoSubscription'])
+                   '30일 체중 관리 가이드', '제품을 어느 끼니에 드실지 안내', 'startDemoSubscription'])
     assert.ok(h.includes(t), '누락: ' + t)
   assert.ok(!h.includes('undefined') && !h.includes('NaN'))
 })

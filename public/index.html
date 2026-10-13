@@ -87,10 +87,6 @@
   .planmode:hover { border-color:var(--sage); }
   .planmode.active { border-color:var(--deep); background:var(--tint); }
     /* 계산 근거 카드의 아이콘은 레퍼런스처럼 단색 세이지로 (파랑·보라·주황 제거) */
-    #science .bg-blue-100, #science .bg-purple-100, #science .bg-orange-100,
-    #science .bg-emerald-100 { background: var(--tint) !important; }
-    #science .text-blue-700, #science .text-purple-700, #science .text-orange-700,
-    #science .text-emerald-700 { color: var(--sage) !important; }
 
     .nav-link:hover { color: var(--sage); }
     .selected-chip { border-color: var(--sage) !important; background-color: var(--tint) !important; }
@@ -135,7 +131,7 @@
       <div class="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm">
         <button id="nav-home"   onclick="goPage('home')"   class="nav-btn">서비스 소개</button>
         <button id="nav-result" onclick="goPage('result')" class="nav-btn">나의 분석</button>
-        <button id="nav-plan"   onclick="goPage('plan')"   class="nav-btn">제품·식단</button>
+        <button id="nav-plan"   onclick="goPage('plan')"   class="nav-btn">제품 추천</button>
         <button id="nav-log"    onclick="goPage('log')"    class="nav-btn">기록</button>
       </div>
     </div>
@@ -158,7 +154,7 @@
           바꿉니다
         </h1>
         <p class="text-emerald-100 text-lg mb-8 leading-relaxed">
-          지금 식습관에 맞춰 하루 목표 칼로리와 30일 식단을 설계해 드립니다.
+          지금 식습관에 맞춰 하루 목표 칼로리와 끼니 가이드를 알려드립니다.
         </p>
         <div class="flex flex-wrap gap-4">
           <button onclick="startService()" class="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-full text-lg font-bold transition">
@@ -196,10 +192,6 @@
               <span class="text-emerald-200 text-sm">일주일 예상 감량</span>
               <span class="text-white font-bold text-sm">0.45 kg</span>
             </div>
-            <div class="flex items-center justify-between bg-emerald-800/40 rounded-xl px-4 py-2.5">
-              <span class="text-emerald-200 text-sm">식단 설계</span>
-              <span class="text-white font-bold text-sm">30일</span>
-            </div>
           </div>
         </div>
       </div>
@@ -235,7 +227,7 @@
             <div class="text-5xl mb-3">🍱</div>
             <div class="text-emerald-700 text-xs font-bold mb-1">3단계</div>
             <h3 class="text-xl font-bold text-gray-900 mb-2">추천과 설계</h3>
-            <p class="text-gray-500 text-sm">제품 구성과 30일 식단을 짜 드립니다</p>
+            <p class="text-gray-500 text-sm">제품 구성과 끼니별 칼로리를 알려드립니다</p>
           </div>
           <div id="flow-3" class="flow-panel hidden">
             <div class="text-5xl mb-3">✍️</div>
@@ -273,19 +265,6 @@
   </div>
 </section>
 
-<!-- 계산 기준 -->
-<section id="science" class="py-12 bg-gray-50">
-  <div class="max-w-3xl mx-auto px-4 text-center">
-    <p class="text-gray-600 text-sm leading-relaxed">
-      하루 목표 칼로리와 영양 기준은 <b class="text-gray-800">2020 한국인 영양소 섭취기준</b>으로 계산하고,
-      체중 변화는 체지방 1 kg을 7,700 kcal로 환산합니다.
-    </p>
-    <p class="text-gray-400 text-xs mt-4 leading-relaxed">
-      건강 정보 제공이 목적이며 의학적 진단이나 치료를 대체하지 않습니다.
-      질환이 있거나 약을 복용 중이라면 식단을 바꾸기 전에 의료진과 상의해 주세요.
-    </p>
-  </div>
-</section>
 </div>
 
 <!-- ══ 페이지: 진단 정보 입력 ══ -->
@@ -522,31 +501,17 @@
 </section>
 </div>
 
-<!-- ══ 페이지: 제품·식단 ══ -->
+<!-- ══ 페이지: 제품 추천 ══ -->
 <div id="page-plan" class="page hidden">
 <section class="py-12 md:py-16 bg-gray-50">
   <div class="max-w-5xl mx-auto px-4">
     <button onclick="goPage('result')" class="text-gray-500 text-sm mb-5"><i class="fas fa-arrow-left mr-1.5"></i>나의 분석으로</button>
     <div class="mb-8">
-      <h2 class="text-3xl mb-2">제품 추천과 식단</h2>
+      <h2 class="text-3xl mb-2">제품 추천과 식사 가이드</h2>
     </div>
     <div class="bg-white rounded-3xl p-5 sm:p-6 md:p-8 mb-5">
       <h3 class="text-xl font-bold text-gray-900 mb-1">맞춤 구독 세트</h3>
       <div id="product-recommendations" class="space-y-5"></div>
-    </div>
-    <div class="bg-white rounded-3xl p-5 sm:p-6 md:p-8 mb-5">
-      <h3 class="text-xl font-bold text-gray-900 mb-1">어디까지 받으시겠어요?</h3>
-      <p class="text-gray-500 text-sm mb-4">언제든 바꾸실 수 있습니다</p>
-      <div class="grid sm:grid-cols-2 gap-3">
-        <button id="planmode-guide" onclick="setPlanMode('guide')" class="planmode text-left p-4 sm:p-5">
-          <div class="font-bold text-gray-900 text-sm mb-1">칼로리 가이드</div>
-          <div class="text-xs text-gray-500 leading-relaxed">하루 목표 칼로리를 끼니로 나누고, 제품을 어느 끼니에 드실지 알려드립니다. 메뉴는 직접 고르세요</div>
-        </button>
-        <button id="planmode-plan" onclick="setPlanMode('plan')" class="planmode text-left p-4 sm:p-5">
-          <div class="font-bold text-gray-900 text-sm mb-1">30일 식단까지</div>
-          <div class="text-xs text-gray-500 leading-relaxed">위에 더해 30일 치 끼니 메뉴를 짜 드리고, 먹었는지 날마다 기록할 수 있습니다</div>
-        </button>
-      </div>
     </div>
     <div id="mealplan-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
   </div>
@@ -557,11 +522,11 @@
 <div id="page-pay" class="page hidden">
 <section class="py-12 md:py-16 bg-gray-50">
   <div class="max-w-5xl mx-auto px-4">
-    <button onclick="goPage('plan')" class="text-gray-500 text-sm mb-5"><i class="fas fa-arrow-left mr-1.5"></i>제품·식단으로</button>
+    <button onclick="goPage('plan')" class="text-gray-500 text-sm mb-5"><i class="fas fa-arrow-left mr-1.5"></i>제품 추천으로</button>
     <div class="mb-8">
       <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 mb-3">시연용 화면 · 실제 결제는 되지 않습니다</span>
       <h2 class="text-3xl mb-2">구독 시작하기</h2>
-      <p class="text-gray-500 text-sm">구독을 시작하시면 30일 식단 전체가 열립니다</p>
+      <p class="text-gray-500 text-sm">제품은 한 달에 한 번 배송됩니다</p>
     </div>
     <div id="pay-section"></div>
   </div>
@@ -585,7 +550,7 @@
 <!-- Footer -->
 <footer class="gradient-green text-white py-12">
   <div class="max-w-6xl mx-auto px-4">
-    <div class="grid md:grid-cols-3 gap-8">
+    <div class="grid md:grid-cols-2 gap-8">
       <div>
         <div class="flex items-center space-x-3 mb-4">
           <div class="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center">
@@ -593,23 +558,14 @@
           </div>
           <span class="text-xl font-bold">밥스누</span>
         </div>
-        <p class="text-emerald-300 text-sm leading-relaxed">서울대학교 식의학유전체실 연구를 바탕으로 하루 식단을 설계합니다.</p>
+        <p class="text-emerald-300 text-sm leading-relaxed">서울대학교 식의학유전체실 연구를 바탕으로 하루 목표 칼로리와 끼니 가이드를 알려드립니다.</p>
       </div>
       <div>
         <h4 class="font-bold mb-4">서비스</h4>
         <ul class="space-y-2 text-emerald-300 text-sm">
           <li><button onclick="goPage('result')" class="hover:text-white transition">식습관 진단과 목표 칼로리</button></li>
-          <li><button onclick="goPage('plan')" class="hover:text-white transition">30일 맞춤 식단</button></li>
           <li><button onclick="goPage('home', 'products')" class="hover:text-white transition">밥스누 제품 구독</button></li>
           <li><button onclick="goPage('log')" class="hover:text-white transition">끼니 기록과 체중 추적</button></li>
-        </ul>
-      </div>
-      <div>
-        <h4 class="font-bold mb-4">계산 기준</h4>
-        <ul class="space-y-2 text-emerald-300 text-sm">
-          <li><button onclick="goPage('home', 'science')" class="hover:text-white transition">2020 한국인 영양소 섭취기준</button></li>
-          <li><button onclick="goPage('home', 'science')" class="hover:text-white transition">체중 변화 산출 방식</button></li>
-          <li><button onclick="goPage('home', 'science')" class="hover:text-white transition">식단 설계 방식</button></li>
         </ul>
       </div>
     </div>

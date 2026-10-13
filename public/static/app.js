@@ -1266,8 +1266,7 @@ function renderTargets(r) {
     + '<div class="text-sm font-bold text-gray-800">' + value + '</div></div>';
 
   el.innerHTML =
-    '<h3 class="text-xl font-bold text-gray-900 mb-1">하루 목표치</h3>'
-    + '<p class="text-gray-500 text-sm mb-5">2020 한국인 영양소 섭취기준으로 계산했습니다</p>'
+    '<h3 class="text-xl font-bold text-gray-900 mb-5">하루 목표치</h3>'
 
     + '<div class="grid sm:grid-cols-3 gap-3 mb-3">'
     + big('목표 칼로리', t.targetKcal.toLocaleString(), 'kcal/일',
