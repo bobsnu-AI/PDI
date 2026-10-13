@@ -613,7 +613,7 @@ const html = id => els.get(id) ? els.get(id)._html : ''
 ok('구독 세트 렌더 (추천 근거·수량·가격)', () => {
   const h = html('product-recommendations')
   assert.ok(h.length > 2000, 'len=' + h.length)
-  for (const s of ['이렇게 골랐어요', '구독 구성', '결제 금액', '정가', '최대 25%', '추가 구성품'])
+  for (const s of ['이렇게 골랐어요', '구독 구성', '결제 금액', '정가', '할인', '추가 구성품'])
     assert.ok(h.includes(s), '누락: ' + s)
   // 내부 용어·할인 근거 설명은 화면에 나오지 않아야 한다
   for (const s of ['추천 룰', '할인 근거', 'PDI', '엑셀', 'Sheet3'])
@@ -728,7 +728,8 @@ ok('제품을 어느 끼니에 넣을지 알려줌', () => {
   assert.ok(g.replacedItems.length >= 2, '대체 구성이 비어 있음')
   const h = html('mealplan-section')
   assert.ok(h.includes('밥스누 제품으로 대신'), '제품 대체 안내 없음')
-  assert.ok(h.includes('하루 ') && h.includes('회'), '하루 몇 회인지 안 나옴')
+  assert.ok(/(하루 \d+(~\d+)?회|(이틀|사흘|닷새)에 \d+회)/.test(h), '몇 번 먹는지 안 나옴')
+  assert.ok(!/\d\.\d회/.test(h), '소수점 횟수가 남아 있음')
   console.log('    저녁 대체 ' + g.replaceDays + '일 · ' + g.replacedItems.join(' + ') + ' ' + g.replacedKcal + ' kcal')
 })
 ok('제품이 없으면 칼로리 가이드만 보여줌', () => {
@@ -906,7 +907,7 @@ vm.runInContext("tracker.plan = null; tracker.diary = {}; diaryDate = '2026-10-1
 ok('달력이 그려지고 오늘이 아닌 날짜도 고를 수 있음', () => {
   const h = html('diary-section')
   assert.ok(h.length > 1500, 'len=' + h.length)
-  for (const s of ['날짜별 기록', '2026년 10월', '일', '토', '10월 10일'])
+  for (const s of ['체중과 식사 기록', '2026년 10월', '일', '토', '10월 10일'])
     assert.ok(h.includes(s), '누락: ' + s)
   // 10월은 31일까지 — 날짜 버튼이 31개
   const days = [...h.matchAll(/setDiaryDate\('2026-10-\d\d'\)/g)]
@@ -1087,6 +1088,8 @@ ok('체중 입력칸은 달력 한 곳에만 있음', () => {
   const trk = read('public/static/tracker.js')
   assert.ok(!trk.includes('id="weight-input"'), '모니터링에 중복 체중 입력칸이 남아 있음')
   assert.ok(trk.includes('id="diary-weight"'), '달력에 체중 입력칸이 없음')
+  const diary = html('diary-section')
+  assert.ok(diary.indexOf('diary-weight') < diary.indexOf('diary-food'), '체중 입력이 음식 기록보다 아래')
 })
 
 ok('목표 재조정·식단 재생성·초기화가 오류 없이 동작', () => {

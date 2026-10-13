@@ -1554,7 +1554,7 @@ function renderSubscription(r) {
     + '<div class="grid lg:grid-cols-2 gap-4">'
     + '<div class="rounded-2xl border-2 border-gray-100 p-4">'
     + '<div class="text-sm font-bold text-gray-900 mb-1">구독 구성 (월 기준)</div>'
-    + '<div class="text-xs text-gray-400 mb-2">수량을 늘리면 할인율이 올라갑니다 (최대 25%)</div>'
+    + '<div class="text-xs text-gray-400 mb-2">수량을 늘리면 할인율이 올라갑니다</div>'
     + rows
     + '<div class="mt-3 pt-3 border-t border-gray-100"><div class="text-xs font-bold text-gray-500 mb-1.5">추가 구성품 <span class="font-normal text-gray-400">(넣으면 +5%p · ★ 추천)</span></div>'
     + '<div class="flex flex-wrap gap-1.5">' + addonChips + '</div></div>'
@@ -1572,7 +1572,6 @@ function renderSubscription(r) {
           + '<span class="text-sm font-bold text-gray-700">월 결제액</span>'
           + '<span class="text-3xl font-black text-emerald-700">' + won(quote.finalPrice) + '</span></div>'
         : '')
-    + '<p class="text-xs text-gray-400 mt-2">구매액에 따라 최대 25%까지 할인됩니다</p>'
     + (quote.rate
         ? '<button type="button" onclick="goPage(\'pay\')" class="w-full mt-3 py-3 bg-emerald-700 text-white text-sm font-bold">'
           + (isPaid() ? '구독 정보 보기' : '이 구성으로 구독 시작하기') + '</button>'

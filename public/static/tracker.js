@@ -249,6 +249,26 @@ function syncPlanModeButtons() {
 // 끼니별 칼로리 배분 — 하루 목표를 나눈 가이드 값 (고정 규칙이 아니라 기준점)
 const GUIDE_MEAL_SHARE = { breakfast: 0.30, lunch: 0.35, dinner: 0.35 };
 
+// 「하루 1.6회」는 와닿지 않는다 — 하루 1~2회 · 사흘에 2회 처럼 세는 말로 바꾼다
+function timesPhrase(n, days) {
+  if (!n || !days) return '';
+  const per = n / days;
+  if (per >= 0.9) {
+    const near = Math.round(per);
+    if (Math.abs(per - near) <= 0.15) return '하루 ' + near + '회';
+    return '하루 ' + Math.floor(per) + '~' + Math.ceil(per) + '회';
+  }
+  // 이틀·사흘·닷새 중 가장 덜 어긋나는 단위로 센다
+  let best = null;
+  for (const [k, word] of [[2, '이틀'], [3, '사흘'], [5, '닷새']]) {
+    const t = Math.round(per * k);
+    if (t < 1) continue;
+    const err = Math.abs(per * k - t);
+    if (!best || err < best.err) best = { err, text: word + '에 ' + t + '회' };
+  }
+  return best ? best.text : days + '일에 ' + n + '회';
+}
+
 function riceLabel(b) { return b === 0.5 ? '½공기' : (b === 1.5 ? '1½공기' : b + '공기'); }
 
 // 칼로리에서 대략의 상차림을 역산 (밥 1공기 ≈ 300 kcal · 국 ≈ 80 · 반찬 1가지 ≈ 95)
@@ -354,7 +374,7 @@ function guidePlanHtml() {
       ? '<div class="flex items-center justify-between gap-2 py-2 border-b border-gray-100 last:border-0">'
         + '<span class="text-sm text-gray-700">' + icon + ' ' + name + '</span>'
         + '<span class="text-sm"><b class="text-gray-900">' + n + '회</b>'
-        + '<span class="text-gray-400"> · 하루 ' + (n / g.days).toFixed(1) + '회</span></span></div>'
+        + '<span class="text-gray-400"> · ' + timesPhrase(n, g.days) + '</span></span></div>'
       : '';
     const left = g.leftover.soymilk + g.leftover.phyto + g.leftover.bar;
     productHtml =
@@ -374,8 +394,7 @@ function guidePlanHtml() {
   }
 
   return '<h3 class="text-xl font-bold text-gray-900 mb-1">30일 체중 관리 가이드</h3>'
-    + '<p class="text-gray-500 text-sm mb-5">하루 <b class="text-gray-800">' + total.toLocaleString() + ' kcal</b>'
-    + '을 끼니로 나눈 기준입니다. 메뉴는 직접 고르시고, 칼로리만 맞춰 주세요</p>'
+    + '<p class="text-gray-500 text-sm mb-5">하루 <b class="text-gray-800">' + total.toLocaleString() + ' kcal</b> 기준입니다</p>'
 
     + '<div class="rounded-2xl border border-gray-100 px-4 sm:px-5 mb-6">'
     + MEAL_TYPES.map(row).join('')
@@ -637,7 +656,6 @@ function renderMealPlan() {
     + '<h3 class="text-xl font-bold text-gray-900">🗓 ' + plan.days.length + '일 맞춤 식단</h3>'
     + (plan.days.length > openN
         ? '<span class="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800">' + openN + '일 미리보기</span>' : '')
-    + '<p class="w-full text-xs text-gray-500">영양 균형 · 식물성 식품 비율 · 메뉴 다양성 · 메뉴 궁합 네 가지를 함께 맞춘 결과입니다</p>'
     + '<button type="button" onclick="requestMealPlan()" class="text-xs font-bold px-3 py-1.5 rounded-lg border border-emerald-600 text-emerald-700 hover:bg-emerald-50"><i class="fas fa-rotate mr-1"></i>식단 다시 만들기</button>'
     + '</div>'
 
@@ -906,8 +924,7 @@ function renderDiary() {
     + (diaryDate === today ? ' (오늘)' : '');
 
   el.innerHTML =
-    '<h3 class="text-xl font-bold text-gray-900 mb-1">날짜별 기록</h3>'
-    + '<p class="text-gray-500 text-sm mb-5">달력에서 날짜를 고르면 그 날 먹은 음식과 체중을 기록할 수 있습니다</p>'
+    '<h3 class="text-xl font-bold text-gray-900 mb-5">체중과 식사 기록</h3>'
 
     + '<div class="grid lg:grid-cols-2 gap-6">'
     // 달력
@@ -930,6 +947,14 @@ function renderDiary() {
     // 선택한 날짜
     + '<div>'
     + '<div class="text-base font-bold text-gray-900 mb-3">' + label + '</div>'
+    + '<div class="flex flex-wrap items-center gap-2 bg-gray-50 rounded-2xl p-4 mb-3">'
+    + '<label for="diary-weight" class="text-sm font-bold text-gray-700 w-12">체중</label>'
+    + '<input id="diary-weight" type="number" step="0.1" min="10" max="300" value="' + (wt !== null ? wt : '') + '" '
+    + 'placeholder="예: 65.0" class="w-24 h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-emerald-500">'
+    + '<span class="text-sm text-gray-400">kg</span>'
+    + '<button type="button" onclick="submitDiaryWeight()" class="h-11 px-5 bg-emerald-700 text-white text-sm font-bold">기록</button>'
+    + '<span id="diary-weight-error" class="text-xs text-red-600"></span>'
+    + '</div>'
     + '<div class="bg-gray-50 rounded-2xl p-4 mb-4">'
     + '<div class="flex flex-wrap gap-2 mb-2">'
     + '<select id="diary-meal" class="h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm">'
@@ -946,13 +971,6 @@ function renderDiary() {
     + '<span id="diary-error" class="text-xs text-red-600"></span>'
     + '</div>'
     + (foodHtml || '<p class="text-sm text-gray-400 mb-4">아직 기록한 음식이 없습니다</p>')
-    + '<div class="flex flex-wrap items-end gap-2 bg-gray-50 rounded-2xl p-4 mt-4">'
-    + '<div><label for="diary-weight" class="block text-xs font-bold text-gray-500 mb-1">이 날 체중 (kg)</label>'
-    + '<input id="diary-weight" type="number" step="0.1" min="10" max="300" value="' + (wt !== null ? wt : '') + '" '
-    + 'placeholder="예: 65.0" class="w-28 h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-emerald-500"></div>'
-    + '<button type="button" onclick="submitDiaryWeight()" class="h-11 px-5 bg-emerald-700 text-white text-sm font-bold">기록</button>'
-    + '<span id="diary-weight-error" class="text-xs text-red-600 self-center"></span>'
-    + '</div>'
     + '</div>'
     + '</div>'
 
