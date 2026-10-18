@@ -23,6 +23,8 @@ function trackerLoad() {
     tracker = trackerDefault();
   }
   if (tracker.version !== 1) tracker = trackerDefault();
+  // 식단 기능을 내린 동안은 예전에 저장된 선택값도 가이드로 되돌린다
+  if (tracker.planMode === 'plan') tracker.planMode = 'guide';
   return tracker;
 }
 
