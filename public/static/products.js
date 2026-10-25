@@ -317,7 +317,7 @@ const GOAL_RULE_KEY = { blood_sugar: 'sugar', bone: 'bone', fatigue: 'fatigue' }
 
 // ──────────────────────────────────────────────
 // recommendSubscription({ grade, bmi, age, lacks, goals, allergies })
-//   grade  : 'poor' | 'inter' | 'ideal'  — 서울대병원 식생활문진표 등급
+//   grade  : 'poor' | 'inter' | 'ideal'  — 식단 점수 등급(위험·보통·안전)
 //   lacks  : { wholeGrain, veg, calcium, protein }  (boolean)
 //   goals  : Set<'weight'|'gut'|'blood_sugar'|'bone'|'fatigue'>
 //   반환: { rule, bodyType, cart, reasons, excluded }

@@ -351,7 +351,7 @@ function determineWeightTrend(currentWeight, previousWeight) {
 
 // ──────────────────────────────────────────────
 // calculateDietPFS(meals, profile)
-//   meals   : addedMeals ([{ name, meal, analysis }])
+//   meals   : 설문으로 만든 1일 식단 ([{ name, meal, analysis }])
 //   profile : { gender, age, height, weight, prevWeight, activity }
 // 반환: null(프로필 부족) | {
 //   eer, ranges, trend,

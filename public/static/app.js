@@ -189,90 +189,125 @@ const ALLERGENS = [
   { id: 'pine',      name: '잣',       re: /잣/ },
 ];
 
-// ── 식습관 설문 — 서울대병원 식생활문진표 ──────────────────────────
-//  출처: 서울대병원 식생활문진표 index (동덕여대 김정수·황세연 / 서울대 최수연 정리)
-//  채점: 문항마다 Ideal 5점 · Intermediate 3점 · Poor 1점
-//  등급: Ideal(5점) 문항 수로 판정 — 0~2 Poor / 3~7 Intermediate / 8~11 Ideal
-//  group 은 자료의 묶음(곡류·단백질·채소과일·고지방·나트륨·단것)
-//  serve 는 응답을 대표 음식 인분으로 환산한 값 (예측 식단 생성용)
+// ══════════════════════════════════════════════
+// 식습관 설문  (식품군 1문항 = 식단 점수 1성분)
+// ──────────────────────────────────────────────
+// 문항 하나가 식단 점수의 식품군 하나에 맞춰져 있어, 응답의 1일 회분을
+// 점수에 그대로 넣습니다 (대표 음식으로 환산하지 않습니다).
+//   comp    : patterns.js 의 성분 키. null 이면 점수에 직접 넣지 않는 문항
+//   serve   : 선택지의 두 번째 값 — 1일 회분. 곡류는 1회분 = 밥 한 공기(생곡 90g)
+//   foods   : 칼로리·제품 추천·30일 식단에 쓰는 대표 음식 (점수에는 쓰지 않음)
+//   slot    : 대표 음식을 놓을 끼니 — 'meal'(아침·점심·저녁) | 'snack'
+// 빈도 선택지 형식은 서울대학교병원 식생활문진표를 따릅니다.
+// 문항 수는 점수가 요구하는 식품군 수로 정해집니다. 점수 5종이 문항을 서로 나눠
+// 쓰도록 맞춰서 17문항입니다 — 한 문항을 빼면 적어도 한 점수에 「뺀 항목」이 생깁니다.
+// 술 문항은 AHEI·AMED 의 음주 성분에 필요합니다. 논문 기준이 적정 음주를 만점으로
+// 보기 때문에, 계산에는 넣고 개선 제안에서는 뺍니다.
 const SURVEY_QUESTIONS = [
-  { id: 'grain', group: 'grain', q: '곡류(밥, 국수, 빵, 떡, 시리얼, 감자, 고구마 등)를 얼마나 자주 드시나요?',
-    options: [['하루 3끼', 5, 3], ['하루 1~2끼', 3, 1.5], ['주 6회 이하', 1, 0.9]] },
-  { id: 'protein', group: 'protein', q: '고기·생선·두부·달걀 반찬 중 하나를 얼마나 자주 드시나요?',
-    options: [['하루 2끼 이상', 5, 2], ['하루 1끼 정도', 3, 1], ['주 3~6회', 1, 0.65], ['주 2회 이하 또는 거의 안 먹음', 1, 0.2]] },
-  { id: 'veg', group: 'vegfruit', q: '김치를 제외한 채소반찬(생채소, 나물, 샐러드 등)을 얼마나 자주 드시나요?',
-    options: [['하루 2끼 이상', 5, 2], ['하루 1끼 정도', 3, 1], ['주 3~6회', 1, 0.65], ['주 2회 이하 또는 거의 안 먹음', 1, 0.2]] },
-  { id: 'fruit', group: 'vegfruit', q: '과일을 얼마나 자주 드시나요?',
-    options: [['매일', 5, 1], ['주 3~6회', 3, 0.65], ['주 2회 이하 또는 거의 안 먹음', 1, 0.2]] },
-  { id: 'fried', group: 'fat', q: '튀김이나 부침개를 얼마나 자주 드시나요?',
-    options: [['주 2회 이하 또는 거의 안 먹음', 5, 0.2], ['주 3~6회', 3, 0.65], ['하루 1회 정도', 1, 1], ['하루 2회 이상', 1, 2]] },
-  { id: 'fatmeat', group: 'fat', q: '지방이 많은 육류(삼겹살, 갈비, 장어 등)를 얼마나 자주 드시나요?',
-    options: [['주 2회 이하 또는 거의 안 먹음', 5, 0.2], ['주 3~6회', 3, 0.65], ['하루 1회 정도', 1, 1], ['하루 2회 이상', 1, 2]] },
-  { id: 'instant', group: 'fat', q: '인스턴트·가공식품(라면, 햄, 통조림 등)을 얼마나 자주 드시나요?',
-    options: [['주 2회 이하 또는 거의 안 먹음', 5, 0.2], ['주 3~6회', 3, 0.65], ['하루 1회 정도', 1, 1], ['하루 2회 이상', 1, 2]] },
-  { id: 'saltadd', group: 'sodium', q: '식사할 때 음식에 소금이나 간장을 추가로 넣으시나요?',
-    options: [['전혀 넣지 않는다', 5, 0], ['가끔 넣는다', 3, 0], ['자주 넣는다', 1, 0]] },
-  { id: 'salty', group: 'sodium', q: '젓갈, 장아찌, 국물 위주 식사 등 짜게 드시는 편인가요?',
-    options: [['그렇지 않다', 5, 0], ['보통이다', 3, 0], ['그렇다', 1, 0]] },
-  { id: 'sweet', group: 'sweet', q: '단 음식(아이스크림, 케이크, 과자 등)을 얼마나 자주 드시나요?',
-    options: [['전혀 먹지 않는다', 5, 0], ['가끔 (주 2회 이하)', 3, 0.2], ['자주 (주 3회 이상)', 1, 0.5]] },
-  { id: 'drink', group: 'sweet', q: '주스·탄산음료·드링크류를 얼마나 자주 드시나요? (한 컵 200 mL)',
-    options: [['주 2컵 이하 또는 거의 안 마심', 5, 0.2], ['주 3~6컵', 3, 0.65], ['하루 1컵 정도', 1, 1], ['하루 2컵 이상', 1, 2]] },
+  // ── 곡류 ──
+  { id: 'refinedGrain', comp: 'refinedGrain', slot: 'meal', foods: ['쌀밥', '식빵'],
+    q: '흰쌀밥·흰빵·국수·감자를 하루에 얼마나 드시나요?',
+    options: [['하루 3끼', 3], ['하루 2끼', 2], ['하루 1끼', 1], ['거의 안 먹음', 0.2]] },
+  { id: 'wholeGrain', comp: 'wholeGrain', slot: 'meal', foods: ['잡곡밥'],
+    q: '잡곡밥·현미밥·통밀빵·귀리를 하루에 얼마나 드시나요?',
+    options: [['하루 2끼 이상', 2], ['하루 1끼', 1], ['주 3~6회', 0.6], ['거의 안 먹음', 0]] },
+
+  // ── 채소·과일 ──
+  { id: 'veg', comp: 'veg', slot: 'meal', foods: ['시금치나물', '콩나물무침', '무생채'],
+    q: '김치를 뺀 채소 반찬을 하루에 몇 접시 드시나요? (나물·샐러드·생채소)',
+    options: [['5접시 이상', 5], ['3~4접시', 3.5], ['1~2접시', 1.5], ['거의 안 먹음', 0.3]] },
+  { id: 'fruit', comp: 'fruit', slot: 'snack', foods: ['사과', '귤'],
+    q: '과일을 얼마나 드시나요? (1회 = 사과 1개 정도)',
+    options: [['하루 3회 이상', 3], ['하루 1~2회', 1.5], ['주 3~6회', 0.6], ['거의 안 먹음', 0.1]] },
+
+  // ── 고기·생선·달걀·콩 ──
+  { id: 'redMeat', comp: 'redMeat', slot: 'meal', foods: ['제육볶음', '삼겹살구이'],
+    q: '소고기·돼지고기를 얼마나 드시나요?',
+    options: [['하루 2회 이상', 2], ['하루 1회', 1], ['주 3~6회', 0.6], ['주 2회 이하', 0.2]] },
+  { id: 'processedMeat', comp: 'processedMeat', slot: 'meal', foods: ['소시지야채볶음', '라면'],
+    q: '햄·소시지·베이컨·어묵·라면을 얼마나 드시나요?',
+    options: [['하루 1회 이상', 1], ['주 3~6회', 0.6], ['주 1~2회', 0.2], ['거의 안 먹음', 0]] },
+  { id: 'fish', comp: 'fish', slot: 'meal', foods: ['고등어구이'],
+    q: '생선·해산물을 얼마나 드시나요?',
+    options: [['거의 매일', 1], ['주 3~6회', 0.6], ['주 1~2회', 0.2], ['거의 안 먹음', 0]] },
+  { id: 'egg', comp: 'egg', slot: 'meal', foods: ['계란말이'],
+    q: '달걀을 얼마나 드시나요?',
+    options: [['하루 2개 이상', 2], ['하루 1개', 1], ['주 3~6회', 0.6], ['거의 안 먹음', 0]] },
+  { id: 'legumes', comp: 'legumes', slot: 'meal', foods: ['두부조림'],
+    q: '두부·콩·콩자반을 얼마나 드시나요?',
+    options: [['하루 2회 이상', 2], ['하루 1회', 1], ['주 3~6회', 0.6], ['거의 안 먹음', 0]] },
+  { id: 'nuts', comp: 'nuts', slot: 'snack', foods: ['견과 한 줌'],
+    q: '견과류를 얼마나 드시나요? (1회 = 한 줌, 약 28g)',
+    options: [['매일 한 줌 이상', 1], ['주 3~6회', 0.6], ['주 1~2회', 0.2], ['거의 안 먹음', 0]] },
+
+  // ── 유제품 ──
+  { id: 'dairy', comp: 'dairy', slot: 'snack', foods: ['우유 한 컵'],
+    q: '우유·요구르트·치즈를 얼마나 드시나요? (한 컵 200 mL)',
+    options: [['하루 2회 이상', 2], ['하루 1회', 1], ['주 3~6회', 0.6], ['거의 안 먹음', 0]] },
+  { id: 'dairyLow', comp: 'dairyLowRatio', slot: null, foods: null,
+    q: '유제품은 주로 어떤 것을 고르시나요?',
+    options: [['대부분 저지방·무지방', 1], ['절반쯤 저지방', 0.5], ['대부분 일반 제품', 0]] },
+
+  // ── 간식·음료 ──
+  { id: 'sweets', comp: 'sweets', slot: 'snack', foods: ['단 음식'],
+    q: '과자·케이크·아이스크림을 얼마나 드시나요?',
+    options: [['하루 1회 이상', 1], ['주 3~6회', 0.6], ['주 1~2회', 0.2], ['거의 안 먹음', 0]] },
+  { id: 'coffeeTea', comp: 'coffeeTea', slot: 'snack', foods: ['커피 한 잔'],
+    q: '커피·차를 하루에 몇 잔 드시나요? (설탕·시럽 없이)',
+    options: [['3잔 이상', 3], ['1~2잔', 1.5], ['주 3~6잔', 0.6], ['거의 안 마심', 0]] },
+  { id: 'ssb', comp: 'ssb', slot: 'snack', foods: ['단 음료'],
+    q: '탄산음료·가당음료·주스를 하루에 몇 잔 드시나요? (한 잔 200 mL)',
+    options: [['2잔 이상', 2], ['1잔 정도', 1], ['주 3~6잔', 0.6], ['거의 안 마심', 0.1]] },
+
+  // ── 술 (AHEI·AMED 는 총 잔 수로 봅니다) ──
+  { id: 'alcohol', comp: 'alcohol', slot: 'snack', foods: ['소주 한 잔'],
+    q: '술을 하루 평균 몇 잔 드시나요? (한 잔 = 소주 1잔·맥주 200 mL·와인 1잔)',
+    options: [['2잔 이상', 2], ['1잔 정도', 1], ['주 2~4잔', 0.45], ['안 마심', 0]] },
+
+  // ── 짠맛 ──
+  { id: 'salty', comp: null, slot: 'meal', foods: ['된장국'],
+    q: '국물·젓갈·장아찌처럼 짜게 드시는 편인가요?',
+    options: [['그렇지 않다', 0], ['보통이다', 1], ['그렇다', 2]] },
 ];
 
-// 등급 — Ideal(5점) 문항 수 기준. 자료의 10항목 0~2 / 3~6 / 7~10 을 11항목에 맞춰 조정함
-const DIET_GRADES = [
-  { id: 'poor',   name: '개선 필요', max: 3,  color: 'red',     desc: '식생활에서 바꿀 부분이 많습니다' },
-  { id: 'inter',  name: '보통',      max: 8,  color: 'amber',   desc: '기본은 지키고 있지만 보완할 부분이 있습니다' },
-  { id: 'ideal',  name: '우수',      max: 99, color: 'emerald', desc: '식생활이 전반적으로 잘 잡혀 있습니다' },
-];
-
-// 설문 응답 → { score, idealCount, grade, items, lacks }
-function surveyAssessment(ans) {
-  const items = SURVEY_QUESTIONS.map(q => {
-    const opt = q.options[ans[q.id]];
-    return { id: q.id, group: q.group, label: opt ? opt[0] : null, point: opt ? opt[1] : 0, ideal: !!opt && opt[1] === 5 };
-  });
-  const idealCount = items.filter(i => i.ideal).length;
-  const grade = DIET_GRADES.find(g => idealCount < g.max) || DIET_GRADES[2];
-  const point = id => (items.find(i => i.id === id) || {}).point || 0;
-  return {
-    items, idealCount,
-    score: items.reduce((s, i) => s + i.point, 0),     // 11~55점
-    grade,
-    // 부족 판정 — 해당 문항이 Ideal 이 아니면 부족으로 본다
-    lacks: { wholeGrain: point('grain') < 5, veg: point('veg') < 5, protein: point('protein') < 5 },
-  };
-}
-
-// 설문 → 대표 음식 매핑 (예측 식단 생성용)
-const SURVEY_FOODS = {
-  grain:   ['쌀밥', '잡곡밥'],
-  protein: ['제육볶음', '고등어구이', '계란말이', '두부조림'],
-  veg:     ['시금치나물', '콩나물무침', '오이무침', '무생채'],
-  fruit:   ['사과', '귤'],
-  fried:   ['만두튀김', '감자전'],
-  fatmeat: ['삼겹살구이', '갈비구이'],
-  instant: ['라면'],
-  // 레시피 DB에 없는 대표 음식은 식재료 조합으로 정의
-  custom: {
-    '단 음식':   { '백설탕': 20, '식빵': 40 },
-    '단 음료':   { '백설탕': 22 },
-  },
+// 레시피 DB에 없는 대표 음식은 식재료 조합으로 정의 (칼로리·나트륨·식이섬유 계산용)
+const SURVEY_CUSTOM_FOODS = {
+  '단 음식':          { '백설탕': 20, '식빵': 40 },
+  '단 음료':          { '백설탕': 22 },
+  '견과 한 줌':       { '아몬드': 14, '호두': 14 },
+  '우유 한 컵':       { '우유': 200 },
+  '커피 한 잔':       { '녹차잎': 2 },
+  '소주 한 잔':        { '소주': 50 },
 };
 
-// 식사 기록 빠른 추가 칩
-const QUICK_FOODS = ['잡곡밥', '쌀밥', '된장찌개', '김치찌개', '배추김치', '시금치나물', '계란말이', '사과', '오리지널 약콩 두유'];
+// 응답 → 성분별 1일 회분 { veg: 3.5, fruit: 1.5, ... }
+//   patterns.js 가 이 값을 그대로 점수에 씁니다.
+function surveyServings(ans) {
+  const serve = {};
+  for (const q of SURVEY_QUESTIONS) {
+    const opt = q.options[ans[q.id]];
+    serve[q.id] = opt ? opt[1] : 0;
+  }
+  const out = {};
+  for (const q of SURVEY_QUESTIONS) if (q.comp) out[q.comp] = serve[q.id];
+  // 통곡물·정제곡물은 점수가 그램으로 기준을 정합니다 (밥 한 공기 = 생곡 90g)
+  out.wholeGrain = serve.wholeGrain * 90;
+  // 유제품은 저지방 비율로 나눕니다 (혈압 관리 점수가 저지방만 인정)
+  const lowRatio = out.dairyLowRatio || 0;
+  out.dairyLow  = serve.dairy * lowRatio;
+  out.dairyHigh = serve.dairy * (1 - lowRatio);
+  delete out.dairy;
+  delete out.dairyLowRatio;
+  return out;
+}
+
 
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
 let currentStep = 1;
-// 식사 기록: [{ name:'비빔밥', meal:'lunch', portion:1, analysis:{...} }, ...]
-let addedMeals = [];
 // 설문 응답: { questionId: value }
 const surveyAnswers = {};
-let inputMode = 'survey';                       // 'survey' | 'log'
 const selectedGoals = new Set(['weight']);      // 체중 관리는 항상 포함
 const selectedAllergies = new Set();
 let pdiResult = null;
@@ -306,12 +341,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderAllergyChips();
   setGender(gender);
   renderSurvey();
-  renderQuickChips();
-  setInputMode('survey');
   renderHealthGoals();
   renderProductGrid();
-  renderMealList();
-  initAutocomplete();
   initPlanFoodList();
 
   // 저장된 설문 응답을 복원해 결과를 미리 계산한다 (두 번째 방문)
@@ -319,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
     for (const [k, v] of Object.entries(tracker.survey)) surveyAnswers[k] = v;
     renderSurvey();
   }
-  if (tracker.profile && (isSurveyComplete() || addedMeals.length)) calculateAndShow(true);
+  if (tracker.profile && isSurveyComplete()) calculateAndShow(true);
 
   // 뒤로가기·앞으로가기
   window.addEventListener('hashchange', () => {
@@ -407,7 +438,6 @@ function toggleAllergy(id) {
   if (selectedAllergies.has(id)) selectedAllergies.delete(id);
   else selectedAllergies.add(id);
   renderAllergyChips();
-  renderMealList();
 }
 
 // 입력값 읽기 — 빈 칸은 null
@@ -551,109 +581,6 @@ function goToStep(n) {
 }
 
 // ══════════════════════════════════════════════
-// AUTOCOMPLETE  (자동완성)
-// ══════════════════════════════════════════════
-function initAutocomplete() {
-  const input = document.getElementById('meal-input');
-  const dropdown = document.getElementById('autocomplete-list');
-  if (!input) return;
-
-  input.addEventListener('input', () => {
-    const val = input.value.trim();
-    dropdown.innerHTML = '';
-    if (!val) { dropdown.classList.add('hidden'); return; }
-
-    // ① 밥스누 제품 매칭
-    const bobsnuMatches = INGREDIENT_NAMES.filter(n => INGREDIENTS[n].cat === 'bobsnu' && n.includes(val));
-    // ② 레시피 매칭 (최대 7개)
-    const recipeMatches = RECIPE_NAMES.filter(n => n.includes(val)).slice(0, 7);
-    // ③ 단품 식재료 매칭 (bobsnu·레시피 중복 제외, 최대 5개)
-    const usedNames = new Set([...bobsnuMatches, ...recipeMatches]);
-    const singleMatches = INGREDIENT_NAMES.filter(n => n.includes(val) && !usedNames.has(n) && INGREDIENTS[n].cat !== 'bobsnu').slice(0, 5);
-
-    if (!bobsnuMatches.length && !recipeMatches.length && !singleMatches.length) { dropdown.classList.add('hidden'); return; }
-
-    dropdown.classList.remove('hidden');
-
-    function addSeparator(label) {
-      const li = document.createElement('li');
-      li.className = 'px-4 py-1 text-xs font-bold bg-gray-50 border-t border-gray-100';
-      li.style.cssText = 'pointer-events:none;color:#7C3AED';
-      li.textContent = label;
-      dropdown.appendChild(li);
-    }
-
-    // ① 밥스누 제품
-    if (bobsnuMatches.length) {
-      addSeparator('⭐ 밥스누 제품');
-      bobsnuMatches.forEach(name => {
-        const ing  = INGREDIENTS[name];
-        const prod = BOBSNU_CATALOG.find(p => p.name === name);
-        const li = document.createElement('li');
-        li.className = 'px-4 py-2.5 hover:bg-purple-50 cursor-pointer flex items-center justify-between group';
-        li.innerHTML =
-          '<div class="flex items-center gap-2">'
-          + '<span>' + (prod ? prod.icon : '⭐') + '</span>'
-          + '<span class="font-medium text-gray-900">' + name + '</span>'
-          + '<span class="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-bold">밥스누</span>'
-          + '<span class="ml-1 text-xs text-gray-400">' + ing.kcal + 'kcal/1회</span>'
-          + '</div>'
-          + '<i class="fas fa-plus text-purple-400 opacity-0 group-hover:opacity-100 text-sm"></i>';
-        li.addEventListener('mousedown', (e) => { e.preventDefault(); input.value = name; dropdown.classList.add('hidden'); });
-        dropdown.appendChild(li);
-      });
-    }
-
-    // ② 레시피 항목
-    if (recipeMatches.length) {
-      if (bobsnuMatches.length) addSeparator('🍽 레시피');
-      recipeMatches.forEach(name => {
-        const recipe = RECIPES[name];
-        const ingCount = Object.keys(recipe.ings).length;
-        const li = document.createElement('li');
-        li.className = 'px-4 py-2.5 hover:bg-emerald-50 cursor-pointer flex items-center justify-between group';
-        li.innerHTML =
-          '<div>'
-          + '<span class="font-medium text-gray-900">' + name + '</span>'
-          + '<span class="ml-2 text-xs text-gray-400">재료 ' + ingCount + '종 · ' + recipe.cal + 'kcal</span>'
-          + '</div>'
-          + '<i class="fas fa-plus text-emerald-500 opacity-0 group-hover:opacity-100 text-sm"></i>';
-        li.addEventListener('mousedown', (e) => { e.preventDefault(); input.value = name; dropdown.classList.add('hidden'); });
-        dropdown.appendChild(li);
-      });
-    }
-
-    // ③ 단품 식재료 항목
-    if (singleMatches.length) {
-      addSeparator('🔸 단품 식품');
-      singleMatches.forEach(name => {
-        const ing  = INGREDIENTS[name];
-        const cat  = FOOD_CATEGORIES[ing.cat] || {};
-        const g    = SINGLE_SERVING_G[ing.cat] || 100;
-        const kcal = Math.round((ing.kcal / 100) * g);
-        const li = document.createElement('li');
-        li.className = 'px-4 py-2.5 hover:bg-blue-50 cursor-pointer flex items-center justify-between group';
-        li.innerHTML =
-          '<div class="flex items-center gap-2">'
-          + '<span>' + (cat.icon || '🔸') + '</span>'
-          + '<span class="font-medium text-gray-900">' + name + '</span>'
-          + '<span class="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600">단품</span>'
-          + '<span class="ml-1 text-xs text-gray-400">' + g + 'g · ' + kcal + 'kcal</span>'
-          + '</div>'
-          + '<i class="fas fa-plus text-blue-400 opacity-0 group-hover:opacity-100 text-sm"></i>';
-        li.addEventListener('mousedown', (e) => { e.preventDefault(); input.value = name; dropdown.classList.add('hidden'); });
-        dropdown.appendChild(li);
-      });
-    }
-  });
-
-  input.addEventListener('blur', () => setTimeout(() => dropdown.classList.add('hidden'), 150));
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); addMeal(); }
-  });
-}
-
-// ══════════════════════════════════════════════
 // 분석 유틸  (인분 조정 · 식재료 조합 · 알레르기)
 // ══════════════════════════════════════════════
 // 음식명 → 분석 (레시피 우선, 없으면 단품 식재료)
@@ -702,26 +629,11 @@ function findAllergens(name, analysis, allergySet) {
   return ALLERGENS.filter(a => allergySet.has(a.id) && names.some(n => a.re.test(n))).map(a => a.name);
 }
 
-// ══════════════════════════════════════════════
-// STEP 2 · 입력 모드 (설문 / 식사 기록)
-// ══════════════════════════════════════════════
-function setInputMode(mode) {
-  inputMode = mode;
-  for (const m of ['survey', 'log']) {
-    const on = m === mode;
-    document.getElementById('panel-' + m).classList.toggle('hidden', !on);
-    document.getElementById('tab-' + m).className = 'flex-1 py-2.5 rounded-xl text-sm font-bold transition '
-      + (on ? 'bg-white text-emerald-800 shadow' : 'text-gray-500 hover:text-gray-700');
-  }
-}
-
 function submitDietInput() {
   const el = document.getElementById('step2-error');
-  if (!addedMeals.length && !isSurveyComplete()) {
-    const answered = Object.keys(surveyAnswers).length;
-    el.querySelector('span').textContent = answered
-      ? '설문 ' + (SURVEY_QUESTIONS.length - answered) + '개 문항이 남았어요. 모두 답하거나 식사를 1개 이상 기록해주세요.'
-      : '식습관 설문에 답하거나 오늘 식사를 1개 이상 기록해주세요.';
+  if (!isSurveyComplete()) {
+    const left = SURVEY_QUESTIONS.length - Object.keys(surveyAnswers).length;
+    el.querySelector('span').textContent = '설문 ' + left + '개 문항이 남았어요.';
     el.classList.remove('hidden');
     return;
   }
@@ -729,13 +641,27 @@ function submitDietInput() {
   goToStep(3);
 }
 
-// ── 설문 ─────────────────────────────────────
+// ── 설문 ──────────────────────────────────────
+// 문항이 17개라 묶음 제목을 달아야 읽힌다 (제목이 붙는 문항 id → 제목)
+const SURVEY_SECTIONS = {
+  refinedGrain: '곡류',
+  veg:          '채소·과일',
+  redMeat:      '고기·생선·달걀·콩',
+  dairy:        '유제품',
+  sweets:       '간식·음료',
+  alcohol:      '술',
+  salty:        '짠맛',
+};
+
 function renderSurvey() {
   const el = document.getElementById('survey-questions');
   if (!el) return;
   el.innerHTML = SURVEY_QUESTIONS.map((q, qi) => {
     const answered = q.id in surveyAnswers;
-    return '<div class="rounded-2xl border ' + (answered ? 'border-emerald-200 bg-emerald-50/40' : 'border-gray-100 bg-gray-50') + ' p-4">'
+    const head = SURVEY_SECTIONS[q.id]
+      ? '<div class="text-xs font-bold tracking-wide mt-2" style="color:var(--deep)">' + SURVEY_SECTIONS[q.id] + '</div>'
+      : '';
+    return head + '<div class="rounded-2xl border ' + (answered ? 'border-emerald-200 bg-emerald-50/40' : 'border-gray-100 bg-gray-50') + ' p-4">'
       + '<div class="text-sm font-bold text-gray-800 mb-2.5"><span class="text-emerald-700 mr-1">Q' + (qi + 1) + '.</span>' + q.q + '</div>'
       + '<div class="flex flex-wrap gap-2">'
       + q.options.map(([label], oi) => {
@@ -768,160 +694,32 @@ function splitPortions(total) {
 }
 
 // 설문 응답 → 대표 음식으로 구성한 예측 1일 식단
-//   문항별 응답을 1일 인분(serve)으로 읽고, 그만큼 대표 음식을 끼니에 배치한다.
+//   점수에는 쓰지 않습니다. 칼로리·나트륨·식이섬유 추정과 제품 추천·30일 식단에 씁니다.
 function buildSurveyDiet(ans) {
   const diet = [];
-  // q: 이 음식을 만든 설문 문항 id — 상세 분석의 「문항 → 식품군」 연결에 사용
-  let q = null;
-  const push = (name, meal, portion, analysis) => {
-    analysis = analysis || analyzeFood(name);
-    if (!analysis || !(portion > 0)) return;
-    diet.push({ name, meal, portion, analysis: scaleAnalysis(analysis, portion), source: 'survey', q });
+  const serveOf = q => {
+    const o = q.options[ans[q.id]];
+    return o ? o[1] : 0;
   };
-  const custom = name => buildCustomAnalysis(name, SURVEY_FOODS.custom[name]);
-  const serveOf = id => {
-    const qq = SURVEY_QUESTIONS.find(x => x.id === id);
-    const opt = qq && qq.options[ans[id]];
-    return opt ? opt[2] : 0;
+  const push = (name, meal, portion, qid) => {
+    const base = SURVEY_CUSTOM_FOODS[name]
+      ? buildCustomAnalysis(name, SURVEY_CUSTOM_FOODS[name])
+      : analyzeFood(name);
+    if (!base || !(portion > 0)) return;
+    // q: 이 음식을 만든 설문 문항 id
+    diet.push({ name, meal, portion, analysis: scaleAnalysis(base, portion), source: 'survey', q: qid });
   };
-  // 곡류 응답이 하루 몇 끼인지로 끼니 수를 정한다 (최소 1끼)
-  const mealCount = Math.max(1, Math.min(3, Math.round(serveOf('grain'))));
-  const slots = ['breakfast', 'lunch', 'dinner'].slice(3 - mealCount);
-  const slotAt = i => slots[i % slots.length];
-  // 문항 → 대표 음식을 인분만큼 배치
-  const spread = (id, foods, firstSlot) => {
-    q = id;
-    splitPortions(serveOf(id)).forEach((p, i) =>
-      push(foods[i % foods.length], firstSlot === 'snack' ? 'snack' : slotAt(i + (firstSlot === 'late' ? 1 : 0)), p));
-  };
-  // 밥 — 흰쌀과 잡곡을 반반으로 가정
-  q = 'grain';
-  for (const slot of slots) { push('쌀밥', slot, 0.5); push('잡곡밥', slot, 0.5); }
-  spread('veg',     SURVEY_FOODS.veg);
-  spread('protein', SURVEY_FOODS.protein, 'late');
-  spread('fried',   SURVEY_FOODS.fried,   'late');
-  spread('fatmeat', SURVEY_FOODS.fatmeat, 'late');
-  spread('instant', SURVEY_FOODS.instant, 'late');
-  spread('fruit',   SURVEY_FOODS.fruit,   'snack');
-  // 단 음식·음료는 레시피 DB에 없어 식재료 조합으로 계산
-  q = 'sweet'; splitPortions(serveOf('sweet')).forEach(p => push('단 음식', 'snack', p, custom('단 음식')));
-  q = 'drink'; splitPortions(serveOf('drink')).forEach(p => push('단 음료', 'snack', p, custom('단 음료')));
+  // 끼니 수는 밥·빵 응답으로 정한다 (최소 1끼, 최대 3끼)
+  const grain = SURVEY_QUESTIONS
+    .filter(q => q.comp === 'refinedGrain' || q.comp === 'wholeGrain')
+    .reduce((t, q) => t + serveOf(q), 0);
+  const slots = ['breakfast', 'lunch', 'dinner'].slice(3 - Math.max(1, Math.min(3, Math.round(grain))));
+  for (const q of SURVEY_QUESTIONS) {
+    if (!q.foods) continue;
+    splitPortions(serveOf(q)).forEach((p, i) =>
+      push(q.foods[i % q.foods.length], q.slot === 'snack' ? 'snack' : slots[i % slots.length], p, q.id));
+  }
   return diet;
-}
-
-// ══════════════════════════════════════════════
-// STEP 2 · 식사 기록
-// ══════════════════════════════════════════════
-const MEAL_SLOTS = [
-  { id: 'breakfast', name: '아침', icon: '🌅' },
-  { id: 'lunch',     name: '점심', icon: '☀️' },
-  { id: 'dinner',    name: '저녁', icon: '🌙' },
-  { id: 'snack',     name: '간식', icon: '🍪' },
-];
-
-function renderQuickChips() {
-  const el = document.getElementById('quick-chips');
-  if (!el) return;
-  el.innerHTML = QUICK_FOODS.filter(n => analyzeFood(n)).map(n =>
-    '<button type="button" onclick="addMeal(\'' + n + '\')" class="text-xs text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-full transition">+ ' + n + '</button>'
-  ).join('');
-}
-
-function addMeal(nameOverride) {
-  const input    = document.getElementById('meal-input');
-  const mealType = document.getElementById('meal-type').value;
-  const portion  = Number(document.getElementById('meal-portion').value) || 1;
-  const rawName  = (nameOverride || input.value).trim();
-
-  if (!rawName) {
-    showInputError('음식 이름을 입력해주세요.');
-    return;
-  }
-
-  const analysis = analyzeFood(rawName);
-  if (!analysis) {
-    const closeR = RECIPE_NAMES.filter(n => n.includes(rawName)).slice(0, 3);
-    const closeI = INGREDIENT_NAMES.filter(n => n.includes(rawName)).slice(0, 3);
-    const close  = [...closeR, ...closeI].slice(0, 3);
-    showInputError(close.length
-      ? '"' + rawName + '"을 찾을 수 없습니다. 혹시 ' + close.join(', ') + ' 이신가요?'
-      : '"' + rawName + '"은 현재 지원되지 않는 음식입니다. 자동완성 목록에서 선택해주세요.');
-    return;
-  }
-
-  clearInputError();
-  document.getElementById('step2-error').classList.add('hidden');
-  addedMeals.push({ name: rawName, meal: mealType, portion, analysis: scaleAnalysis(analysis, portion) });
-  if (!nameOverride) input.value = '';
-  renderMealList();
-}
-
-function removeMeal(idx) {
-  addedMeals.splice(idx, 1);
-  renderMealList();
-}
-
-// 끼니 카드의 '+ 추가' → 해당 끼니로 입력창 이동
-function focusMealSlot(slot) {
-  document.getElementById('meal-type').value = slot;
-  const input = document.getElementById('meal-input');
-  input.focus();
-  input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function portionLabel(p) {
-  return { 0.5: '½인분', 1: '1인분', 1.5: '1½인분', 2: '2인분' }[p] || (p + '인분');
-}
-
-// 식재료 구성은 보여주지 않고 음식명·양·칼로리만 간단히 (분석 피드백은 결과 화면에서)
-function renderMealList() {
-  const container = document.getElementById('meal-list');
-  if (!container) return;
-  const total = addedMeals.reduce((s, m) => s + m.analysis.totalCal, 0);
-  document.getElementById('meal-count').textContent = '(' + addedMeals.length + '개)';
-  document.getElementById('meal-total-kcal').textContent = addedMeals.length ? '총 ' + Math.round(total).toLocaleString() + ' kcal' : '';
-
-  container.innerHTML = MEAL_SLOTS.map(slot => {
-    const items = addedMeals.map((m, idx) => ({ ...m, idx })).filter(m => m.meal === slot.id);
-    const kcal = items.reduce((s, m) => s + m.analysis.totalCal, 0);
-    return '<div class="border border-gray-100 rounded-2xl p-4 bg-white shadow-sm">'
-      + '<div class="flex items-center justify-between mb-2">'
-      + '<span class="font-bold text-gray-800 text-sm">' + slot.icon + ' ' + slot.name + '</span>'
-      + '<span class="text-xs text-gray-400">' + (items.length ? Math.round(kcal) + ' kcal' : '') + '</span>'
-      + '</div>'
-      + (items.length
-          ? '<ul class="divide-y divide-gray-50">' + items.map(renderMealItem).join('') + '</ul>'
-          : '<p class="text-xs text-gray-400 py-2">기록 없음</p>')
-      + '<button type="button" onclick="focusMealSlot(\'' + slot.id + '\')" class="mt-2 text-xs text-emerald-700 font-medium hover:underline"><i class="fas fa-plus mr-1"></i>' + slot.name + ' 추가</button>'
-      + '</div>';
-  }).join('');
-}
-
-function renderMealItem(item) {
-  const allergy = findAllergens(item.name, item.analysis, selectedAllergies);
-  return '<li class="flex items-center justify-between gap-2 py-1.5">'
-    + '<div class="min-w-0">'
-    + '<span class="text-sm text-gray-900">' + item.name + '</span>'
-    + (item.portion !== 1 ? '<span class="ml-1 text-xs text-gray-400">' + portionLabel(item.portion) + '</span>' : '')
-    + (allergy.length ? '<span class="ml-1.5 text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-bold" title="알레르기 주의">⚠ ' + allergy.join('·') + '</span>' : '')
-    + '</div>'
-    + '<div class="flex items-center gap-2 flex-shrink-0">'
-    + '<span class="text-xs text-gray-500">' + item.analysis.totalCal + ' kcal</span>'
-    + '<button type="button" onclick="removeMeal(' + item.idx + ')" class="text-gray-300 hover:text-red-400 transition" aria-label="' + item.name + ' 삭제"><i class="fas fa-times-circle"></i></button>'
-    + '</div></li>';
-}
-
-// 입력 오류 메시지
-function showInputError(msg) {
-  const el = document.getElementById('meal-input-error');
-  if (!el) return;
-  const span = el.querySelector('span') || el;
-  span.textContent = msg;
-  el.classList.remove('hidden');
-}
-function clearInputError() {
-  const el = document.getElementById('meal-input-error');
-  if (el) el.classList.add('hidden');
 }
 
 // ══════════════════════════════════════════════
@@ -1083,24 +881,19 @@ function calculatePDI(meals) {
 // ══════════════════════════════════════════════
 // DISPLAY RESULTS
 // ══════════════════════════════════════════════
-// 식사 기록이 있으면 기록 기반(정확), 없으면 설문 기반 예측 식단으로 계산
 // silent: 다시 방문한 사용자의 저장된 응답으로 조용히 다시 계산할 때 (화면 이동·경고 없음)
 function calculateAndShow(silent) {
   const profile = readProfile();
   const profileErr = validateProfile(profile);
   if (profileErr) { if (silent) return; alert(profileErr); goToStep(1); return; }
 
-  const surveyDiet = isSurveyComplete() ? buildSurveyDiet(surveyAnswers) : null;
-  const basis = addedMeals.length ? 'log' : (surveyDiet ? 'survey' : null);
-  if (!basis) { if (silent) return; alert('식습관 설문에 답하거나 식사를 1개 이상 기록해주세요.'); goToStep(2); return; }
+  if (!isSurveyComplete()) { if (silent) return; alert('식습관 설문에 모두 답해주세요.'); goToStep(2); return; }
 
-  const meals = basis === 'log' ? addedMeals : surveyDiet;
+  const meals = buildSurveyDiet(surveyAnswers);
   pdiResult = calculatePDI(meals);
   pdiResult.meals = meals;
-  pdiResult.basis = basis;
-  pdiResult.surveyPDI = (basis === 'log' && surveyDiet) ? calculatePDI(surveyDiet).pdiScore : null;
+  pdiResult.servings = surveyServings(surveyAnswers);
   pdiResult.profile = profile;
-  pdiResult.survey = isSurveyComplete() ? surveyAssessment(surveyAnswers) : null;
   pdiResult.body = bodyIndices(profile);
   pdiResult.phytoScore = calculatePhytoScore(pdiResult.phytoMap, selectedGoals);
   pdiResult.pfs = calculateDietPFS(meals, profile);
@@ -1225,15 +1018,11 @@ function foodGroupIntake(meals) {
 
 function displayResults() {
   const r = pdiResult;
-  // 식사를 기록하지 않았으면 섭취량에 의존하는 지표는 아예 띄우지 않는다
-  const isSurvey = r.basis === 'survey';
 
-  renderTargets(r);      // ① 기준·목표 칼로리 · BMI · 복부비만 · 영양소 목표치
-  renderTips(r);         // ② 목표 관리 팁
-  renderGuide(r);        // ③ 주의사항
-  const sum = document.getElementById('key-summary');
-  if (sum) sum.classList.toggle('hidden', isSurvey);
-  if (!isSurvey) renderKeySummary(r);
+  renderTargets(r);        // ① 기준·목표 칼로리 · BMI · 복부비만 · 영양소 목표치
+  renderDietScore(r.meals, r.servings, r.profile.gender); // ② 식단 점수 · 질환 위험도 · 개선 제안
+  renderTips(r);           // ③ 목표 관리 팁
+  renderGuide(r);          // ④ 주의사항
 
   renderSubscription(r);
   renderSidePick(r);
@@ -1401,21 +1190,31 @@ function subCartToQuoteInput() {
 }
 
 // 부족 판정 — 룰테이블의 「통곡물·채소·단백질 부족」 축
+//   기준은 식단 점수와 같은 것을 씁니다 (통곡물 1회분 90g · 채소 하루 350g)
 //   칼슘은 식재료 DB에 칼슘 함량이 없어 판정하지 않습니다 (룰테이블의 칼슘 열도 사용 안 함)
-function dietLacks(r) {
-  // 설문만 한 경우 — 섭취량을 알 수 없으므로 식생활문진표 문항으로 직접 판정
-  if (r.basis === 'survey' && r.survey) return r.survey.lacks;
+//   기준은 식단 점수와 같은 것을 씁니다 (통곡물 90g = 밥 한 공기 · 채소 하루 3접시)
+function dietLacks(scored) {
+  const serv = scored.components.serv;
   return {
-    wholeGrain: r.intake.wholeGrainPct < 5,
-    veg:        r.intake.vegG < 350,
-    protein:    r.pfs.daily.nutrients.protein < r.pfs.ranges.protein[0],
+    wholeGrain: (serv.wholeGrain || 0) < 90,
+    veg:        (serv.veg || 0) < 3,
+    protein:    (serv.legumes || 0) + (serv.fish || 0) + (serv.egg || 0) < 1,
   };
 }
 
+// 추천 룰테이블의 등급 축 — 식단 점수 등급(위험·보통·안전)을 그대로 씁니다
+const GRADE_OF_TIER = { low: 'poor', mid: 'inter', high: 'ideal' };
+
+function dietGrade(scored) {
+  const o = scored.insufficient ? null : ptOverall(scored);
+  return o ? GRADE_OF_TIER[o.tier.key] : 'inter';
+}
+
 function initSubCart(r) {
-  const lacks = dietLacks(r);
+  const scored = scoreDietPatterns(r.meals, r.servings, r.profile.gender);
+  const lacks = dietLacks(scored);
   subRecommendation = recommendSubscription({
-    grade: r.survey ? r.survey.grade.id : 'inter',
+    grade: dietGrade(scored),
     bmi: r.body.bmi, age: r.profile.age,
     lacks, goals: selectedGoals, allergies: r.profile.allergies,
   });
@@ -1621,76 +1420,6 @@ function renderSubscription(r) {
 }
 
 // ── 기록 요약 — 식사를 기록했을 때만 보여준다 ──
-function renderKeySummary(r) {
-  const el = document.getElementById('key-summary');
-  if (!el) return;
-  const pfs = r.pfs;
-  const eer = pfs.eer;
-  const intake = r.totalCalories;
-  const ratio = eer > 0 ? intake / eer : 0;
-  const n = pfs.daily.nutrients;
-
-  // 칼로리 게이지: 0–150% 눈금, 100% 위치에 기준선
-  let calState, calColor;
-  if (ratio > 1.1)       { calState = '초과 +' + Math.round(intake - eer).toLocaleString() + ' kcal'; calColor = '#EF4444'; }
-  else if (ratio >= 0.8) { calState = '적정';                                                        calColor = '#10B981'; }
-  else                   { calState = '부족 −' + Math.round(eer - intake).toLocaleString() + ' kcal'; calColor = '#F59E0B'; }
-  const gaugeMax = 1.5;
-  const fillPct = Math.min(ratio, gaugeMax) / gaugeMax * 100;
-  const markPct = 1 / gaugeMax * 100;
-
-  // 목표 대비 막대 (target 도달 = 100%)
-  function miniBar(value, target, color) {
-    const pct = target > 0 ? Math.min(value / target, 1) * 100 : 0;
-    return '<div class="h-2 bg-gray-100 rounded-full overflow-hidden mt-2"><div class="h-2 rounded-full" style="width:' + pct + '%;background:' + color + '"></div></div>';
-  }
-  function tile(label, valueHtml, sub, extra) {
-    return '<div class="bg-gray-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 min-w-0">'
-      + '<div class="text-xs font-bold text-gray-500 mb-1">' + label + '</div>'
-      + '<div class="flex items-baseline gap-1 flex-wrap">' + valueHtml + '</div>'
-      + (extra || '')
-      + '<div class="text-xs text-gray-400 mt-1.5">' + sub + '</div>'
-      + '</div>';
-  }
-
-  const protLo = pfs.ranges.protein[0], protHi = pfs.ranges.protein[1];
-  const fibT = pfs.ranges.fiber;
-
-  el.innerHTML =
-    '<h3 class="text-xl font-bold text-gray-900 mb-1">기록한 식사 요약</h3>'
-    + '<p class="text-gray-500 text-sm mb-5">오늘 기록한 식사를 목표치와 비교했습니다</p>'
-
-    + '<div class="rounded-2xl border border-gray-100 p-4 sm:p-5 mb-4">'
-    + '<div class="flex flex-wrap items-end justify-between gap-2 mb-3">'
-    + '<div><div class="text-xs font-bold text-gray-500 mb-1">먹은 칼로리 / 기준 칼로리</div>'
-    + '<div class="text-2xl md:text-3xl font-black text-gray-900">' + Math.round(intake).toLocaleString()
-    + '<span class="text-base font-medium text-gray-400"> / ' + eer.toLocaleString() + ' kcal</span></div></div>'
-    + '<div class="text-right"><span class="text-3xl font-black" style="color:' + calColor + '">' + Math.round(ratio * 100) + '%</span>'
-    + '<div class="text-sm font-bold" style="color:' + calColor + '">' + calState + '</div></div>'
-    + '</div>'
-    + '<div class="relative h-5 bg-gray-100 rounded-full" role="img" aria-label="기준 칼로리 대비 ' + Math.round(ratio * 100) + '%">'
-    + '<div class="absolute inset-y-0 left-0 rounded-full transition-all duration-700" style="width:' + fillPct + '%;background:' + calColor + '"></div>'
-    + '<div class="absolute -top-1 -bottom-1 w-0.5 bg-gray-800" style="left:' + markPct + '%"></div>'
-    + '</div>'
-    + '<div class="relative h-4 mt-1 text-xs text-gray-400">'
-    + '<span class="absolute left-0">0</span>'
-    + '<span class="absolute -translate-x-1/2 font-bold text-gray-600" style="left:' + markPct + '%">기준 100%</span>'
-    + '<span class="absolute right-0">150%</span>'
-    + '</div>'
-    + '</div>'
-
-    + '<div class="grid grid-cols-2 gap-3">'
-    + tile('단백질',
-        '<span class="text-2xl font-black text-emerald-700">' + Math.round(n.protein) + '</span><span class="text-sm text-gray-400">g</span>',
-        '목표 ' + Math.round(protLo) + '–' + Math.round(protHi) + 'g', miniBar(n.protein, protLo, '#6B8E73'))
-    + tile('식이섬유',
-        '<span class="text-2xl font-black text-emerald-700">' + n.fiber.toFixed(1) + '</span><span class="text-sm text-gray-400">g</span>',
-        '목표 ' + Math.round(fibT) + 'g 이상', miniBar(n.fiber, fibT, '#6B8E73'))
-    + '</div>'
-    + '<p class="text-xs text-gray-400 mt-3">단백질·식이섬유는 식재료 칼로리와 식품군으로 계산한 추정치입니다.</p>';
-}
-
-// ── ③ 주의사항 & 관리 가이드 ─────────────────
 function renderGuide(r) {
   const el = document.getElementById('guide-section');
   if (!el) return;
@@ -1701,13 +1430,9 @@ function renderGuide(r) {
   if (r.allergyHits.length) {
     warn.push(['🚫', '알레르기 주의', r.allergyHits.map(h => h.name + '(' + h.allergens.join('·') + ')').join(', ')]);
   }
-  // 칼로리·나트륨처럼 섭취량 기반 경고는 식사 기록이 있을 때만 (설문으로는 양을 알 수 없음)
-  if (r.basis === 'log' && ratio > 1.1) warn.push(['🔥', '칼로리 초과', '기준보다 ' + Math.round(r.totalCalories - r.pfs.eer) + 'kcal 많아요. 간식·가공식품부터 줄여보세요.']);
   if (ps.coveredCount < 6) warn.push(['🥗', '채소·과일 종류 부족', '색이 다른 채소·과일·콩을 번갈아 드시면 영양소 종류가 늘어납니다.']);
   if (r.intake.wholeGrainPct < 5) warn.push(['🌾', '통곡물 섭취 부족', '흰쌀밥을 잡곡밥·현미밥으로 바꿔보세요.']);
-  if (r.intake.vegG < 200) warn.push(['🥬', '채소 섭취 부족', r.basis === 'log'
-    ? '약 ' + Math.round(r.intake.vegG) + 'g — 끼니마다 채소 반찬 1–2접시(하루 350g 이상)를 권장합니다.'
-    : '끼니마다 채소 반찬 1–2접시(하루 350g 이상)를 권장합니다.']);
+  if (r.intake.vegG < 200) warn.push(['🥬', '채소 섭취 부족', '끼니마다 채소 반찬 1–2접시(하루 350g 이상)를 권장합니다.']);
   if (r.intake.fruitG < 100) warn.push(['🍎', '과일 섭취 부족', '하루 1–2회(주먹 1개 크기) 과일을 드세요.']);
   if (!r.categoryMap.legumes) warn.push(['🫘', '콩 식품 미섭취', '두부·된장·콩밥 같은 콩 식품을 끼니에 넣어보세요.']);
   if (r.categoryMap.refined && r.categoryMap.refined.percentage > 40) {
@@ -1788,7 +1513,7 @@ function renderProductGrid() {
 }
 
 // 「다른 음식」 입력용 datalist — 레시피 + 단품 식재료
-// ponytail: 14,715개를 한 번에 넣으면 무거워 상위 2,000개만. 부족하면 입력형 자동완성(initAutocomplete)으로 승격
+// ponytail: 14,715개를 한 번에 넣으면 무거워 상위 2,000개만
 function initPlanFoodList() {
   const dl = document.getElementById('plan-food-list');
   if (!dl) return;
@@ -1798,7 +1523,6 @@ function initPlanFoodList() {
 
 // ── 재시작 ───────────────────────────────────
 function restartAssessment() {
-  addedMeals = [];
   subCart = null;
   tracker.survey = null;
   trackerSave();
@@ -1806,11 +1530,8 @@ function restartAssessment() {
   selectedGoals.clear();
   for (const g of HEALTH_GOALS) if (g.base) selectedGoals.add(g.id);
   pdiResult = null;
-  renderMealList();
   renderSurvey();
-  setInputMode('survey');
   renderHealthGoals();
   goPage('intake');
   goToStep(1);
-  document.getElementById('meal-input').value = '';
 }

@@ -20,7 +20,7 @@ const sandbox = {
   clearTimeout: noop,
 }
 const ctx = vm.createContext(sandbox)
-for (const f of ['recipes', 'foodclass', 'pfs', 'products', 'mealplan', 'tracker', 'app']) {
+for (const f of ['recipes', 'foodclass', 'pfs', 'patterns', 'products', 'mealplan', 'tracker', 'app']) {
   vm.runInContext(read(`public/static/${f}.js`), ctx, { filename: f + '.js' })
 }
 const $ = name => vm.runInContext(name, ctx)
@@ -206,39 +206,128 @@ ok('부족한 것도 목표도 없으면 사유를 아예 달지 않음', () => 
   assert.equal(r.reasons.length, 0)
 })
 
-console.log('\n── 서울대병원 식생활문진표 설문 ──')
-const SQ = $('SURVEY_QUESTIONS'), assess = $('surveyAssessment')
-ok('11문항 적재', () => assert.equal(SQ.length, 11))
-ok('모든 문항에 Ideal(5점) 선택지가 하나씩 있음', () => {
-  for (const q of SQ) assert.equal(q.options.filter(o => o[1] === 5).length, 1, q.id)
+console.log('\n── 식습관 설문 (식품군 1문항 = 1성분) ──')
+const SQ = $('SURVEY_QUESTIONS'), servingsOf = $('surveyServings')
+const pickAll = n => { const a = {}; SQ.forEach(q => a[q.id] = Math.min(n, q.options.length - 1)); return a }
+const least = pickAll(99)      // 마지막 선택지 = 가장 적게 먹는 쪽
+
+ok('문항이 모두 성분에 연결되어 있음', () => {
+  assert.ok(SQ.length >= 15, '문항 ' + SQ.length + '개')
+  const comps = $('PT_SERVING_G')
+  for (const q of SQ) {
+    assert.ok(q.options.every(o => typeof o[1] === 'number'), q.id + ' 선택지에 회분 숫자가 없음')
+    // 짠맛·저지방 비율 문항은 성분이 아니고, 통곡물은 그램, 유제품은 저지방·일반으로 나뉜다
+    if (!q.comp || ['dairyLowRatio', 'wholeGrain', 'dairy'].includes(q.comp)) continue
+    assert.ok(q.comp in comps, q.id + ' → 성분 ' + q.comp + ' 없음')
+  }
 })
-ok('전부 Ideal → 우수', () => {
-  const ans = {}
-  for (const q of SQ) ans[q.id] = q.options.findIndex(o => o[1] === 5)
-  const a = assess(ans)
-  assert.equal(a.idealCount, 11)
-  assert.equal(a.grade.id, 'ideal')
-  assert.equal(a.score, 55)
+
+ok('응답이 환산 없이 그대로 성분이 된다', () => {
+  const ans = { ...least }
+  ans.veg = 0                                               // 채소 5접시 이상
+  ans.wholeGrain = 1                                        // 잡곡 하루 1끼
+  const sv = servingsOf(ans)
+  assert.equal(sv.veg, 5, '채소 5접시 응답이 ' + sv.veg + '로 들어감')
+  assert.equal(sv.wholeGrain, 90, '잡곡 1끼 = 90g')          // 밥 한 공기 = 생곡 90g
+  const scored = $('scoreDietPatterns')($('buildSurveyDiet')(ans), sv)
+  assert.equal(scored.components.serv.veg, 5)
 })
-ok('전부 Poor → 개선 필요', () => {
-  const ans = {}
-  for (const q of SQ) ans[q.id] = q.options.findIndex(o => o[1] === 1)
-  const a = assess(ans)
-  assert.equal(a.idealCount, 0)
-  assert.equal(a.grade.id, 'poor')
+
+ok('커피·차 한 문항이 당뇨 위험 감소 식단에 들어간다', () => {
+  const ans = { ...least }
+  ans.coffeeTea = 1                                         // 1~2잔 → 1.5잔
+  const sv = servingsOf(ans)
+  const scored = $('scoreDietPatterns')($('buildSurveyDiet')(ans), sv, 'female')
+  assert.equal(scored.components.serv.coffeeTea, 1.5)
+  const drrd = scored.patterns.find(p => p.key === 'DRRD')
+  assert.equal(drrd.comps.find(c => c.c === 'coffeeTea').value, 1.5)
 })
-ok('Ideal 5개 → 보통', () => {
-  const ans = {}
-  SQ.forEach((q, i) => { ans[q.id] = q.options.findIndex(o => o[1] === (i < 5 ? 5 : 1)) })
-  assert.equal(assess(ans).grade.id, 'inter')
+
+ok('유제품은 저지방 비율로 나뉜다', () => {
+  const ans = { ...least }
+  ans.dairy = 1                                             // 하루 1회
+  ans.dairyLow = 1                                          // 절반쯤 저지방
+  const sv = servingsOf(ans)
+  assert.equal(sv.dairyLow, 0.5)
+  assert.equal(sv.dairyHigh, 0.5)
 })
-ok('곡류·채소·단백질 문항이 부족 판정으로 이어짐', () => {
-  const ans = {}
-  for (const q of SQ) ans[q.id] = q.options.findIndex(o => o[1] === 5)
-  assert.equal(JSON.stringify(assess(ans).lacks), JSON.stringify({ wholeGrain: false, veg: false, protein: false }))
-  ans.veg = SQ.find(q => q.id === 'veg').options.findIndex(o => o[1] === 1)
-  assert.equal(assess(ans).lacks.veg, true)
+
+console.log('\n── 설문과 점수가 맞물리는지 ──')
+const scoredAll = (ans) => $('scoreDietPatterns')($('buildSurveyDiet')(ans), servingsOf(ans), 'female')
+
+ok('17문항으로 점수 5종이 모두 계산되고, 빈 문항이 없다', () => {
+  assert.equal(SQ.length, 17, '문항 ' + SQ.length + '개')
+  const sc = scoredAll(least)
+  assert.equal(sc.patterns.length, 5)
+  // 모든 문항이 적어도 한 점수를 움직인다 — 답을 바꿔 확인한다.
+  // 기준 답안을 둘 쓴다: 성분값이 기준 범위를 벗어나 있으면 점수가 0이나 1에
+  // 붙어 버려서(나트륨이 이미 4,000mg 을 넘은 경우 등) 한쪽에서만 움직인다.
+  const mid = {}
+  SQ.forEach(q => mid[q.id] = Math.min(1, q.options.length - 1))
+  const pos = a => scoredAll(a).patterns.map(p => p.position)
+  for (const q of SQ) {
+    const moves = [least, mid].some(b => {
+      const base = pos(b), alt = { ...b }
+      alt[q.id] = alt[q.id] === 0 ? q.options.length - 1 : 0
+      return pos(alt).some((v, i) => Math.abs(v - base[i]) > 1e-9)
+    })
+    assert.ok(moves, q.id + ' 문항이 어떤 점수도 움직이지 않음')
+  }
 })
+
+ok('남은 「뺀 항목」은 지방산 조성과 혈당지수뿐', () => {
+  const sc = scoredAll(least)
+  const left = []
+  for (const p of sc.patterns) for (const m of p.missing || []) left.push(m)
+  for (const m of left)
+    assert.ok(m.includes('지방') || m.includes('혈당지수'), '설명 못한 뺀 항목: ' + m)
+})
+
+ok('AHEI·AMED 음주는 논문 기준대로 채점된다', () => {
+  const ahei = $('ptAlcoholAHEI'), amed = $('ptAlcoholAMED')
+  assert.equal(ahei(0, 'female'), 0.25)            // 금주 = 10점 중 2.5점
+  assert.equal(ahei(1, 'female'), 1)               // 하루 1잔 = 만점
+  assert.equal(ahei(2.5, 'female'), 0)             // 과음 = 0점
+  assert.ok(ahei(3, 'male') === 1 || ahei(2, 'male') === 1)
+  assert.equal(amed(1, 'female'), 1)               // 14g = 적정 구간
+  assert.equal(amed(0, 'female'), 0)
+  assert.equal(amed(0.5, 'male'), 0)               // 7g = 남성 기준 미달
+})
+
+ok('개선 제안에 「술을 늘리세요」가 나오지 않는다', () => {
+  const sc = scoredAll(least)
+  const tips = $('dietAdvice')(sc, 5)
+  for (const t of tips)
+    assert.ok(t.comp !== 'alcohol', '제안에 ' + t.comp + ' 가 올라옴')
+})
+
+const gradeOf = ans => {
+  const scored = scoredAll(ans)
+  return { grade: $('dietGrade')(scored), lacks: $('dietLacks')(scored), scored }
+}
+
+ok('좋은 쪽으로 답하면 안전 등급까지 올라간다', () => {
+  const ans = { ...least }
+  for (const id of ['veg', 'fruit', 'wholeGrain', 'fish', 'legumes',
+                    'nuts', 'dairy', 'coffeeTea']) ans[id] = 0
+  ans.dairyLow = 0
+  const g = gradeOf(ans)
+  const avg = g.scored.patterns.reduce((a, p) => a + p.score, 0) / g.scored.patterns.length
+  assert.equal(g.grade, 'ideal', '등급 ' + g.grade + ' (평균 ' + avg.toFixed(0) + '점)')
+  assert.equal(g.lacks.veg, false)
+  assert.equal(g.lacks.wholeGrain, false)
+})
+
+ok('나쁜 쪽으로 답하면 위험 등급·부족 판정', () => {
+  const ans = { ...least }
+  for (const id of ['refinedGrain', 'redMeat', 'processedMeat',
+                    'sweets', 'ssb', 'salty']) ans[id] = 0
+  const g = gradeOf(ans)
+  assert.equal(g.grade, 'poor', '등급 ' + g.grade)
+  assert.equal(g.lacks.veg, true)
+  assert.equal(g.lacks.wholeGrain, true)
+})
+
 console.log('\n── 권장 영양 섭취량 ──')
 const profile = { gender: 'female', age: 35, height: 162, weight: 68, prevWeight: 69, activity: 'low' }
 const targets = $('nutritionTargets')(profile)
@@ -597,7 +686,6 @@ vm.runInContext('calculateAndShow();', ctx)
 ok('설문만으로 PDI·목표 산출', () => {
   const r = $('pdiResult')
   assert.ok(r.pdiScore > 0)
-  assert.equal(r.basis, 'survey')
   assert.ok(r.targets.targetKcal > 0)
   console.log('    설문 PDI ' + r.pdiScore.toFixed(1) + '% · ' + r.targets.bodyType.name
     + ' · 목표 ' + r.targets.targetKcal + ' kcal (EER ' + r.targets.eer + ')')
@@ -642,15 +730,12 @@ ok('② 목표 관리 팁 · ③ 주의사항이 따로 그려짐', () => {
 })
 ok('삭제된 화면이 index.html 에 남아 있지 않음', () => {
   for (const id of ['pdi-ring', 'detail-analysis', 'phyto-score-section', 'pfs-score-section',
-                    'category-chart', 'ingredient-breakdown', 'flow-list', 'rtab-analysis'])
+                    'category-chart', 'ingredient-breakdown', 'flow-list', 'rtab-analysis',
+                    'panel-log', 'tab-log', 'meal-input', 'meal-list', 'quick-chips', 'key-summary'])
     assert.ok(!htmlSrc.includes('id="' + id + '"'), '삭제 안 됨: ' + id)
   // 처음 보는 사람이 알 수 없는 말이 화면에 남아 있지 않아야 한다
   for (const w of ['PDI', 'PFS', '파이토케미컬 다양성'])
     assert.ok(!htmlSrc.includes(w), '내부 용어 노출: ' + w)
-})
-ok('식사를 기록하지 않았으면 섭취량 기반 요약을 띄우지 않음', () => {
-  const sum = sandbox.document.getElementById('key-summary')
-  assert.equal(sum.cls.has('hidden'), true, '설문만 했는데 기록 요약이 보임')
 })
 ok('차류 식품군 보정 — 녹차가 PRF 로 계산됨', () => {
   const ING = $('INGREDIENTS')
@@ -667,22 +752,6 @@ ok('차류 식품군 보정 — 녹차가 PRF 로 계산됨', () => {
   assert.ok(after > before, '녹차를 곁들여도 PDI 가 오르지 않음')
   console.log('    보정 식재료 ' + $('INGREDIENT_CAT_FIXED') + '개 · 녹차 없음 '
     + before.toFixed(1) + '% → 녹차 1잔 ' + after.toFixed(1) + '%')
-})
-
-ok('식사를 기록하면 기록 요약이 보임', () => {
-  vm.runInContext(`
-    addedMeals = [];
-    addMeal('잡곡밥'); addMeal('된장찌개'); addMeal('제육볶음'); addMeal('배추김치'); addMeal('시금치나물');
-    calculateAndShow();
-  `, ctx)
-  const ks = html('key-summary')
-  assert.equal(sandbox.document.getElementById('key-summary').cls.has('hidden'), false, '기록했는데 요약이 숨겨짐')
-  for (const s of ['기록한 식사 요약', '먹은 칼로리 / 기준 칼로리', '단백질', '식이섬유'])
-    assert.ok(ks.includes(s), '기록인데 누락: ' + s)
-  assert.ok(!ks.includes('PDI') && !ks.includes('PFS'), '요약에 내부 용어가 남아 있음')
-  assert.ok(!ks.includes('undefined') && !ks.includes('NaN'))
-  // 설문 상태로 되돌림 (뒤 검사들이 설문 기준으로 이어짐)
-  vm.runInContext('addedMeals = []; calculateAndShow();', ctx)
 })
 
 console.log('\n── 받는 범위 (칼로리 가이드 / 30일 식단) ──')
@@ -1144,6 +1213,116 @@ ok('목표 재조정·식단 재생성·초기화가 오류 없이 동작', () =
   assert.equal($('currentStep'), 1)
   vm.runInContext('trackerReset()', ctx)
   assert.equal($('tracker').plan, null)
+})
+
+
+console.log('\n── 식단 점수 (patterns.js) ──')
+const mkMeals = names => {
+  const analyze = $('analyzeRecipe'), R = $('RECIPES')
+  return names.filter(n => R[n]).map(n => ({ name: n, analysis: analyze(n) }))
+}
+const scoreDiet = $('scoreDietPatterns')
+
+ok('식재료가 성분으로 분류됨 (고기·생선·통곡물·콩)', () => {
+  const cls = $('ptClassify')
+  assert.equal(cls('돼지고기(삼겹살)', 'protein'), 'redMeat')
+  assert.equal(cls('소시지', 'protein'), 'processedMeat')
+  assert.equal(cls('고등어', 'protein'), 'fish')
+  assert.equal(cls('달걀', 'refined'), 'egg')          // cat 이 refined 여도 이름으로 잡는다
+  assert.equal(cls('현미', 'grains'), 'wholeGrain')
+  assert.equal(cls('백미', 'grains'), 'refinedGrain')
+  assert.equal(cls('두부', 'legumes'), 'legumes')
+  assert.equal(cls('콜라', 'tea'), 'ssb')
+  assert.equal(cls('커피(분말)', 'tea'), 'coffeeTea')
+  // 밥스누 제품은 cat 이 모두 bobsnu — 제품명으로 성분을 가른다
+  assert.equal(cls('약콩차', 'bobsnu'), 'coffeeTea')
+  assert.equal(cls('파이토100', 'bobsnu'), 'other')
+  assert.equal(cls('약콩두유', 'bobsnu'), 'legumes')
+})
+
+ok('5가지 점수가 0~100 범위로 계산됨', () => {
+  const s = scoreDiet(mkMeals(['쌀밥', '된장국', '고등어구이', '시금치나물']))
+  assert.equal(s.patterns.length, 5)   // 가중치 방식 2종은 설문 상한이 있어야 계산된다
+  for (const p of s.patterns) {
+    assert.ok(p.score >= 0 && p.score <= 100, p.key + ' 점수 범위 이탈: ' + p.score)
+    assert.ok(p.tier && p.tier.label, p.key + ' 등급 없음')
+  }
+})
+
+ok('기록이 적으면 점수를 내지 않는다', () => {
+  // 「줄여야 하는 항목」은 안 먹으면 만점이 나오므로 하루치가 안 되면 점수를 숨긴다
+  assert.equal(scoreDiet([]).insufficient, true)
+  assert.equal(scoreDiet(mkMeals(['쌀밥'])).insufficient, true)
+  assert.equal(scoreDiet(mkMeals(['쌀밥', '된장국', '고등어구이', '시금치나물'])).insufficient, false)
+})
+
+ok('채소·통곡물·콩 위주 식단이 가공식품 식단보다 높음', () => {
+  const good = scoreDiet(mkMeals(['잡곡밥', '두부된장국', '두부조림', '시금치나물', '겉절이']))
+  const bad  = scoreDiet(mkMeals(['식빵', '소시지야채볶음', '감자튀김']))
+  const avg  = s => s.patterns.reduce((a, p) => a + p.score, 0) / s.patterns.length
+  assert.ok(avg(good) > avg(bad) + 5, '좋은 식단 ' + avg(good).toFixed(0) + ' vs 가공 식단 ' + avg(bad).toFixed(0))
+})
+
+ok('개선 제안에 밥스누 제품이 붙는다', () => {
+  const tips = $('dietAdvice')(scoreDiet(mkMeals(['식빵', '소시지야채볶아', '감자튀김'])), 6)
+  const withProd = tips.filter(t => t.product)
+  assert.ok(withProd.length, '제품 제안이 하나도 없음')
+  for (const t of withProd) assert.equal(t.product.length, 2)   // [제품명, 실행 문구]
+  // 상위 3개에 제품이 걸리지 않는 식단도 제품 제안을 하나는 받는다
+  const t3 = $('dietAdvice')(scoreDiet(mkMeals(['쌀밥', '된장국', '고든어구이', '시금치나무'])), 3)
+  assert.ok(t3.some(t => t.product), '제품 제안 보강이 안 됨')
+  // 채소·과일·통곡물은 제품으로 대신하지 않는다
+  const sug = $('PT_PRODUCT_SUGGEST')
+  for (const c of ['veg', 'fruit', 'wholeGrain', 'fish']) assert.equal(sug[c], undefined, c)
+})
+
+ok('점수 띠가 위험·보통·안전 구역과 내 위치를 보여준다', () => {
+  const bar = $('ptScoreBar')(35, '#C0392B')
+  for (const w of ['위험', '보통', '안전']) assert.ok(bar.includes(w), '구역 이름 누락: ' + w)
+  assert.ok(bar.includes('left:35%'), '내 위치 표시가 없음')
+  // 구역 폭 합이 100% (경계 40 / 60)
+  const widths = [...bar.matchAll(/width:(\d+)%/g)].map(m => +m[1])
+  assert.equal(widths.slice(0, 3).reduce((a, b) => a + b, 0), 100)
+})
+
+ok('설문으로 5가지 점수가 모두 계산됨 (WCRF/AICR 만 자료 필요)', () => {
+  const ans = {}, SQ2 = $('SURVEY_QUESTIONS')
+  SQ2.forEach(q => ans[q.id] = Math.min(1, q.options.length - 1))
+  const s = $('scoreDietPatterns')($('buildSurveyDiet')(ans), $('surveyServings')(ans))
+  assert.equal(s.patterns.length, 5)
+  for (const p of s.patterns) assert.ok(p.score >= 0 && p.score <= 100, p.key + ' ' + p.score)
+  assert.deepEqual(Object.keys(s.pending), ['WCRF/AICR'])
+  assert.ok(s.pending['WCRF/AICR'].need)
+})
+
+ok('개선 제안이 부족한 항목을 찍고 오를 점수를 함께 준다', () => {
+  const s = scoreDiet(mkMeals(['쌀밥', '소시지야채볶음']))
+  const tips = $('dietAdvice')(s, 3)
+  assert.equal(tips.length, 3)
+  for (const t of tips) {
+    assert.ok(t.label && t.hint, '제안에 설명이 없음')
+    assert.ok(t.gain > 0, t.label + ' 의 예상 상승폭이 ' + t.gain)
+    assert.ok(t.affects.length, t.label + ' 에 영향받는 점수가 없음')
+    assert.ok(['up', 'down'].includes(t.direction))
+  }
+})
+
+ok('결과 화면에 식단 점수 영역이 그려짐', () => {
+  vm.runInContext('calculateAndShow(true)', ctx)
+  const sec = html('diet-score-section')
+  assert.ok(sec.includes('식단 점수'), '제목이 없음')
+  assert.ok(sec.includes('내 식단 등급'), '합산 등급 영역이 없음')
+  assert.ok(sec.includes('이렇게 바꾸면'), '개선 제안이 없음')
+  assert.ok(!sec.includes('<svg'), '없앤 위험도 그림이 아직 남아 있음')
+})
+
+ok('합산 등급이 점수 5종의 평균 위치로 나온다', () => {
+  const s = scoreDiet(mkMeals(['쌀밥', '시금치나물']))
+  const o = $('ptOverall')(s)
+  const avg = s.patterns.reduce((a, p) => a + p.position, 0) / s.patterns.length
+  assert.equal(o.score, Math.round(avg * 100))
+  assert.ok(['위험', '보통', '안전'].includes(o.tier.label), o.tier.label)
+  assert.equal($('dietGrade')(s), { low: 'poor', mid: 'inter', high: 'ideal' }[o.tier.key])
 })
 
 console.log('\n✅ ' + pass + '개 검사 통과\n')

@@ -5,7 +5,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 
 const read = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8')
 
-const SCRIPTS = ['recipes', 'foodclass', 'pfs', 'products', 'mealplan', 'tracker', 'app']
+const SCRIPTS = ['recipes', 'foodclass', 'pfs', 'patterns', 'products', 'mealplan', 'tracker', 'app']
 // 줄바꿈(LF/CRLF)에 영향받지 않도록 정규식으로 태그 블록을 찾는다
 const tagRe = new RegExp(SCRIPTS.map(n => `<script src="/static/${n}\\.js"></script>`).join('\\s*'))
 const html = read('public/index.html')

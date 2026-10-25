@@ -360,78 +360,17 @@
       </div>
     </div>
 
-    <!-- Step 2: 식습관 설문 / 식사 기록 -->
+    <!-- Step 2: 식습관 설문 -->
     <div id="step-2" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6 hidden animate-fade-in">
       <h3 class="text-xl font-bold text-gray-900 mb-1"><span class="text-emerald-700">Step 2</span> · 식습관 입력</h3>
       <p class="text-gray-500 text-sm mb-5">
-        처음에는 <span class="text-emerald-700 font-medium">간단한 설문</span>으로 평소 식습관을 예측하고,
-        <span class="text-emerald-700 font-medium">매일 식사를 기록</span>하면 더 정확하게 계산됩니다.
+        식품군별 문항에 답하면 평소 식습관을 식단 점수로 바꿔 보여드립니다.
       </p>
-
-      <!-- 모드 탭 -->
-      <div class="flex gap-2 mb-6 bg-gray-100 p-1 rounded-2xl">
-        <button id="tab-survey" onclick="setInputMode('survey')" class="flex-1 py-2.5 rounded-xl text-sm font-bold transition">📝 식습관 설문 <span class="font-normal opacity-75">(예측)</span></button>
-        <button id="tab-log" onclick="setInputMode('log')" class="flex-1 py-2.5 rounded-xl text-sm font-bold transition">🍽 오늘 식사 기록 <span class="font-normal opacity-75">(정확)</span></button>
-      </div>
 
       <!-- 설문 -->
       <div id="panel-survey">
         <div id="survey-questions" class="space-y-4"></div>
-        <p class="text-xs text-gray-400 mt-4">※ 서울대학교병원 식생활문진표를 바탕으로 한 문항입니다. 응답은 대표 음식으로 환산해 계산합니다.</p>
-      </div>
-
-      <!-- 식사 기록 -->
-      <div id="panel-log" class="hidden">
-        <div class="bg-gray-50 rounded-2xl p-4 md:p-5 mb-5">
-          <div class="flex flex-col sm:flex-row gap-3">
-            <div class="flex gap-3">
-              <div class="flex-1 sm:flex-none">
-                <label for="meal-type" class="block text-xs font-semibold text-gray-500 mb-1.5">식사</label>
-                <select id="meal-type" class="w-full h-12 px-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800 bg-white text-sm font-medium">
-                  <option value="breakfast">🌅 아침</option>
-                  <option value="lunch">☀️ 점심</option>
-                  <option value="dinner">🌙 저녁</option>
-                  <option value="snack">🍪 간식</option>
-                </select>
-              </div>
-              <div class="flex-1 sm:flex-none">
-                <label for="meal-portion" class="block text-xs font-semibold text-gray-500 mb-1.5">양</label>
-                <select id="meal-portion" class="w-full h-12 px-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800 bg-white text-sm font-medium">
-                  <option value="0.5">½ 인분</option>
-                  <option value="1" selected>1 인분</option>
-                  <option value="1.5">1½ 인분</option>
-                  <option value="2">2 인분</option>
-                </select>
-              </div>
-            </div>
-            <div class="flex-1 relative">
-              <label for="meal-input" class="block text-xs font-semibold text-gray-500 mb-1.5">음식 검색</label>
-              <div class="relative">
-                <input id="meal-input" type="text" placeholder="예: 비빔밥, 된장찌개, 사과..." autocomplete="off"
-                  class="w-full h-12 pl-4 pr-10 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800 text-sm bg-white"/>
-                <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 text-sm"></i>
-                <ul id="autocomplete-list" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto"></ul>
-              </div>
-            </div>
-            <div class="flex items-end">
-              <button onclick="addMeal()" class="w-full sm:w-auto h-12 px-6 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-medium text-sm transition">
-                <i class="fas fa-plus mr-1"></i>추가
-              </button>
-            </div>
-          </div>
-          <p id="meal-input-error" class="hidden mt-2 text-sm text-red-500"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
-          <div class="mt-3 flex flex-wrap gap-2 items-center">
-            <span class="text-xs text-gray-400">자주 먹는 음식:</span>
-            <span id="quick-chips" class="contents"></span>
-          </div>
-        </div>
-
-        <!-- 끼니별 기록 -->
-        <div class="flex items-center justify-between mb-3">
-          <h4 class="font-bold text-gray-800 text-sm">오늘의 식사 <span id="meal-count" class="text-emerald-700">(0개)</span></h4>
-          <span id="meal-total-kcal" class="text-xs text-gray-500"></span>
-        </div>
-        <div id="meal-list" class="grid sm:grid-cols-2 gap-3"></div>
+        <p class="text-xs text-gray-400 mt-4">※ 서울대학교병원 식생활문진표의 빈도 선택지 형식에, 식단 점수가 쓰는 식품군 단위를 맞춘 문항입니다. 응답은 그대로 점수에 들어갑니다.</p>
       </div>
 
       <p id="step2-error" class="hidden mt-4 text-sm text-red-500"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
@@ -472,12 +411,12 @@
       <h2 class="text-3xl mb-2">나의 분석</h2>
     </div>
     <div class="grid lg:grid-cols-3 gap-5 md:gap-6 items-start">
-      <!-- 본문: ① 목표치 ② 관리 팁 ③ 주의사항 -->
+      <!-- 본문: ① 목표치 ② 식단 점수·질환 위험도 ③ 관리 팁 ④ 주의사항 -->
       <div class="lg:col-span-2 space-y-5">
-        <div id="target-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
-        <div id="tips-section"   class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
+        <div id="target-section"     class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
+        <div id="diet-score-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
+        <div id="tips-section"       class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
         <div id="guide-section"  class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
-        <div id="key-summary"    class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
       </div>
       <!-- 사이드: 제품 추천 받기 -->
       <aside class="space-y-4">
@@ -580,6 +519,7 @@
 <script src="/static/recipes.js"></script>
 <script src="/static/foodclass.js"></script>
 <script src="/static/pfs.js"></script>
+<script src="/static/patterns.js"></script>
 <script src="/static/products.js"></script>
 <script src="/static/mealplan.js"></script>
 <script src="/static/tracker.js"></script>
