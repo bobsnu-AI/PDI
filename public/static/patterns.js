@@ -384,8 +384,86 @@ function dietAdvice(scored, limit) {
 // ══════════════════════════════════════════════
 let ptScored = null;        // 마지막 계산 결과
 
+// ── 질환 위험비 (Wang P 외. Nat Med 2023;29:719-728 Table 2, 다변량 보정) ──
+// 점수 상위 10%와 하위 10%를 비교한 위험비입니다. 사람마다 다시 계산하는 값이
+// 아니고, 「이 점수가 그 질환과 얼마나 강하게 묶이는지」의 세기로만 씁니다.
+const PT_DISEASE_HR = {
+  'AHEI-2010': { cvd: 0.77, diabetes: 0.62, cancer: 0.94 },
+  'DASH':      { cvd: 0.81, diabetes: 0.66, cancer: 0.94 },
+  'hPDI':      { cvd: 0.84, diabetes: 0.70, cancer: 0.94 },
+  'AMED':      { cvd: 0.80, diabetes: 0.71, cancer: 0.92 },
+  'DRRD':      { cvd: 0.73, diabetes: 0.56, cancer: 0.92 },
+};
+
+// ── 논문 집단의 점수 분포 (같은 논문 Table 1) ──────
+// 1분위 중앙값이 곧 10백분위, 5분위 중앙값이 곧 90백분위입니다.
+// min·max 는 Methods 에 적힌 성분 수 × 성분별 배점입니다.
+//   AHEI-2010 11성분 × 0~10점 · AMED 9성분 × 0~1점
+//   hPDI 18군 × 1~5점 · DASH 8성분 × 1~5점 · DRRD 9성분 × 1~5점
+// 이 분포로 우리 0~1 축을 논문 축에 맞춥니다. 한국인 분포가 아니라
+// 미국 간호사·의료인 20만 5천여 명의 분포이고, 화면에도 그렇게 적습니다.
+const PT_PAPER_SCORE = {
+  'AHEI-2010': { p10: 39.0, p90: 65.0, min: 0,  max: 110 },
+  'DASH':      { p10: 17.9, p90: 29.1, min: 8,  max: 40  },
+  'hPDI':      { p10: 47.2, p90: 62.5, min: 18, max: 90  },
+  'AMED':      { p10: 2.3,  p90: 6.4,  min: 0,  max: 9   },
+  'DRRD':      { p10: 20.6, p90: 33.4, min: 9,  max: 45  },
+};
+
+// 내 점수 위치를 「논문 10백분위 = 0, 90백분위 = 1」 축으로 옮깁니다.
+// 논문이 보고한 구간 밖은 양 끝에 붙입니다 — 관측하지 않은 범위로는 늘리지 않습니다.
+function ptPaperPos(key, position) {
+  const b = PT_PAPER_SCORE[key];
+  if (!b) return position;
+  const span = b.max - b.min;
+  const lo = (b.p10 - b.min) / span, hi = (b.p90 - b.min) / span;
+  return Math.max(0, Math.min(1, (position - lo) / (hi - lo)));
+}
+
+const PT_DISEASE_LABELS = [
+  { key: 'cvd',      name: '심혈관질환',    note: '심근경색·뇌졸중 등' },
+  { key: 'diabetes', name: '2형당뇨',       note: '' },
+  { key: 'cancer',   name: '암 전체',       note: '' },
+];
+
+// ── 질환별 등급과 내 위험비 ───────────────────
+// 질환마다 관련이 깊은 점수에 더 큰 몫을 줘서 묶습니다.
+//   가중치  w = |ln(위험비)| — 위험비가 1.0 에서 멀수록 큰 값입니다.
+//   내 위치 P = Σ(w · 논문축 위치) ÷ Σw        (ptPaperPos 로 옮긴 위치)
+//   묶은 위험비 HR = exp( Σ(w·ln 위험비) ÷ Σw )   (가중 기하평균)
+//   내 위험비    = HR^P
+//     P = 0 이면 1.00(논문 하위 10% 집단), P = 1 이면 논문의 상위 10% 값입니다.
+//     논문이 관측한 구간 안에만 머물러서, 1.00 을 넘거나 HR 아래로는 가지 않습니다.
+//
+// ※ 가정 하나가 들어갑니다 — 구간 안에서 점수와 위험이 로그 직선 관계라고 봅니다.
+//   논문은 상위 10%와 하위 10%만 비교해 보고했고, 그 사이는 보고하지 않았습니다.
+//   화면에도 이 가정을 적습니다. 진단이나 발병 확률이 아닙니다.
+//
+// ※ 기준 집단이 한국인이 아닙니다. 논문 집단(미국 간호사·의료인)의 점수 분포를
+//   그대로 썼습니다. 한국인 분포 자료가 모이면 PT_PAPER_SCORE 만 바꾸면 됩니다.
+function diseaseGrades(scored) {
+  const out = [];
+  for (const d of PT_DISEASE_LABELS) {
+    let sumW = 0, sumP = 0, sumLn = 0, strongest = null;
+    for (const p of scored.patterns) {
+      const hr = (PT_DISEASE_HR[p.key] || {})[d.key];
+      if (!hr) continue;
+      const w = Math.abs(Math.log(hr));
+      sumW += w; sumP += w * ptPaperPos(p.key, p.position); sumLn += w * Math.log(hr);
+      if (!strongest || hr < strongest.hr) strongest = { hr, name: p.name, key: p.key };
+    }
+    if (!sumW) continue;
+    const position = sumP / sumW;
+    const groupHr = Math.exp(sumLn / sumW);
+    const myHr = Math.pow(groupHr, position);
+    out.push({ ...d, position, score: Math.round(position * 100), tier: ptTier(position),
+               groupHr, myHr, pct: Math.round((1 - myHr) * 100), strongest });
+  }
+  return out;
+}
+
 // ── 합산 결과 ────────────────────────────────
-// 점수 5종의 평균 위치를 위험·보통·안전 띠의 한 점으로 보여줍니다.
+// 점수 5종의 평균 위치 — 제품 추천의 등급 축에 씁니다.
 function ptOverall(scored) {
   const ps = scored.patterns;
   if (!ps.length) return null;
@@ -433,7 +511,7 @@ function renderDietScore(meals, servings, gender) {
 
   const s = ptScored;
   const tips = dietAdvice(s, 3);
-  const overall = ptOverall(s);
+  const diseases = diseaseGrades(s);
 
   // ① 점수 카드
   const cards = s.patterns.map(p =>
@@ -446,6 +524,24 @@ function renderDietScore(meals, servings, gender) {
     + (p.missing.length
         ? '<div class="text-xs text-gray-400 mt-2">기록으로 알 수 없어 뺀 항목: ' + p.missing.join(', ') + '</div>'
         : '')
+    + '</div>').join('');
+
+  // ② 질환별 등급 카드
+  const diseaseCards = diseases.map(d =>
+    '<div class="rounded-2xl border p-4" style="border-color:var(--line)">'
+    + '<div class="flex items-baseline justify-between mb-1">'
+    + '<span class="text-sm font-bold text-gray-800">' + d.name + '</span>'
+    + '<span class="text-xl font-black" style="color:' + d.tier.color + '">' + d.tier.label + '</span></div>'
+    + '<div class="text-xs text-gray-400 mb-2">' + (d.note || '&nbsp;') + '</div>'
+    + ptScoreBar(d.score, d.tier.color)
+    + '<div class="flex items-baseline justify-between mt-3">'
+    + '<span class="text-xs text-gray-500">내 위험비</span>'
+    + '<span class="text-sm font-bold" style="color:' + d.tier.color + '">' + d.myHr.toFixed(2)
+    + ' <span class="font-normal text-gray-500">'
+    + (d.pct > 0 ? '(' + d.pct + '% 낮음)' : '(차이 없음)') + '</span></span>'
+    + '</div>'
+    + '<div class="text-xs text-gray-400 mt-1">하위 10% 집단이 1.00, 상위 10% 집단이 '
+    + d.groupHr.toFixed(2) + ' · 가장 크게 반영한 점수 ' + d.strongest.name + '</div>'
     + '</div>').join('');
 
   // ③ 개선 제안
@@ -469,13 +565,18 @@ function renderDietScore(meals, servings, gender) {
     + '<p class="text-gray-500 text-sm mb-5">여러 연구에서 쓰이는 식단 평가 방법으로 채점했습니다. 띠에서 내 위치가 왼쪽이면 위험, 오른쪽이면 안전입니다</p>'
     + '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">' + cards + '</div>'
 
-    + '<h3 class="text-xl font-bold text-gray-900 mb-1">내 식단 등급</h3>'
-    + '<p class="text-gray-500 text-sm mb-3">위 점수를 모두 합친 결과입니다</p>'
-    + '<div class="rounded-2xl border p-4 sm:p-5 mb-8" style="border-color:var(--line)">'
-    + '<div class="flex items-baseline justify-between mb-3">'
-    + '<span class="text-2xl font-black" style="color:' + overall.tier.color + '">' + overall.tier.label + '</span>'
-    + '<span class="text-sm font-bold text-gray-400">' + overall.score + '점</span></div>'
-    + ptScoreBar(overall.score, overall.tier.color)
+    + '<h3 class="text-xl font-bold text-gray-900 mb-1">질환별 등급</h3>'
+    + '<p class="text-gray-500 text-sm mb-3">논문 집단의 점수 분포에서 내가 어디인지로 냈습니다. '
+    + '하위 10% 집단이 1.00 이고, 낮을수록 그 질환이 적었던 쪽입니다</p>'
+    + '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">' + diseaseCards + '</div>'
+    + '<div class="rounded-2xl p-4 text-xs mb-8" style="background:var(--tint);color:var(--deep)">'
+    + '<b>기준 집단이 한국인이 아닙니다.</b> 내 점수가 어디쯤인지는 '
+    + '논문이 조사한 집단(미국 간호사·의료인 20만 5천여 명)의 점수 분포에 맞춰 계산했습니다. '
+    + '한국인 분포로 보면 위치가 달라질 수 있습니다.'
+    + '<br><br><b>가정 하나가 들어갑니다.</b> 근거 논문(Wang P 외. Nat Med. 2023;29:719–728)은 '
+    + '점수 상위 10%가 하위 10%보다 그 질환이 얼마나 적었는지만 보고했고 그 사이는 보고하지 '
+    + '않았습니다. 그래서 그 구간에서 점수와 위험이 로그 직선 관계라고 보고 「내 위험비 = '
+    + '상위 10% 위험비 ^ 내 위치」로 채웠습니다. 발병 확률이나 진단이 아닙니다.'
     + '</div>'
 
     + '<h3 class="text-xl font-bold text-gray-900 mb-1">이렇게 바꾸면 올라갑니다</h3>'

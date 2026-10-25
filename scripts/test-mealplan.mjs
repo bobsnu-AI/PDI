@@ -1311,9 +1311,83 @@ ok('결과 화면에 식단 점수 영역이 그려짐', () => {
   vm.runInContext('calculateAndShow(true)', ctx)
   const sec = html('diet-score-section')
   assert.ok(sec.includes('식단 점수'), '제목이 없음')
-  assert.ok(sec.includes('내 식단 등급'), '합산 등급 영역이 없음')
+  assert.ok(sec.includes('질환별 등급'), '질환별 등급 영역이 없음')
+  for (const n of ['심혈관질환', '2형당뇨', '암 전체'])
+    assert.ok(sec.includes(n), n + ' 칸이 없음')
+  assert.ok(sec.includes('Nat Med'), '출처 표기가 없음')
   assert.ok(sec.includes('이렇게 바꾸면'), '개선 제안이 없음')
   assert.ok(!sec.includes('<svg'), '없앤 위험도 그림이 아직 남아 있음')
+})
+
+ok('질환별 등급은 위험비가 센 점수를 더 크게 반영한다', () => {
+  const s = scoreDiet(mkMeals(['쌀밥', '시금치나물']))
+  const ds = $('diseaseGrades')(s)
+  assert.equal(ds.length, 3)
+  // 2형당뇨에서 가장 크게 반영되는 점수는 DRRD (위험비 0.56)
+  const dm = ds.find(d => d.key === 'diabetes')
+  assert.equal(dm.strongest.key, 'DRRD')
+  // 손으로 계산한 가중 평균과 같다 (위치는 논문 축으로 옮긴 값)
+  const hr = { 'AHEI-2010': 0.62, DASH: 0.66, hPDI: 0.70, AMED: 0.71, DRRD: 0.56 }
+  const pp = $('ptPaperPos')
+  let sw = 0, sp = 0
+  for (const p of s.patterns) {
+    const w = Math.abs(Math.log(hr[p.key]))
+    sw += w; sp += w * pp(p.key, p.position)
+  }
+  assert.ok(Math.abs(dm.position - sp / sw) < 1e-12, dm.position + ' vs ' + sp / sw)
+  // 암은 지표 간 위험비 차이가 작아 가중치가 당뇨보다 고르다
+  const spread = k => {
+    const w = s.patterns.map(x => Math.abs(Math.log($('PT_DISEASE_HR')[x.key][k])))
+    return Math.max(...w) / Math.min(...w)
+  }
+  assert.ok(spread('cancer') < spread('diabetes'), '암 가중치가 당뇨보다 고르지 않음')
+  // 가중 평균이므로 언제나 지표 위치들 사이에 있다
+  const ps = s.patterns.map(x => pp(x.key, x.position))
+  for (const d of ds)
+    assert.ok(d.position >= Math.min(...ps) - 1e-12 && d.position <= Math.max(...ps) + 1e-12,
+      d.key + ' 위치가 지표 범위 밖 ' + d.position)
+  for (const d of ds) assert.ok(['위험', '보통', '안전'].includes(d.tier.label), d.tier.label)
+})
+
+ok('내 위치는 논문 집단의 10~90백분위 구간으로 옮겨진다', () => {
+  const band = $('PT_PAPER_SCORE')
+  const pp = $('ptPaperPos')
+  for (const [k, b] of Object.entries(band)) {
+    const span = b.max - b.min
+    const lo = (b.p10 - b.min) / span, hi = (b.p90 - b.min) / span
+    // 논문 10백분위에 서면 0, 90백분위에 서면 1
+    assert.ok(Math.abs(pp(k, lo) - 0) < 1e-12, k + ' 10백분위')
+    assert.ok(Math.abs(pp(k, hi) - 1) < 1e-12, k + ' 90백분위')
+    // 가운데는 0.5
+    assert.ok(Math.abs(pp(k, (lo + hi) / 2) - 0.5) < 1e-12, k + ' 중간')
+    // 논문이 관측하지 않은 밖은 양 끝에 붙인다
+    assert.equal(pp(k, 0), 0, k + ' 0 은 최하')
+    assert.equal(pp(k, 1), 1, k + ' 1 은 최상')
+    // 구간이 축 전체보다 좁다 — 좁은데 1.0 으로 가정하면 기울기가 깎인다
+    assert.ok(hi - lo < 0.5, k + ' 구간 폭 ' + (hi - lo))
+  }
+  // 알 수 없는 점수는 그대로 통과시킨다
+  assert.equal(pp('없는점수', 0.33), 0.33)
+})
+
+ok('내 위험비는 하위 10% 를 1.00 으로 둔 보간값', () => {
+  const s = scoreDiet(mkMeals(['쌀밥', '시금치나물']))
+  for (const d of $('diseaseGrades')(s)) {
+    // 정의 그대로인지
+    assert.ok(Math.abs(d.myHr - Math.pow(d.groupHr, d.position)) < 1e-12, d.key)
+    // 묶은 위험비는 논문 값들 사이에 있다
+    assert.ok(d.groupHr > 0.5 && d.groupHr < 1, d.key + ' 집단 위험비 ' + d.groupHr)
+    // 논문이 관측한 범위를 넘지 않는다 — 1.00 초과도, 상위 10% 미만도 없다
+    assert.ok(d.myHr <= 1 && d.myHr >= d.groupHr, d.key + ' HR=' + d.myHr)
+    // 점수가 높을수록 위험비가 낮다
+    assert.equal(d.pct, Math.round((1 - d.myHr) * 100))
+  }
+  // 2형당뇨가 암보다 강하게 묶인다 (논문 위험비가 더 낮음)
+  const ds = $('diseaseGrades')(s)
+  assert.ok(ds.find(d => d.key === 'diabetes').groupHr < ds.find(d => d.key === 'cancer').groupHr)
+  // 양 끝값 — 최상위면 논문 값 그대로, 최하위면 1.00
+  assert.ok(Math.abs(Math.pow(0.64, 1) - 0.64) < 1e-12)
+  assert.equal(Math.pow(0.64, 0), 1)
 })
 
 ok('합산 등급이 점수 5종의 평균 위치로 나온다', () => {
