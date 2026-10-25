@@ -402,7 +402,8 @@ function setGender(g) {
 // 허리둘레는 평소 입는 바지 사이즈(인치)로 받아 cm 로 환산한다 — 줄자가 없어도 답할 수 있게
 //   1 인치 = 2.54 cm. 복부비만 기준(남 90 cm·여 85 cm)은 약 35.4 인치·33.5 인치에 해당
 function waistCmFromInch(inch) {
-  return inch > 0 ? Math.round(inch * 2.54 * 10) / 10 : undefined;
+  // 안 고른 경우는 반드시 null — undefined 면 validateProfile 의 범위 검사에 걸립니다
+  return inch > 0 ? Math.round(inch * 2.54 * 10) / 10 : null;
 }
 // ══════════════════════════════════════════════
 function renderWaistOptions() {

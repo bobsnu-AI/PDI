@@ -568,7 +568,7 @@ function renderDietScore(meals, servings, gender) {
     + '<h3 class="text-xl font-bold text-gray-900 mb-1">질환별 등급</h3>'
     + '<p class="text-gray-500 text-sm mb-3">논문 집단의 점수 분포에서 내가 어디인지로 냈습니다. '
     + '하위 10% 집단이 1.00 이고, 낮을수록 그 질환이 적었던 쪽입니다</p>'
-    + '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">' + diseaseCards + '</div>'
+    + '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">' + diseaseCards + '</div>'
     + '<div class="rounded-2xl p-4 text-xs mb-8" style="background:var(--tint);color:var(--deep)">'
     + '<b>기준 집단이 한국인이 아닙니다.</b> 내 점수가 어디쯤인지는 '
     + '논문이 조사한 집단(미국 간호사·의료인 20만 5천여 명)의 점수 분포에 맞춰 계산했습니다. '

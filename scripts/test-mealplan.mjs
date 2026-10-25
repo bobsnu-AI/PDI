@@ -1319,6 +1319,20 @@ ok('결과 화면에 식단 점수 영역이 그려짐', () => {
   assert.ok(!sec.includes('<svg'), '없앤 위험도 그림이 아직 남아 있음')
 })
 
+ok('바지 사이즈를 안 골라도 결과를 낼 수 있다', () => {
+  const w = $('waistCmFromInch'), v = $('validateProfile')
+  // 「모르겠어요」는 null 이어야 합니다. undefined 면 범위 검사에 걸려 결과가 막힙니다
+  assert.strictEqual(w(null), null, '안 고른 경우가 null 이 아님')
+  assert.strictEqual(w(0), null)
+  assert.equal(w(34), 86.4)
+  const p = { gender: 'female', age: 45, height: 162, weight: 64, activity: 'low', allergies: new Set() }
+  assert.equal(v({ ...p, waist: w(null) }), null, '허리둘레 없이 막힘')
+  assert.equal(v({ ...p, waist: w(34) }), null)
+  // 범위를 벗어난 값은 그대로 걸러야 합니다
+  assert.ok(v({ ...p, waist: 300 }), '범위 밖인데 통과함')
+  assert.ok(v({ ...p, age: null }), '필수 항목이 비었는데 통과함')
+})
+
 ok('질환별 등급은 위험비가 센 점수를 더 크게 반영한다', () => {
   const s = scoreDiet(mkMeals(['쌀밥', '시금치나물']))
   const ds = $('diseaseGrades')(s)
