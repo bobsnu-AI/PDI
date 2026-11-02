@@ -503,9 +503,9 @@ function renderDietScore(meals, servings, gender) {
   if (ptScored.insufficient) {
     el.innerHTML =
       '<h3 class="text-xl font-bold text-gray-900 mb-1">식단 점수</h3>'
-      + '<p class="text-gray-500 text-sm mb-4">여러 연구에서 쓰이는 식단 평가 방법으로 채점해 드립니다</p>'
+      + '<p class="text-gray-500 text-sm mb-4">여러 연구에서 쓰이는 식단 평가 방법으로 채점해 드려요</p>'
       + '<div class="rounded-2xl p-4 text-sm" style="background:var(--tint);color:var(--deep)">'
-      + '하루 먹은 것을 더 기록해 주세요. 지금 기록만으로는 점수가 실제보다 높게 나옵니다.</div>';
+      + '하루 먹은 것을 더 기록해 주세요. 지금 기록만으로는 점수가 실제보다 높게 나와요.</div>';
     return;
   }
 
@@ -519,7 +519,7 @@ function renderDietScore(meals, servings, gender) {
     + '<div class="flex items-baseline justify-between mb-1">'
     + '<span class="text-sm font-bold text-gray-800">' + p.name + '</span>'
     + '<span class="text-2xl font-black" style="color:' + p.tier.color + '">' + p.score + '</span></div>'
-    + '<div class="text-xs text-gray-400 mb-2">' + p.key + ' · ' + p.tier.label + '</div>'
+    + '<div class="text-xs text-gray-400 mb-2">' + p.tier.label + '</div>'
     + ptScoreBar(p.score, p.tier.color)
     + (p.missing.length
         ? '<div class="text-xs text-gray-400 mt-2">기록으로 알 수 없어 뺀 항목: ' + p.missing.join(', ') + '</div>'
@@ -534,14 +534,11 @@ function renderDietScore(meals, servings, gender) {
     + '<span class="text-xl font-black" style="color:' + d.tier.color + '">' + d.tier.label + '</span></div>'
     + '<div class="text-xs text-gray-400 mb-2">' + (d.note || '&nbsp;') + '</div>'
     + ptScoreBar(d.score, d.tier.color)
-    + '<div class="flex items-baseline justify-between mt-3">'
-    + '<span class="text-xs text-gray-500">내 위험비</span>'
-    + '<span class="text-sm font-bold" style="color:' + d.tier.color + '">' + d.myHr.toFixed(2)
-    + ' <span class="font-normal text-gray-500">'
-    + (d.pct > 0 ? '(' + d.pct + '% 낮음)' : '(차이 없음)') + '</span></span>'
+    + '<div class="text-xs mt-3" style="color:' + d.tier.color + '">'
+    + (d.pct > 0
+        ? '같은 점수대 사람들은 식습관이 가장 나쁜 쪽보다 <b>' + d.pct + '% 적었어요</b>'
+        : '식습관이 가장 나쁜 쪽과 차이가 없어요')
     + '</div>'
-    + '<div class="text-xs text-gray-400 mt-1">하위 10% 집단이 1.00, 상위 10% 집단이 '
-    + d.groupHr.toFixed(2) + ' · 가장 크게 반영한 점수 ' + d.strongest.name + '</div>'
     + '</div>').join('');
 
   // ③ 개선 제안
@@ -550,7 +547,7 @@ function renderDietScore(meals, servings, gender) {
     + '<div class="flex items-center justify-between gap-2 mb-1">'
     + '<span class="text-sm font-bold" style="color:var(--deep)">' + t.label + '</span>'
     + '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-white" style="color:var(--deep)">최대 +' + t.gain + '점</span></div>'
-    + '<div class="text-lg font-black text-gray-900">' + t.now + ' <span class="text-sm font-bold text-gray-400">→ '
+    + '<div class="text-lg font-black text-gray-900">' + t.now + t.unit + ' <span class="text-sm font-bold text-gray-400">→ '
     + t.target + t.unit + ' ' + (t.direction === 'up' ? '늘리기' : '줄이기') + '</span></div>'
     + '<div class="text-xs text-gray-600 mt-1">' + t.hint + '</div>'
     + (t.product
@@ -561,25 +558,35 @@ function renderDietScore(meals, servings, gender) {
     + '</div>').join('');
 
   el.innerHTML =
-    '<h3 class="text-xl font-bold text-gray-900 mb-1">식단 점수</h3>'
-    + '<p class="text-gray-500 text-sm mb-5">여러 연구에서 쓰이는 식단 평가 방법으로 채점했습니다. 띠에서 내 위치가 왼쪽이면 위험, 오른쪽이면 안전입니다</p>'
-    + '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">' + cards + '</div>'
+    // ① 먼저 할 일 — 사용자가 결과에서 가장 알고 싶은 것입니다
+    '<h3 class="text-xl font-bold text-gray-900 mb-1">먼저 이것부터 바꿔보세요</h3>'
+    + '<p class="text-gray-500 text-sm mb-4">지금 식습관에서 가장 아쉬운 세 가지예요. '
+    + '이렇게 바꾸면 아래 점수가 올라가요</p>'
+    + '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">' + tipCards + '</div>'
+    + '<button type="button" onclick="goPage(\'plan\')" class="w-full mt-4 py-3.5 bg-emerald-700 '
+    + 'text-white text-sm font-bold">이걸 채우는 제품 구성 보기</button>'
 
+    // ② 점수
+    + '<h3 class="text-xl font-bold text-gray-900 mt-10 mb-1">식단 점수</h3>'
+    + '<p class="text-gray-500 text-sm mb-5">여러 연구에서 쓰이는 식단 평가 방법으로 채점했어요. 띠에서 내 위치가 왼쪽이면 위험, 오른쪽이면 안전이에요</p>'
+    + '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-10">' + cards + '</div>'
+
+    // ③ 질환별 등급 — 등급은 보여주고, 계산 설명은 접어둡니다
     + '<h3 class="text-xl font-bold text-gray-900 mb-1">질환별 등급</h3>'
-    + '<p class="text-gray-500 text-sm mb-3">논문 집단의 점수 분포에서 내가 어디인지로 냈습니다. '
-    + '하위 10% 집단이 1.00 이고, 낮을수록 그 질환이 적었던 쪽입니다</p>'
+    + '<p class="text-gray-500 text-sm mb-3">식습관이 비슷한 사람들에게서 그 질환이 얼마나 적었는지예요</p>'
     + '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">' + diseaseCards + '</div>'
-    + '<div class="rounded-2xl p-4 text-xs mb-8" style="background:var(--tint);color:var(--deep)">'
+    + '<details class="rounded-2xl p-4 text-xs" style="background:var(--tint);color:var(--deep)">'
+    + '<summary class="cursor-pointer font-bold">이 등급은 어떻게 계산했나요</summary>'
+    + '<div class="mt-3">'
     + '<b>기준 집단이 한국인이 아닙니다.</b> 내 점수가 어디쯤인지는 '
-    + '논문이 조사한 집단(미국 간호사·의료인 20만 5천여 명)의 점수 분포에 맞춰 계산했습니다. '
-    + '한국인 분포로 보면 위치가 달라질 수 있습니다.'
+    + '논문이 조사한 집단(미국 간호사·의료인 20만 5천여 명)의 점수 분포에 맞춰 계산했어요. '
+    + '한국인 분포로 보면 위치가 달라질 수 있어요.'
     + '<br><br><b>가정 하나가 들어갑니다.</b> 근거 논문(Wang P 외. Nat Med. 2023;29:719–728)은 '
     + '점수 상위 10%가 하위 10%보다 그 질환이 얼마나 적었는지만 보고했고 그 사이는 보고하지 '
-    + '않았습니다. 그래서 그 구간에서 점수와 위험이 로그 직선 관계라고 보고 「내 위험비 = '
-    + '상위 10% 위험비 ^ 내 위치」로 채웠습니다. 발병 확률이나 진단이 아닙니다.'
-    + '</div>'
-
-    + '<h3 class="text-xl font-bold text-gray-900 mb-1">이렇게 바꾸면 올라갑니다</h3>'
-    + '<p class="text-gray-500 text-sm mb-4">점수를 가장 많이 깎은 항목부터 보여드립니다</p>'
-    + '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">' + tipCards + '</div>';
+    + '않았어요. 그래서 그 구간에서 점수와 위험이 로그 직선 관계라고 보고 「내 위험비 = '
+    + '상위 10% 위험비 ^ 내 위치」로 채웠어요. 발병 확률이나 진단이 아니에요.'
+    + '<br><br>' + diseases.map(d => d.name + ' — 내 위험비 ' + d.myHr.toFixed(2)
+        + ' (하위 10% 집단 1.00, 상위 10% 집단 ' + d.groupHr.toFixed(2)
+        + ' · 가장 크게 반영한 점수 ' + d.strongest.name + ')').join('<br>')
+    + '</div></details>';
 }

@@ -11,60 +11,61 @@
     //   한곳에서 전체 색을 바꿉니다. 클래스 이름은 그대로 두고 색만 달라집니다.
     tailwind.config = { theme: { extend: { colors: {
       emerald: {
-        50:  '#F4F8F5', 100: '#E8F2EA', 200: '#D3E3D6', 300: '#B3CDB8',
-        400: '#8FB296', 500: '#6B8E73', 600: '#5C7D64', 700: '#2C5530',
-        800: '#234426', 900: '#1A331D', 950: '#0F1F11',
+        50:  '#F2F6F3', 100: '#E2EDE6', 200: '#C4D9CD', 300: '#9BBFAC',
+        400: '#6E9B84', 500: '#4A7C63', 600: '#2F5F48', 700: '#1B4332',
+        800: '#143227', 900: '#0D231A', 950: '#06130E',
       },
       gray: {
-        50:  '#FAF9F7', 100: '#F2F0EC', 200: '#E6E3DD', 300: '#D2CEC6',
-        400: '#A8A49C', 500: '#8A8680', 600: '#6B6862', 700: '#4F4D48',
-        800: '#36352F', 900: '#23221E', 950: '#141310',
+        50:  '#F8F8F6', 100: '#F1F1ED', 200: '#E4E2DC', 300: '#CCC9C1',
+        400: '#A09D95', 500: '#7A776F', 600: '#5C5952', 700: '#43403B',
+        800: '#2E2C28', 900: '#1A1916', 950: '#0D0C0B',
       },
     } } } };
   </script>
   <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
-
     :root {
-      --deep:   #2C5530;   /* 제목·큰 숫자 */
-      --sage:   #6B8E73;   /* 버튼·아이콘·강조 */
-      --muted:  #8A9F8E;   /* 보조 설명 */
-      --tint:   #E8F2EA;   /* 옅은 초록 배경 */
-      --cream:  #F9F7F4;   /* 따뜻한 오프화이트 섹션 */
-      --line:   rgba(107, 142, 115, 0.2);   /* 카드 테두리 */
+      --deep:   #1B4332;   /* 제목·큰 숫자 — 파이토100 상자의 초록 */
+      --sage:   #2F5F48;   /* 버튼·강조 */
+      --muted:  #5C5952;   /* 보조 설명 */
+      --tint:   #F2F6F3;   /* 옅은 초록 배경 */
+      --cream:  #F6F6F3;   /* 섹션 구분용 */
+      --line:   #E4E2DC;   /* 카드 테두리 */
     }
 
-    body { font-family: 'Noto Sans KR', sans-serif; background: #FEFEFE; color: #4F4D48; }
+    body { font-family: Pretendard Variable, Pretendard, system-ui, sans-serif;
+           background: #FFFFFF; color: #43403B; letter-spacing: -0.01em; }
 
-    /* 레퍼런스는 제목이 굵지 않고 크고 가볍습니다 — font-black/bold 를 전역으로 눌러줍니다 */
-    h1, h2, .text-4xl, .text-5xl { font-weight: 400 !important; letter-spacing: -0.02em; color: var(--deep); }
-    h1.font-black, h2.font-black, .text-4xl.font-black, .text-5xl.font-black { font-weight: 400 !important; }
-    h3, .text-3xl { font-weight: 500; letter-spacing: -0.01em; }
+    /* 숫자가 많은 화면이라 자릿수가 흔들리지 않게 고정폭 숫자를 씁니다 */
+    body { font-variant-numeric: tabular-nums; }
+
+    /* 제목 — 크되 굵지 않게. Pretendard 는 600 에서 가장 또렷합니다 */
+    h1, h2, .text-4xl, .text-5xl { font-weight: 600 !important; letter-spacing: -0.035em;
+                                   line-height: 1.18; color: var(--deep); }
+    h1.font-black, h2.font-black, .text-4xl.font-black, .text-5xl.font-black { font-weight: 600 !important; }
+    h3, .text-3xl { font-weight: 600; letter-spacing: -0.025em; }
+    p { line-height: 1.7; }
+
+    /* 키보드로 다닐 때 지금 어디인지 보이게 */
+    :focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; border-radius: 4px; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
 
     /* 버튼은 전부 알약 모양 */
     button, .btn, a.inline-flex, button.rounded-xl, button.rounded-2xl { border-radius: 9999px !important; }
     /* 수량 ± 같은 작은 정사각 버튼은 원형이어도 자연스러워 그대로 둡니다 */
 
     /* 카드 — 그림자 대신 얇은 테두리 */
-    .card-hover { transition: all 0.2s; }
-    .card-hover:hover { transform: translateY(-2px); border-color: var(--sage); }
+    .card-hover { transition: border-color 0.2s; }
+    .card-hover:hover { border-color: var(--sage); }
     .shadow-md, .shadow-lg, .shadow-sm, .shadow { box-shadow: none !important; border: 1px solid var(--line); }
+    .rounded-3xl { border-radius: 1rem; }
+    .rounded-2xl { border-radius: .75rem; }
 
-    .gradient-green { background: linear-gradient(135deg, #2C5530 0%, #3E6B44 60%, #6B8E73 100%); }
-    .hero-bg { background: linear-gradient(140deg, #F4F8F5 0%, #E8F2EA 55%, #DCEADF 100%); color: var(--deep); }
-    /* 히어로가 밝아졌으므로 그 안의 흰 글자를 어두운 초록으로 */
-    .hero-bg .text-white, .hero-bg h1 { color: var(--deep) !important; }
-    .hero-bg .text-emerald-100 { color: #5B5953 !important; }      /* 본문 */
-    .hero-bg .text-emerald-300 { color: var(--muted) !important; }  /* 작은 라벨 */
-    .hero-bg .text-emerald-400 { color: var(--sage) !important; }   /* 제목 강조 줄 */
-    .hero-bg .text-emerald-200 { color: #5B5953 !important; }       /* 카드 항목명 */
-    .hero-bg .bg-emerald-800 { background: #FFFFFF !important; border: 1px solid var(--line); }
-    .hero-bg .bg-emerald-800 span { color: var(--sage) !important; }
-    .hero-bg .bg-emerald-900\/50 { background: #FFFFFF !important; border: 1px solid var(--line); }
-    .hero-bg .bg-emerald-800\/60, .hero-bg .bg-emerald-800\/40 { background: var(--tint) !important; }
-    .hero-bg .border-emerald-400 { border-color: var(--sage) !important; }
+    .gradient-green { background: #143227; }
 
     .food-chip { transition: all 0.2s; cursor: pointer; }
     .food-chip:hover { transform: scale(1.03); }
@@ -80,6 +81,14 @@
   .nav-btn:hover { color:var(--deep); background:var(--tint); }
   .nav-btn.active { color:var(--deep); background:var(--tint); font-weight:700; }
   /* 받는 범위 선택 카드 — 전역 알약 모양에서 제외 */
+  /* 흐름 — 모바일은 한 장씩 넘기고, 넓은 화면에서는 네 단계를 한눈에 보여줍니다 */
+  @media (min-width: 768px) {
+    .flow-track { display:grid; grid-template-columns:repeat(4,1fr); gap:1.25rem; text-align:left !important; }
+    .flow-panel.hidden { display:block; }
+    .flow-panel { padding-left:1rem; border-left:2px solid var(--line); }
+    /* 네 단계가 다 보이므로 아래 점 줄은 같은 말의 반복입니다 */
+    .flow-arrow, .flow-dots { display:none !important; }
+  }
   /* 흐름 패널의 점 */
   .flow-dot { padding:.35rem .75rem; border-radius:9999px; color:var(--muted); background:#fff; border:1px solid var(--line); }
   .flow-dot.active { color:#fff; background:var(--deep); border-color:var(--deep); font-weight:700; }
@@ -141,56 +150,67 @@
 <!-- ══ 페이지: 서비스 소개 (첫 진입) ══ -->
 <div id="page-home" class="page">
 <!-- Hero Section -->
-<section class="hero-bg text-white py-20 px-4">
+<section class="py-16 md:py-24 px-4">
   <div class="max-w-6xl mx-auto">
-    <div class="grid md:grid-cols-2 gap-12 items-center">
-      <div>
-        <div class="inline-flex items-center bg-emerald-800 rounded-full px-4 py-1.5 mb-6">
-          <span class="text-emerald-300 text-xs font-medium">🎓 서울대학교 식의학유전체실 연구 기반</span>
-        </div>
-        <h1 class="text-4xl md:text-5xl font-black leading-tight mb-6">
-          굶지 않고<br>
-          <span class="text-emerald-400">먹는 것부터</span><br>
-          바꿉니다
-        </h1>
-        <p class="text-emerald-100 text-lg mb-8 leading-relaxed">
-          지금 식습관에 맞춰 하루 목표 칼로리와 끼니 가이드를 알려드립니다.
+    <div class="grid md:grid-cols-12 gap-10 md:gap-14 items-start">
+      <div class="md:col-span-7">
+        <h1 class="text-4xl md:text-5xl mb-5">내 식습관 점수,<br class="hidden sm:block"> 2분이면 나와요</h1>
+        <p class="text-gray-600 text-lg mb-9 max-w-xl">
+          질문 17개에 답하면 연구에서 쓰는 다섯 가지 기준으로 채점해 드려요.
+          어디를 바꾸면 좋을지도 함께 알려드려요.
         </p>
-        <div class="flex flex-wrap gap-4">
-          <button onclick="startService()" class="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-full text-lg font-bold transition">
-            무료로 시작하기
+        <div class="flex flex-wrap items-center gap-4">
+          <button onclick="startService()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-8 py-4 rounded-full text-base font-semibold transition">
+            진단 시작하기
           </button>
-          <a href="#service" class="border border-emerald-400 text-emerald-300 px-8 py-4 rounded-full text-lg font-medium hover:bg-emerald-800 transition">
-            어떻게 하나요?
-          </a>
+          <a href="#service" class="text-gray-600 hover:text-emerald-700 px-2 py-4 font-medium transition">어떻게 하나요</a>
         </div>
-        <p class="text-emerald-400 text-xs mt-5">가입 없이 2분 · 기록은 내 기기에만 저장됩니다</p>
+        <p class="text-gray-400 text-sm mt-5">가입은 필요 없고, 기록은 내 기기에만 저장돼요.</p>
+        <div class="flex flex-wrap gap-x-10 gap-y-5 mt-10 pt-8" style="border-top:1px solid var(--line)">
+          <div>
+            <div class="text-2xl font-semibold" style="color:var(--deep)">17<span class="text-sm font-normal ml-0.5">문항</span></div>
+            <div class="text-sm text-gray-500 mt-0.5">평소 먹는 대로만 답하면 돼요</div>
+          </div>
+          <div>
+            <div class="text-2xl font-semibold" style="color:var(--deep)">5<span class="text-sm font-normal ml-0.5">가지</span></div>
+            <div class="text-sm text-gray-500 mt-0.5">연구에서 쓰는 식단 점수</div>
+          </div>
+          <div>
+            <div class="text-2xl font-semibold" style="color:var(--deep)">3<span class="text-sm font-normal ml-0.5">가지</span></div>
+            <div class="text-sm text-gray-500 mt-0.5">질환별 등급</div>
+          </div>
+        </div>
       </div>
-      <div class="flex justify-center">
-        <div class="bg-emerald-900/50 backdrop-blur rounded-3xl p-7 max-w-sm w-full">
-          <p class="text-emerald-300 text-xs mb-1">예시 · 35세 여성 162 cm 68 kg</p>
-          <h3 class="text-white font-bold text-lg mb-5">이런 결과를 받습니다</h3>
-          <div class="bg-emerald-800/60 rounded-2xl p-4 mb-3">
-            <div class="flex items-end justify-between">
-              <div>
-                <p class="text-emerald-300 text-xs">지금 체중</p>
-                <p class="text-white font-black text-2xl">68.0<span class="text-sm font-medium"> kg</span></p>
-              </div>
-              <div class="text-emerald-400 pb-1">→</div>
-              <div class="text-right">
-                <p class="text-emerald-300 text-xs">목표 체중</p>
-                <p class="text-emerald-400 font-black text-2xl">57.7<span class="text-sm font-medium"> kg</span></p>
-              </div>
+
+      <!-- 받게 되는 결과를 그대로 보여줍니다 — 이 띠가 이 서비스의 신호입니다 -->
+      <div class="md:col-span-5">
+        <div class="rounded-2xl p-6 sm:p-7 bg-white" style="border:1px solid var(--line)">
+          <p class="text-sm text-gray-400 mb-5">예시 · 45세 여성</p>
+          <div class="mb-6">
+            <div class="flex items-baseline justify-between mb-2">
+              <span class="text-sm font-semibold text-gray-800">건강 식생활 지수</span>
+              <span class="text-3xl font-bold" style="color:#1E8449">61</span>
+            </div>
+            <div class="flex h-2.5 rounded-full overflow-hidden relative">
+              <div style="width:40%;background:#F4D7D2"></div>
+              <div style="width:20%;background:#F8EBC8"></div>
+              <div style="width:40%;background:#D5E9DA"></div>
+              <div class="absolute top-0 bottom-0" style="left:61%;transform:translateX(-50%);width:4px;border-radius:2px;background:#1E8449;box-shadow:0 0 0 2px #fff"></div>
+            </div>
+            <div class="flex mt-1.5 text-xs text-gray-400">
+              <span style="width:40%">위험</span>
+              <span style="width:20%;text-align:center">보통</span>
+              <span style="width:40%;text-align:right">안전</span>
             </div>
           </div>
-          <div class="space-y-2.5">
-            <div class="flex items-center justify-between bg-emerald-800/40 rounded-xl px-4 py-2.5">
-              <span class="text-emerald-200 text-sm">하루 목표 칼로리</span>
-              <span class="text-white font-bold text-sm">1,642 kcal</span>
+          <div class="space-y-3 pt-5" style="border-top:1px solid var(--line)">
+            <div class="flex items-baseline justify-between">
+              <span class="text-sm text-gray-500">먼저 바꿀 것</span>
+              <span class="text-sm font-semibold text-gray-800">붉은 고기 줄이기</span>
             </div>
-            <div class="flex items-center justify-between bg-emerald-800/40 rounded-xl px-4 py-2.5">
-              <span class="text-emerald-200 text-sm">일주일 예상 감량</span>
-              <span class="text-white font-bold text-sm">0.45 kg</span>
+            <div class="flex items-baseline justify-between">
+              <span class="text-sm text-gray-500">하루 목표 칼로리</span>
+              <span class="text-sm font-semibold text-gray-800">1,642 kcal</span>
             </div>
           </div>
         </div>
@@ -200,46 +220,42 @@
 </section>
 
 <!-- 서비스 흐름 (순환) -->
-<section id="service" class="py-16 bg-white border-b">
-  <div class="max-w-3xl mx-auto px-4">
-    <div class="text-center mb-10">
-      <h2 class="text-3xl font-black text-gray-900 mb-2">이렇게 돌아갑니다</h2>
-      <p class="text-gray-500 text-sm">기록이 쌓이면 추천이 다시 맞춰집니다</p>
+<section id="service" class="py-16 md:py-20" style="background:var(--cream)">
+  <div class="max-w-4xl mx-auto px-4">
+    <div class="mb-10">
+      <h2 class="text-3xl mb-2">이렇게 이용해요</h2>
+      <p class="text-gray-500">기록이 쌓이면 추천이 다시 맞춰져요</p>
     </div>
 
-    <div class="rounded-3xl p-6 sm:p-10" style="border:1px solid var(--line)">
+    <div class="rounded-2xl p-6 sm:p-8 bg-white" style="border:1px solid var(--line)">
       <div class="flex items-center gap-3 sm:gap-6">
-        <button onclick="shiftFlow(-1)" class="w-10 h-10 flex-shrink-0 text-gray-400 hover:text-emerald-700 hover:bg-gray-50 text-xl" aria-label="이전">‹</button>
-        <div class="flex-1 min-w-0 text-center">
+        <button onclick="shiftFlow(-1)" class="flow-arrow w-10 h-10 flex-shrink-0 text-gray-400 hover:text-emerald-700 hover:bg-gray-50 text-xl" aria-label="이전">‹</button>
+        <div class="flow-track flex-1 min-w-0 text-center">
           <div id="flow-0" class="flow-panel">
-            <div class="text-5xl mb-3">📝</div>
-            <div class="text-emerald-700 text-xs font-bold mb-1">1단계</div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">설문</h3>
-            <p class="text-gray-500 text-sm">키·체중과 평소 식습관을 묻습니다</p>
+            <div class="text-2xl font-semibold mb-3" style="color:var(--muted)">1</div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">설문</h3>
+            <p class="text-gray-500 text-sm">키·체중과 평소 식습관을 물어요</p>
           </div>
           <div id="flow-1" class="flow-panel hidden">
-            <div class="text-5xl mb-3">🔍</div>
-            <div class="text-emerald-700 text-xs font-bold mb-1">2단계</div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">진단</h3>
-            <p class="text-gray-500 text-sm">하루 목표 칼로리와 부족한 영양이 나옵니다</p>
+            <div class="text-2xl font-semibold mb-3" style="color:var(--muted)">2</div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">진단</h3>
+            <p class="text-gray-500 text-sm">하루 목표 칼로리와 부족한 영양이 나와요</p>
           </div>
           <div id="flow-2" class="flow-panel hidden">
-            <div class="text-5xl mb-3">🍱</div>
-            <div class="text-emerald-700 text-xs font-bold mb-1">3단계</div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">추천과 설계</h3>
-            <p class="text-gray-500 text-sm">제품 구성과 끼니별 칼로리를 알려드립니다</p>
+            <div class="text-2xl font-semibold mb-3" style="color:var(--muted)">3</div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">추천과 설계</h3>
+            <p class="text-gray-500 text-sm">제품 구성과 끼니별 칼로리를 알려드려요</p>
           </div>
           <div id="flow-3" class="flow-panel hidden">
-            <div class="text-5xl mb-3">✍️</div>
-            <div class="text-emerald-700 text-xs font-bold mb-1">4단계</div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">섭취와 기록</h3>
-            <p class="text-gray-500 text-sm">먹은 것과 체중을 기록하면 <b class="text-emerald-700">2단계부터 다시</b> 맞춰 드립니다</p>
+            <div class="text-2xl font-semibold mb-3" style="color:var(--muted)">4</div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">섭취와 기록</h3>
+            <p class="text-gray-500 text-sm">먹은 것과 체중을 기록하면 <b class="text-emerald-700">2단계부터 다시</b> 맞춰 드려요</p>
           </div>
         </div>
-        <button onclick="shiftFlow(1)" class="w-10 h-10 flex-shrink-0 text-gray-400 hover:text-emerald-700 hover:bg-gray-50 text-xl" aria-label="다음">›</button>
+        <button onclick="shiftFlow(1)" class="flow-arrow w-10 h-10 flex-shrink-0 text-gray-400 hover:text-emerald-700 hover:bg-gray-50 text-xl" aria-label="다음">›</button>
       </div>
 
-      <div class="flex flex-wrap justify-center items-center gap-1.5 mt-8 text-xs">
+      <div class="flow-dots flex flex-wrap justify-center items-center gap-1.5 mt-8 text-xs">
         <button id="flowdot-0" onclick="setFlow(0)" class="flow-dot active">설문</button>
         <span class="text-gray-300">›</span>
         <button id="flowdot-1" onclick="setFlow(1)" class="flow-dot">진단</button>
@@ -255,13 +271,25 @@
 
 <!-- 제품 구독 -->
 <section id="products" class="py-16 bg-white">
-  <div class="max-w-6xl mx-auto px-4">
-    <div class="text-center mb-12">
-      <h2 class="text-3xl font-black text-gray-900 mb-4">한 끼를 대신하는 밥스누 제품</h2>
-      <p class="text-gray-600 max-w-2xl mx-auto">한 끼를 대신하면 칼로리는 낮추고 단백질·칼슘은 채울 수 있습니다. 품목과 수량은 진단 결과에 따라 달라집니다</p>
+  <div class="max-w-5xl mx-auto px-4">
+    <div class="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+      <div class="rounded-3xl overflow-hidden" style="border:1px solid var(--line)">
+        <img src="static/img/phyto100.jpg" alt="밥스누 파이토100 상자와 채소" class="w-full h-full object-cover" loading="lazy">
+      </div>
+      <div>
+        <h2 class="text-3xl mb-4">한 끼를 대신하는 밥스누 제품</h2>
+        <p class="text-gray-600 mb-6 leading-relaxed">한 끼를 대신하면 칼로리는 낮추고 단백질·칼슘은 채울 수 있어요.</p>
+        <ul class="space-y-2.5 mb-7 text-sm">
+          <li class="flex gap-3"><span class="text-emerald-700">약콩두유</span><span class="text-gray-500">9종 · 한 팩 190 mL</span></li>
+          <li class="flex gap-3"><span class="text-emerald-700">파이토100</span><span class="text-gray-500">채소·과일 분말 한 포</span></li>
+          <li class="flex gap-3"><span class="text-emerald-700">약콩 프로틴바</span><span class="text-gray-500">간식 대신 한 개</span></li>
+        </ul>
+        <p class="text-gray-500 text-sm mb-6">어떤 품목을 몇 개 받을지는 <b class="text-gray-700">진단 결과에 따라</b> 정해져요. 알레르기 품목은 진단할 때 고르시면 추천에서 빠져요.</p>
+        <button onclick="startService()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-7 py-3.5 rounded-full font-bold transition">
+          내 구성 확인하기
+        </button>
+      </div>
     </div>
-    <div id="product-grid" class="grid md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
-    <p class="text-center text-gray-400 text-xs mt-8">알레르기 품목은 진단할 때 고르시면 추천에서 빠집니다</p>
   </div>
 </section>
 
@@ -273,7 +301,7 @@
   <div class="max-w-4xl mx-auto px-4">
     <div class="text-center mb-10">
       <h2 class="text-3xl mb-3">체중 진단 시작</h2>
-      <p class="text-gray-500 max-w-xl mx-auto text-sm">세 단계만 입력하시면 하루 목표 칼로리와 관리 계획을 계산해 드립니다. 입력한 내용은 내 기기에만 저장됩니다</p>
+      <p class="text-gray-500 max-w-xl mx-auto text-sm">세 단계만 입력하시면 하루 목표 칼로리와 관리 계획을 계산해 드려요. 입력한 내용은 내 기기에만 저장돼요</p>
     </div>
 
     <!-- Steps Indicator -->
@@ -297,14 +325,14 @@
     <!-- Step 1: Profile -->
     <div id="step-1" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6 animate-fade-in">
       <h3 class="text-xl font-bold text-gray-900 mb-1"><span class="text-emerald-700">Step 1</span> · 기본 프로필</h3>
-      <p class="text-gray-500 text-sm mb-6">나에게 맞는 <span class="text-emerald-700 font-medium">기준 칼로리</span>를 계산하기 위한 정보입니다.</p>
+      <p class="text-gray-500 text-sm mb-6">나에게 맞는 <span class="text-emerald-700 font-medium">기준 칼로리</span>를 계산하는 데 쓰는 정보예요.</p>
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="col-span-2">
           <label class="block text-sm font-medium text-gray-700 mb-2">성별</label>
           <div class="flex gap-3">
-            <button id="gender-male" onclick="setGender('male')" class="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-medium hover:border-emerald-500 transition">남성 👨</button>
-            <button id="gender-female" onclick="setGender('female')" class="flex-1 py-3 rounded-xl border-2 border-emerald-500 bg-emerald-50 text-gray-700 font-medium hover:border-emerald-500 transition">여성 👩</button>
+            <button id="gender-male" onclick="setGender('male')" class="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-medium hover:border-emerald-500 transition">남성</button>
+            <button id="gender-female" onclick="setGender('female')" class="flex-1 py-3 rounded-xl border-2 border-emerald-500 bg-emerald-50 text-gray-700 font-medium hover:border-emerald-500 transition">여성</button>
           </div>
         </div>
         <div>
@@ -347,7 +375,7 @@
       <!-- 알레르기 -->
       <div class="mt-6">
         <label class="block text-sm font-medium text-gray-700 mb-1">알레르기 <span class="text-gray-400 font-normal">(해당 항목 모두 선택)</span></label>
-        <p class="text-xs text-gray-400 mb-3">선택한 알레르기 식품이 포함된 음식·제품은 결과에서 경고로 표시됩니다</p>
+        <p class="text-xs text-gray-400 mb-3">선택한 알레르기 식품이 포함된 음식·제품은 결과에서 경고로 표시돼요</p>
         <div id="allergy-chips" class="flex flex-wrap gap-2"></div>
       </div>
 
@@ -355,7 +383,7 @@
 
       <div class="mt-6 flex justify-end">
         <button onclick="submitProfile()" class="bg-emerald-700 text-white px-8 py-3 rounded-xl font-medium hover:bg-emerald-800 transition">
-          다음 <i class="fas fa-arrow-right ml-2"></i>
+          다음
         </button>
       </div>
     </div>
@@ -364,13 +392,13 @@
     <div id="step-2" class="bg-white rounded-3xl shadow-lg p-6 md:p-8 mb-6 hidden animate-fade-in">
       <h3 class="text-xl font-bold text-gray-900 mb-1"><span class="text-emerald-700">Step 2</span> · 식습관 입력</h3>
       <p class="text-gray-500 text-sm mb-5">
-        식품군별 문항에 답하면 평소 식습관을 식단 점수로 바꿔 보여드립니다.
+        식품군별 문항에 답하면 평소 식습관을 식단 점수로 바꿔 보여드려요.
       </p>
 
       <!-- 설문 -->
       <div id="panel-survey">
         <div id="survey-questions" class="space-y-4"></div>
-        <p class="text-xs text-gray-400 mt-4">※ 서울대학교병원 식생활문진표의 빈도 선택지 형식에, 식단 점수가 쓰는 식품군 단위를 맞춘 문항입니다. 응답은 그대로 점수에 들어갑니다.</p>
+        <p class="text-xs text-gray-400 mt-4">※ 서울대학교병원 식생활문진표의 빈도 선택지 형식에, 식단 점수가 쓰는 식품군 단위를 맞춘 문항이에요. 응답은 그대로 점수에 들어가요.</p>
       </div>
 
       <p id="step2-error" class="hidden mt-4 text-sm text-red-500"><i class="fas fa-exclamation-circle mr-1"></i><span></span></p>
@@ -380,7 +408,7 @@
           <i class="fas fa-arrow-left mr-2"></i>이전
         </button>
         <button onclick="submitDietInput()" class="bg-emerald-700 text-white px-8 py-3 rounded-xl font-medium hover:bg-emerald-800 transition">
-          다음 <i class="fas fa-arrow-right ml-2"></i>
+          다음
         </button>
       </div>
     </div>
@@ -422,15 +450,15 @@
       <aside class="space-y-4">
         <div class="bg-emerald-700 rounded-3xl p-6 md:p-7 text-white">
           <h3 class="text-xl font-bold mb-2 text-white">제품 추천 받기</h3>
-          <p class="text-emerald-100 text-sm leading-relaxed mb-5">부족한 영양을 채우고 칼로리는 낮추는 밥스누 제품 구성을 보여드립니다</p>
+          <p class="text-emerald-100 text-sm leading-relaxed mb-5">부족한 영양을 채우고 칼로리는 낮추는 밥스누 제품 구성을 보여드려요</p>
           <div id="side-pick" class="space-y-2 mb-5"></div>
           <button onclick="goPage('plan')" class="w-full bg-white text-emerald-800 py-4 font-bold text-base">
-            추천 구성 보기 <i class="fas fa-arrow-right ml-1"></i>
+            추천 구성 보기
           </button>
         </div>
         <div class="bg-white rounded-3xl p-6" style="border:1px solid var(--line)">
           <h3 class="text-base font-bold text-gray-900 mb-1">오늘 기록하기</h3>
-          <p class="text-gray-500 text-xs leading-relaxed mb-4">체중과 식사를 기록하면 목표 칼로리를 다시 계산해 드립니다</p>
+          <p class="text-gray-500 text-xs leading-relaxed mb-4">체중과 식사를 기록하면 목표 칼로리를 다시 계산해 드려요</p>
           <button onclick="goPage('log')" class="w-full border-2 border-emerald-700 text-emerald-700 py-3 font-medium text-sm">기록 페이지로</button>
         </div>
         <button onclick="restartAssessment()" class="w-full text-gray-400 text-xs underline py-2">처음부터 다시 진단하기</button>
@@ -463,9 +491,9 @@
   <div class="max-w-5xl mx-auto px-4">
     <button onclick="goPage('plan')" class="text-gray-500 text-sm mb-5"><i class="fas fa-arrow-left mr-1.5"></i>제품 추천으로</button>
     <div class="mb-8">
-      <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 mb-3">시연용 화면 · 실제 결제는 되지 않습니다</span>
+      <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 mb-3">시연용 화면 · 실제 결제는 되지 않아요</span>
       <h2 class="text-3xl mb-2">구독 시작하기</h2>
-      <p class="text-gray-500 text-sm">제품은 한 달에 한 번 배송됩니다</p>
+      <p class="text-gray-500 text-sm">제품은 한 달에 한 번 배송돼요</p>
     </div>
     <div id="pay-section"></div>
   </div>
@@ -478,7 +506,7 @@
   <div class="max-w-5xl mx-auto px-4">
     <div class="mb-8">
       <h2 class="text-3xl mb-2">기록</h2>
-      <p class="text-gray-500 text-sm">기록이 쌓이면 목표 칼로리를 다시 맞춰 드립니다</p>
+      <p class="text-gray-500 text-sm">기록이 쌓이면 목표 칼로리를 다시 맞춰 드려요</p>
     </div>
     <div id="diary-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8 mb-5"></div>
     <div id="monitor-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
@@ -497,7 +525,7 @@
           </div>
           <span class="text-xl font-bold">밥스누</span>
         </div>
-        <p class="text-emerald-300 text-sm leading-relaxed">서울대학교 식의학유전체실 연구를 바탕으로 하루 목표 칼로리와 끼니 가이드를 알려드립니다.</p>
+        <p class="text-emerald-300 text-sm leading-relaxed">서울대학교 식의학유전체실 연구를 바탕으로 하루 목표 칼로리와 끼니 가이드를 알려드려요.</p>
       </div>
       <div>
         <h4 class="font-bold mb-4">서비스</h4>

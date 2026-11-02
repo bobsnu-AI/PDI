@@ -91,7 +91,7 @@ function setMealStatus(day, mealType, status) {
 // 다른 음식 입력 (인분 포함) — 레시피 DB·단품 식재료 모두 허용
 function addSubstitute(day, mealType, name, portion) {
   const base = analyzeFood(name);
-  if (!base) return '「' + name + '」을(를) 찾을 수 없습니다. 다른 이름으로 입력해보세요.';
+  if (!base) return '「' + name + '」을(를) 찾을 수 없어요. 다른 이름으로 입력해보세요.';
   const a = scaleAnalysis(base, portion);
   const prfKcal = a.ingredients.reduce((s, i) => s + (i.prf ? (i.kcal || 0) : 0), 0);
   const e = mealLog(day, mealType);
@@ -192,7 +192,7 @@ function weightTrend() {
 //   조정량 = (실제 주당변화 − 계획 주당변화) × 7,700 / 7  (1회 조정은 ±300kcal 로 제한)
 function retargetSuggestion(targets) {
   const tr = weightTrend();
-  if (!tr || tr.spanDays < 7) return { ready: false, reason: '체중을 7일 이상 기록하면 목표를 재조정합니다.', trend: tr };
+  if (!tr || tr.spanDays < 7) return { ready: false, reason: '체중을 7일 이상 기록하면 목표를 다시 맞춰요.', trend: tr };
   const planned = targets.weeklyDelta;
   const gap = tr.perWeek - planned;
   if (Math.abs(gap) < 0.2) return { ready: true, onTrack: true, trend: tr, planned, gap: +gap.toFixed(2), delta: 0, newTargetKcal: targets.targetKcal };
@@ -342,13 +342,12 @@ function productChip(text) {
 // 「무엇을 · 하루 몇 번 · 어느 끼니에」 를 카드 한 장에 담는다
 function productGuideHtml(g) {
   if (!g) return '<div class="bg-gray-50 rounded-2xl p-4 text-sm text-gray-500">'
-    + '위에서 제품을 담으시면 어느 끼니에 나눠 드실지 알려드립니다</div>';
+    + '위에서 제품을 담으시면 어느 끼니에 나눠 드실지 알려드려요</div>';
   const left = g.leftover.soymilk + g.leftover.phyto + g.leftover.bar;
   const cards = PRODUCT_VIEW.filter(p => g.cov.stock[p.key] > 0).map(p => {
     const n = g.cov.stock[p.key];
     const slots = g.where[p.key] || [];
     return '<div class="rounded-2xl p-4 text-center" style="border:1px solid var(--line)">'
-      + '<div class="text-4xl leading-none mb-2">' + p.icon + '</div>'
       + '<div class="text-sm font-bold text-gray-900">' + p.name + '</div>'
       + '<div class="text-xl font-black text-emerald-800 mt-1">' + timesPhrase(n, g.days) + '</div>'
       + '<div class="text-xs text-gray-400 mb-3">한 달 ' + n + '회분</div>'
@@ -359,7 +358,7 @@ function productGuideHtml(g) {
   }).join('');
   return '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">' + cards + '</div>'
     + '<p class="text-xs text-gray-500 mt-3">'
-    + '구독한 제품으로 <b class="text-gray-800">' + g.days + '일</b>을 채울 수 있습니다'
+    + '구독한 제품으로 <b class="text-gray-800">' + g.days + '일</b>을 채울 수 있어요'
     + (g.days < 30 ? ' · 30일을 채우려면 제품을 더 담아주세요' : '')
     + (left ? ' · 남는 ' + left + '회분은 원하는 날 드세요' : '')
     + (g.counts.addon ? ' · 추가 구성품은 하루 1회' : '')
@@ -394,8 +393,7 @@ function guidePlanHtml() {
     const plain = Math.max(0, Math.round(kcal[mt.id] - (ex ? ex.kcal : 0)));
     return '<div class="flex gap-3 sm:gap-4 py-4 border-b border-gray-100 last:border-0">'
       + '<div class="flex-shrink-0 w-14 text-center">'
-      + '<div class="text-2xl leading-none">' + mt.icon + '</div>'
-      + '<div class="text-xs font-bold text-gray-500 mt-1">' + mt.name + '</div></div>'
+      + '<div class="text-sm font-bold text-gray-700">' + mt.name + '</div></div>'
       + '<div class="min-w-0 flex-1">'
       + '<div class="text-lg font-bold text-gray-900 mb-1">' + Math.round(kcal[mt.id]).toLocaleString()
       + '<span class="text-sm font-medium text-gray-400"> kcal</span></div>'
@@ -414,7 +412,7 @@ function guidePlanHtml() {
 
   const snack = g && g.extra.snack
     ? '<div class="flex gap-3 sm:gap-4 py-4 border-t border-gray-100">'
-      + '<div class="flex-shrink-0 w-14 text-center"><div class="text-2xl leading-none">🍪</div>'
+      + '<div class="flex-shrink-0 w-14 text-center">'
       + '<div class="text-xs font-bold text-gray-500 mt-1">간식</div></div>'
       + '<div class="min-w-0 flex-1"><div class="text-lg font-bold text-gray-900 mb-1">' + g.extra.snack.kcal
       + '<span class="text-sm font-medium text-gray-400"> kcal</span></div>'
@@ -423,7 +421,7 @@ function guidePlanHtml() {
     : '';
 
   return '<h3 class="text-xl font-bold text-gray-900 mb-1">30일 체중 관리 가이드</h3>'
-    + '<p class="text-gray-500 text-sm mb-5">하루 <b class="text-gray-800">' + total.toLocaleString() + ' kcal</b> 기준입니다</p>'
+    + '<p class="text-gray-500 text-sm mb-5">하루 <b class="text-gray-800">' + total.toLocaleString() + ' kcal</b> 기준이에요</p>'
 
     + '<div class="text-sm font-bold text-gray-800 mb-2">끼니마다 이만큼</div>'
     + '<div class="rounded-2xl border border-gray-100 px-4 sm:px-5 mb-6">'
@@ -524,7 +522,7 @@ function renderPay() {
 
   if (isPaid()) {
     el.innerHTML = '<div class="rounded-3xl border-2 p-6 text-center" style="border-color:var(--deep);background:var(--tint)">'
-      + '<div class="text-lg font-bold text-emerald-900 mb-1">구독이 시작되었습니다</div>'
+      + '<div class="text-lg font-bold text-emerald-900 mb-1">구독이 시작됐어요</div>'
       + '<div class="text-sm text-gray-600 mb-5">날마다 먹은 것과 체중을 기록해 보세요</div>'
       + '<div class="flex flex-wrap gap-2 justify-center">'
       + '<button type="button" onclick="goPage(\'plan\')" class="px-5 py-3 bg-emerald-700 text-white text-sm font-bold">가이드 보기</button>'
@@ -538,11 +536,11 @@ function renderPay() {
     + payCards().map(c => payCardHtml(c, mineKey)).join('')
     + '</div>'
     + '<div class="rounded-2xl bg-white border p-5" style="border-color:var(--line)">'
-    + '<div class="text-sm font-bold text-gray-800 mb-2">구독하시면 이렇게 달라집니다</div>'
+    + '<div class="text-sm font-bold text-gray-800 mb-2">구독하시면 이렇게 달라져요</div>'
     + '<ul class="space-y-1.5 text-sm text-gray-600">'
-    + ['고른 구성에 맞춰 끼니별 칼로리와 제품 배분을 알려드립니다',
-       '날마다 먹은 것과 체중을 기록하면 목표 칼로리를 다시 맞춰 드립니다',
-       '제품은 한 달에 한 번 배송되고, 언제든 수량을 바꾸실 수 있습니다']
+    + ['고른 구성에 맞춰 끼니별 칼로리와 제품 배분을 알려드려요',
+       '날마다 먹은 것과 체중을 기록하면 목표 칼로리를 다시 맞춰 드려요',
+       '제품은 한 달에 한 번 배송되고, 언제든 수량을 바꾸실 수 있어요']
       .map(t => '<li class="flex gap-2"><span class="text-emerald-600">·</span><span>' + t + '</span></li>').join('')
     + '</ul></div>';
 }
@@ -559,25 +557,25 @@ function mealPlanPromptHtml(reason) {
     + '<div><div class="text-sm font-bold ' + (done ? 'text-gray-900' : 'text-gray-500') + '">' + title + '</div>'
     + '<div class="text-xs text-gray-500 mt-0.5">' + body + '</div></div></div>';
 
-  return '<h3 class="text-xl font-bold text-gray-900 mb-1">🗓 맞춤 식단</h3>'
-    + '<p class="text-sm text-gray-500 mb-5">구독하는 제품 구성에 맞춰 식단을 만들어 드립니다 (최대 30일) · 앞 7일은 무료로 보실 수 있습니다</p>'
+  return '<h3 class="text-xl font-bold text-gray-900 mb-1">맞춤 식단</h3>'
+    + '<p class="text-sm text-gray-500 mb-5">구독하는 제품 구성에 맞춰 식단을 만들어 드려요 (최대 30일) · 앞 7일은 무료로 보실 수 있어요</p>'
     + (reason ? '<div class="bg-amber-50 border border-amber-100 rounded-xl p-3.5 mb-5 text-sm text-amber-900">' + reason + '</div>' : '')
     + '<div class="space-y-3 mb-5">'
     + step(1, '구독 구성 정하기', '위 「맞춤 구독 세트」에서 두유·파이토100·프로틴바 수량을 정하세요', !empty)
-    + step(2, '식단 추천받기', '정한 구성으로 ' + (willDays || 30) + '일 식단을 계산합니다 (약 1초)', false)
-    + step(3, '매일 실천 기록', '끼니마다 먹었는지 체크하고 체중을 기록하면 목표를 다시 맞춰 드립니다', false)
+    + step(2, '식단 추천받기', '정한 구성으로 ' + (willDays || 30) + '일 식단을 계산해요 (약 1초)', false)
+    + step(3, '매일 실천 기록', '끼니마다 먹었는지 체크하고 체중을 기록하면 목표를 다시 맞춰 드려요', false)
     + '</div>'
     + (empty
-        ? '<div class="bg-gray-50 rounded-xl p-4 text-sm text-gray-500">제품을 1개 이상 담으면 식단을 추천받을 수 있습니다.</div>'
+        ? '<div class="bg-gray-50 rounded-xl p-4 text-sm text-gray-500">제품을 1개 이상 담으면 식단을 추천받을 수 있어요.</div>'
         : '<div class="rounded-2xl border-2 border-emerald-100 bg-emerald-50 p-4">'
           + '<div class="text-sm font-bold text-emerald-900 mb-1">선택한 구성</div>'
           + '<div class="text-xs text-emerald-800 mb-1">두유 ' + c.soymilk + ' · 파이토100 ' + c.phyto + ' · 프로틴바 ' + c.bar
           + (c.addon ? ' · 추가 구성품 ' + c.addon : '')
           + ' → 월 ' + won(q.finalPrice) + ' (' + q.rate + '% 할인)</div>'
-          + '<div class="text-xs text-emerald-700 mb-3">이 구성으로 <b>' + willDays + '일치</b> 식단을 설계할 수 있습니다'
+          + '<div class="text-xs text-emerald-700 mb-3">이 구성으로 <b>' + willDays + '일치</b> 식단을 설계할 수 있어요'
           + (willDays < 30 ? ' (30일을 채우려면 제품을 더 담아주세요)' : '') + '</div>'
           + '<button type="button" onclick="requestMealPlan()" class="w-full py-3 rounded-xl bg-emerald-700 text-white font-bold hover:bg-emerald-800 transition">'
-          + '🗓 이 구성으로 ' + willDays + '일 식단 추천받기</button></div>');
+          + '이 구성으로 ' + willDays + '일 식단 추천받기</button></div>');
 }
 
 function renderMealPlan() {
@@ -588,7 +586,7 @@ function renderMealPlan() {
   if (planMode() === 'guide') { el.innerHTML = guidePlanHtml(); return; }
   if (!tracker.plan) { el.innerHTML = mealPlanPromptHtml(null); return; }
   if (typeof planStale === 'function' && planStale()) {
-    el.innerHTML = mealPlanPromptHtml('구독 구성이 바뀌었습니다. 새 구성으로 식단을 다시 추천받으세요. (지금까지의 실천 기록은 초기화됩니다)');
+    el.innerHTML = mealPlanPromptHtml('구독 구성이 바뀌었어요. 새 구성으로 식단을 다시 추천받으세요. (지금까지의 실천 기록은 초기화돼요)');
     return;
   }
 
@@ -599,7 +597,7 @@ function renderMealPlan() {
   const lastFrom = Math.max(1, openN - planPage() + 1);
   const lockHtml = plan.days.length > openN
     ? '<div class="mt-3 rounded-2xl border-2 border-dashed p-5 text-center" style="border-color:#D1D5DB">'
-      + '<div class="text-sm font-bold text-gray-800 mb-1">🔒 Day ' + (openN + 1) + '–' + plan.days.length + '은 구독 후에 열립니다</div>'
+      + '<div class="text-sm font-bold text-gray-800 mb-1">Day ' + (openN + 1) + '–' + plan.days.length + '은 구독 후에 열려요</div>'
       + '<div class="text-xs text-gray-500 mb-3">먼저 ' + openN + '일치를 보시고 결정하세요</div>'
       + '<button type="button" onclick="goPage(\'pay\')" class="px-5 py-2.5 bg-emerald-700 text-white text-sm font-bold">구독 시작하고 30일 전체 보기</button></div>'
     : '';
@@ -620,7 +618,7 @@ function renderMealPlan() {
             '<span class="text-xs font-bold px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800">' + n + '</span>').join('')
           + '<span class="text-xs text-emerald-700 self-center">· 밥스누 대체식 ' + (meal.combo === 'A' ? '(두유+파이토)' : '(두유+프로틴바+과일)') + '</span></div>'
         : '<div class="grid sm:grid-cols-5 gap-1.5">' + meal.dishes.map(x =>
-            '<div class="bg-gray-50 rounded-lg px-2 py-1.5 min-w-0"><div class="text-xs text-gray-400">' + x.icon + ' ' + x.slotName
+            '<div class="bg-gray-50 rounded-lg px-2 py-1.5 min-w-0"><div class="text-xs text-gray-400">' + x.slotName
             + (x.portion && x.portion !== 1 ? ' <span class="text-emerald-700 font-bold">' + x.portion + '공기</span>' : '') + '</div>'
             + '<div class="text-xs font-bold text-gray-800 truncate" title="' + x.name + '">' + x.name + '</div>'
             + '<div class="text-xs text-gray-400">' + x.kcal + ' kcal</div></div>').join('') + '</div>'
@@ -652,7 +650,7 @@ function renderMealPlan() {
 
       return '<div class="border-t border-gray-100 pt-2.5 mt-2.5 first:border-0 first:pt-0 first:mt-0">'
         + '<div class="flex flex-wrap items-center gap-2 mb-1.5">'
-        + '<span class="text-sm font-bold text-gray-800">' + meal.icon + ' ' + meal.name + '</span>'
+        + '<span class="text-sm font-bold text-gray-800">' + meal.name + '</span>'
         + '<span class="text-xs text-gray-400">' + meal.kcal + ' kcal</span>'
         + '<span class="flex gap-1 ml-auto">'
         + statusBtn(d.day, meal.type, 'eaten', '먹었어요', '✓', e.status === 'eaten')
@@ -669,14 +667,14 @@ function renderMealPlan() {
       + '<span class="text-xs text-gray-500 ml-auto">계획 ' + d.kcal + ' kcal · 식물성 식품 ' + d.pdi + '%</span>'
       + (act.logged ? '<span class="text-xs font-bold text-amber-700">실제 ' + act.kcal + ' kcal · 식물성 식품 ' + act.pdi + '% (' + act.logged + '/' + act.total + '끼 기록)</span>' : '')
       + '</summary><div class="mt-3">' + mealsHtml + '</div>'
-      + (d.snack ? '<div class="mt-2.5 pt-2.5 border-t border-gray-100 text-xs"><b class="text-gray-700">🍪 간식</b> '
+      + (d.snack ? '<div class="mt-2.5 pt-2.5 border-t border-gray-100 text-xs"><b class="text-gray-700">간식</b> '
           + d.snack.items.join(' + ') + ' <span class="text-gray-400">' + d.snack.kcal + ' kcal</span></div>' : '')
       + '</details>';
   }).join('');
 
   el.innerHTML =
     '<div class="flex flex-wrap items-center justify-between gap-2 mb-4">'
-    + '<h3 class="text-xl font-bold text-gray-900">🗓 ' + plan.days.length + '일 맞춤 식단</h3>'
+    + '<h3 class="text-xl font-bold text-gray-900">' + plan.days.length + '일 맞춤 식단</h3>'
     + (plan.days.length > openN
         ? '<span class="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800">' + openN + '일 미리보기</span>' : '')
     + '<button type="button" onclick="requestMealPlan()" class="text-xs font-bold px-3 py-1.5 rounded-lg border border-emerald-600 text-emerald-700 hover:bg-emerald-50"><i class="fas fa-rotate mr-1"></i>식단 다시 만들기</button>'
@@ -691,14 +689,14 @@ function renderMealPlan() {
     + scoreTile('평균 식물성 비율', m.avgPDI + '%', '#2C5530', '자체 설정 목표 40%')
     + '</div>'
     + '<div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 mb-3 text-xs text-emerald-900">'
-    + '<b>밥스누 제품 배치</b> · 구독한 ' + m.coverage.totalServings + '회분을 ' + plan.days.length + '일에 나눠 넣었습니다<br>'
+    + '<b>밥스누 제품 배치</b> · 구독한 ' + m.coverage.totalServings + '회분을 ' + plan.days.length + '일에 나눠 넣었어요<br>'
     + '저녁 ' + m.coverage.replaceDays + '일은 제품으로 한 끼 대체'
     + (m.coverage.extraCount.breakfast ? ' · 아침 ' + m.coverage.extraCount.breakfast + '일 곁들임' : '')
     + (m.coverage.extraCount.lunch ? ' · 점심 ' + m.coverage.extraCount.lunch + '일 곁들임' : '')
     + (m.coverage.extraCount.snack ? ' · 간식 ' + m.coverage.extraCount.snack + '회' : '')
     + (m.shortfall
         ? '<div class="mt-2 pt-2 border-t border-emerald-200 text-amber-800">'
-          + '구독량으로는 <b>' + plan.days.length + '일</b>까지 설계됩니다. ' + m.maxDays + '일을 채우려면 '
+          + '구독량으로는 <b>' + plan.days.length + '일</b>까지 설계돼요. ' + m.maxDays + '일을 채우려면 '
           + m.shortfall.soymilkName + ' ' + m.shortfall.soymilkPacks + '팩'
           + ' 또는 약콩 프로틴바 ' + m.shortfall.barPacks + '팩'
           + ' 또는 밥스누 파이토100 ' + m.shortfall.phytoPacks + '팩을 더 담아주세요.'
@@ -803,7 +801,7 @@ function diaryAdd(nameOverride) {
   diaryMeal = meal; diaryPortion = portion;
   if (!name) { if (err) err.textContent = '음식 이름을 입력해주세요.'; return; }
   if (!analyzeFood(name)) {
-    if (err) err.textContent = '"' + name + '"을 찾을 수 없습니다. 입력창의 목록에서 골라주세요.';
+    if (err) err.textContent = '"' + name + '"을 찾을 수 없어요. 입력창의 목록에서 골라주세요.';
     return;
   }
   if (err) err.textContent = '';
@@ -900,7 +898,7 @@ function renderDiary() {
       .filter(e => e.meal === mt.id);
     if (!items.length) return '';
     return '<div class="flex flex-wrap items-center gap-1.5 mb-2">'
-      + '<span class="text-xs font-bold text-gray-500 w-12 flex-shrink-0">' + mt.icon + ' ' + mt.name + '</span>'
+      + '<span class="text-xs font-bold text-gray-500 w-12 flex-shrink-0">' + mt.name + '</span>'
       + items.map(e => '<span class="inline-flex items-center gap-1 text-xs bg-gray-50 rounded-full pl-3 pr-1.5 py-1.5">'
           + e.name + (e.portion !== 1 ? ' <span class="text-gray-400">' + e.portion + '인분</span>' : '')
           + '<button type="button" onclick="diaryRemove(' + e.i + ')" aria-label="삭제" '
@@ -912,7 +910,7 @@ function renderDiary() {
   let barsHtml;
   if (!meals.length) {
     barsHtml = '<div class="bg-gray-50 rounded-2xl p-5 text-sm text-gray-500 text-center">'
-      + '이 날 먹은 음식을 추가하면 목표치와 비교해 보여드립니다</div>';
+      + '이 날 먹은 음식을 추가하면 목표치와 비교해 보여드려요</div>';
   } else {
     const pfs  = calculateDietPFS(meals, tracker.profile);
     const n    = pfs.daily.nutrients;
@@ -939,7 +937,7 @@ function renderDiary() {
       + (lacks.length
           ? '<div class="flex flex-wrap gap-1.5">' + lacks.map(x =>
               '<span class="text-xs font-bold px-3 py-1.5 rounded-full bg-amber-100 text-amber-800">' + x + ' 섭취 부족</span>').join('') + '</div>'
-          : '<div class="text-sm text-emerald-700">🎉 부족한 것 없이 고르게 드셨습니다</div>');
+          : '<div class="text-sm text-emerald-700">부족한 것 없이 고르게 드셨어요</div>');
   }
 
   const wt = weightOf(diaryDate);
@@ -982,7 +980,7 @@ function renderDiary() {
     + '<div class="flex flex-wrap gap-2 mb-2">'
     + '<select id="diary-meal" class="h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm">'
     + DIARY_MEALS.map(m => '<option value="' + m.id + '"' + (m.id === diaryMeal ? ' selected' : '') + '>'
-        + m.icon + ' ' + m.name + '</option>').join('')
+        + m.name + '</option>').join('')
     + '</select>'
     + '<select id="diary-portion" class="h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm">'
     + [0.5, 1, 1.5, 2].map(p => '<option value="' + p + '"' + (p === diaryPortion ? ' selected' : '') + '>' + p + '인분</option>').join('')
@@ -993,7 +991,7 @@ function renderDiary() {
     + '</div>'
     + '<span id="diary-error" class="text-xs text-red-600"></span>'
     + '</div>'
-    + (foodHtml || '<p class="text-sm text-gray-400 mb-4">아직 기록한 음식이 없습니다</p>')
+    + (foodHtml || '<p class="text-sm text-gray-400 mb-4">아직 기록한 음식이 없어요</p>')
     + '</div>'
     + '</div>'
 
@@ -1009,7 +1007,7 @@ function renderDiary() {
 function preferenceNoteHtml() {
   const n = Object.keys(tracker.diary || {}).filter(d => (tracker.diary[d] || []).length).length;
   return '<div class="mt-5 rounded-2xl bg-gray-50 p-4 text-xs text-gray-600">'
-    + '🍽 지금까지 <b class="text-gray-800">' + n + '일</b> 기록하셨어요. 꾸준히 기록하시면 자주 드시는 음식으로 식단을 짜 드릴 수 있어요'
+    + '지금까지 <b class="text-gray-800">' + n + '일</b> 기록하셨어요. 꾸준히 기록하시면 자주 드시는 음식으로 식단을 짜 드릴 수 있어요'
     + (n < SAMPLE_DAYS ? ' (' + (SAMPLE_DAYS - n) + '일 더)' : '')
     + '</div>';
 }
@@ -1036,17 +1034,17 @@ function renderMonitor() {
     ? '<div class="bg-gray-50 rounded-xl p-3.5 text-sm text-gray-600">' + rt.reason + '</div>'
     : rt.onTrack
       ? '<div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3.5 text-sm text-emerald-800">'
-        + '✅ 계획대로 진행 중입니다 (계획 ' + rt.planned + ' kg/주 · 실제 ' + tr.perWeek + ' kg/주). 목표 칼로리를 유지합니다.</div>'
+        + '계획대로 진행 중이에요 (계획 ' + rt.planned + ' kg/주 · 실제 ' + tr.perWeek + ' kg/주). 목표 칼로리를 유지해요.</div>'
       : '<div class="bg-amber-50 border border-amber-100 rounded-xl p-3.5">'
-        + '<div class="text-sm font-bold text-amber-900 mb-1">🎯 목표 재조정 제안</div>'
+        + '<div class="text-sm font-bold text-amber-900 mb-1">목표 재조정 제안</div>'
         + '<div class="text-xs text-amber-800">계획 ' + rt.planned + ' kg/주 → 실제 <b>' + tr.perWeek + ' kg/주</b> (차이 ' + (rt.gap > 0 ? '+' : '') + rt.gap + ')<br>'
         + '목표 칼로리를 <b>' + targets.targetKcal.toLocaleString() + ' → ' + rt.newTargetKcal.toLocaleString() + ' kcal</b>'
-        + ' (' + (rt.delta > 0 ? '+' : '') + rt.delta + ') 로 조정하고 남은 식단을 다시 생성합니다.</div>'
+        + ' (' + (rt.delta > 0 ? '+' : '') + rt.delta + ') 로 조정하고 남은 식단을 다시 만들어요.</div>'
         + '<button type="button" onclick="applyRetarget(' + rt.newTargetKcal + ')" class="mt-2 text-xs font-bold px-3 py-1.5 rounded-lg bg-amber-500 text-white">목표 적용 + 식단 재생성</button>'
         + '</div>';
 
   el.innerHTML =
-    '<h3 class="text-xl font-bold text-gray-900 mb-4">📈 체중 변화 · 실천 현황</h3>'
+    '<h3 class="text-xl font-bold text-gray-900 mb-4">체중 변화 · 실천 현황</h3>'
 
     + '<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">'
     + tile('현재 체중', cur + ' kg', 'BMI ' + bmi.toFixed(1) + ' · ' + bt.name, '#2C5530')
@@ -1059,7 +1057,7 @@ function renderMonitor() {
     + retargetHtml
     + '<div class="flex flex-wrap gap-3 mt-4 text-xs text-gray-500">'
     + '<span>✓ 추천대로 ' + ad.eaten + '끼</span><span>✎ 다른 음식 ' + ad.other + '끼</span><span>– 안 먹음 ' + ad.skipped + '끼</span>'
-    + '<button type="button" onclick="if(confirm(\'기록·식단·체중을 모두 삭제합니다. 계속할까요?\')){trackerReset();location.reload();}" class="ml-auto underline text-gray-400 hover:text-red-500">기록 초기화</button>'
+    + '<button type="button" onclick="if(confirm(\'기록·식단·체중을 모두 지워요. 계속할까요?\')){trackerReset();location.reload();}" class="ml-auto underline text-gray-400 hover:text-red-500">기록 초기화</button>'
     + '</div>';
 
   drawWeightChart();

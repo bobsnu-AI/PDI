@@ -38,15 +38,6 @@ const PHYTOCHEMICAL_GROUPS = {
 };
 
 // benefits 키워드 → HEALTH_GOALS 아이콘 매핑
-const BENEFIT_ICON = {
-  '여성건강':   '👩',  '골건강':     '🦴',  '콜레스테롤': '🩺',
-  '항산화':     '✨',  'LDL 억제':   '❤️',  '시력':       '👁️',
-  '항염':       '🛡️',  '체지방':     '⚖️',  '저GI':       '🩸',
-  '황반보호':   '👁️',  '눈건강':     '👁️',  '심혈관':     '❤️',
-  '뇌건강':     '🧠',  '해독효소':   '🌿',  '항암':       '🛡️',
-  '소화':       '🌿',  '관절':       '🛡️',  '항혈전':     '❤️',
-  '면역':       '🛡️',  '세포보호':   '✨',  '혈당조절':   '🩸',
-};
 
 
 // 출처: 우리 DB(recipes.js 14,714개 레시피) 하루 3끼 시뮬레이션 2,000회 → p75
@@ -144,7 +135,7 @@ const HEALTH_GOALS = [
   { id: 'bone',        name: '뼈 건강',   icon: '🦴', phytos: ['isoflavones', 'lignans', 'flavonols'],
     tip: '두부·두유 등 콩 식품과 멸치·우유·녹색 채소로 칼슘을 보충하고 햇볕을 쬐세요.' },
   { id: 'fatigue',     name: '피로 회복', icon: '🔋', phytos: ['saponins', 'anthocyanins', 'catechins'],
-    tip: '아침 식사를 거르지 말고 단백질을 끼니마다 나눠 드세요. 충분한 수면이 기본입니다.' },
+    tip: '아침 식사를 거르지 말고 단백질을 끼니마다 나눠 드세요. 충분한 수면이 기본이에요.' },
 ];
 
 // ── 식재료 식품군 보정 ──────────────────────────
@@ -342,7 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setGender(gender);
   renderSurvey();
   renderHealthGoals();
-  renderProductGrid();
   initPlanFoodList();
 
   // 저장된 설문 응답을 복원해 결과를 미리 계산한다 (두 번째 방문)
@@ -465,7 +455,7 @@ function validateProfile(p) {
     ['waist', '허리둘레', 40, 200, false],
   ];
   const missing = fields.filter(f => f[4] && p[f[0]] === null).map(f => f[1]);
-  if (missing.length) return '필수 항목(' + missing.join('·') + ')을 입력해주세요. 기준 칼로리 계산에 필요합니다.';
+  if (missing.length) return '필수 항목(' + missing.join('·') + ')을 입력해주세요. 기준 칼로리 계산에 필요해요.';
   for (const [k, label, min, max] of fields) {
     if (p[k] !== null && !(p[k] >= min && p[k] <= max)) {
       return label + '은(는) ' + min + '–' + max + ' 범위로 입력해주세요.';
@@ -812,70 +802,10 @@ function calculatePDI(meals) {
   const diversityScore = phytoCoverage.filter(p => p.present).length;
   const deficient = phytoCoverage.filter(p => !p.present || p.level === 'low').map(p => p.key);
 
-  // ── 주의사항 (McCarty 원칙 기반) ──
-  const warnings = [];
-  if (categoryMap['refined'] && categoryMap['refined'].percentage > 40) {
-    warnings.push(
-      '정제 곡물 비율 ' + categoryMap['refined'].percentage.toFixed(0) +
-      '% — 통곡물(현미·잡곡·귀리)로 일부 대체하면 PDI를 높일 수 있습니다'
-    );
-  }
-  // PRF 식품군 중 두류 미섭취 여부 (식품군 수준 경고, McCarty 원칙)
-  if (!categoryMap['legumes']) {
-    warnings.push('두류·콩가공품 미섭취 — 두류는 핵심 PRF 식품군입니다 (된장찌개·두부·콩밥 등)');
-  }
-  if (!categoryMap['vegetables']) {
-    warnings.push('채소류 미섭취 — 채소는 핵심 PRF 식품군입니다');
-  }
-
-  // ── 등급 ──
-  let grade, gradeLabel, gradeColor;
-  if (pdiScore >= 40)      { grade = 'excellent'; gradeLabel = '🌟 목표 달성 (≥40%)'; gradeColor = '#10B981'; }
-  else if (pdiScore >= 30) { grade = 'good';      gradeLabel = '👍 양호 (30–39%)';     gradeColor = '#3B82F6'; }
-  else if (pdiScore >= 20) { grade = 'fair';      gradeLabel = '📈 보통 (20–29%)';     gradeColor = '#F59E0B'; }
-  else                     { grade = 'poor';      gradeLabel = '⚠️ 개선 필요 (<20%)';  gradeColor = '#EF4444'; }
-
-  // ── 식단 개선 제안 (식품군 수준, McCarty 원칙) ──
-  const suggestions = [];
-  if (pdiScore < 40) {
-    const gap = (40 - pdiScore).toFixed(1);
-    suggestions.push(
-      '📊 PRF 식품군(통곡물·두류·채소·과일·견과) 칼로리 비중을 높이면 PDI가 올라갑니다. ' +
-      '현재 ' + pdiScore.toFixed(1) + '%, 목표까지 약 ' + gap + '%p 필요합니다.'
-    );
-  }
-  // 부족한 PRF 식품군 기반 제안
-  if (!categoryMap['grains']) {
-    suggestions.push('🌾 흰쌀밥 대신 현미밥·잡곡밥을 선택하면 통곡물 PRF 칼로리가 추가됩니다');
-  }
-  if (!categoryMap['legumes']) {
-    suggestions.push('🫘 된장찌개·두부·콩나물 등 두류 반찬 1가지를 추가해보세요');
-  }
-  if (!categoryMap['vegetables']) {
-    suggestions.push('🥬 나물·김치·채소국 등 채소 반찬은 PRF 칼로리를 높이는 핵심입니다');
-  }
-  if (!categoryMap['fruits']) {
-    suggestions.push('🍎 식후 과일 1회 섭취가 PDI 향상에 효과적입니다');
-  }
-  if (!categoryMap['nuts']) {
-    suggestions.push('🥜 견과류 한 줌(호두·아몬드 등)을 간식으로 추가해보세요');
-  }
-  if (!categoryMap['tea']) {
-    suggestions.push('🍵 식후 녹차·보이차 한 잔은 칼로리 거의 없이 PRF 식품군을 추가하는 방법입니다');
-  }
-  // 파이토케미컬 다양성 보조 제안 (참고용 표시)
-  if (diversityScore < 6) {
-    suggestions.push(
-      '🌈 [참고] 다양한 색깔의 채소·과일을 포함하면 다양한 계열의 파이토케미컬을 ' +
-      '섭취할 수 있습니다 (현재 추정 ' + diversityScore + '/12 계열)'
-    );
-  }
-
   return {
     pdiScore, prfCalories, totalCalories,
     categoryMap, phytoCoverage, diversityScore,
-    warnings, grade, gradeLabel, gradeColor,
-    deficient, suggestions, phytoMap, allIngredients,
+    deficient, phytoMap, allIngredients,
   };
 }
 
@@ -959,11 +889,11 @@ function requestMealPlan() {
   if (!pdiResult || !subCart) return;
   const q = subscriptionQuote(subCartToQuoteInput());
   if (q.counts.soymilk + q.counts.phyto + q.counts.bar === 0) {
-    alert('제품을 1개 이상 담은 뒤 식단을 추천받을 수 있습니다.');
+    alert('제품을 1개 이상 담은 뒤 식단을 추천받을 수 있어요.');
     return;
   }
   const logged = Object.keys(tracker.log || {}).length;
-  if (logged && !confirm('새 구성으로 식단을 다시 만들면 지금까지의 실천 기록이 초기화됩니다. 계속할까요?')) return;
+  if (logged && !confirm('새 구성으로 식단을 다시 만들면 지금까지의 실천 기록이 초기화돼요. 계속할까요?')) return;
   tracker.startDate = isoToday();
   tracker.log = {};
   buildMealPlan(true);
@@ -1096,9 +1026,8 @@ function renderTips(r) {
   el.innerHTML =
     '<h3 class="text-xl font-bold text-gray-900 mb-4">목표 관리 팁</h3>'
     + '<ul class="space-y-3">' + tips.map(g =>
-        '<li class="flex gap-3"><span class="text-xl leading-none">' + g.icon + '</span>'
-        + '<span class="text-sm"><b class="text-gray-800">' + g.name + '</b> '
-        + '<span class="text-gray-600">' + g.tip + '</span></span></li>').join('')
+        '<li class="text-sm"><b class="text-gray-800">' + g.name + '</b> '
+        + '<span class="text-gray-600">' + g.tip + '</span></li>').join('')
     + '</ul>';
 }
 
@@ -1110,7 +1039,7 @@ function renderSidePick(r) {
   const q = subscriptionQuote(subCartToQuoteInput());
   el.innerHTML = q.lines.map(l =>
     '<div class="flex items-center justify-between gap-2 text-sm">'
-    + '<span class="text-emerald-100 truncate">' + l.product.icon + ' ' + l.product.name + '</span>'
+    + '<span class="text-emerald-100 truncate">' + l.product.name + '</span>'
     + '<span class="text-white font-bold flex-shrink-0">' + l.qty + '개</span></div>').join('')
     + '<div class="flex items-center justify-between gap-2 pt-3 mt-3 border-t border-emerald-600">'
     + '<span class="text-emerald-100 text-xs">한 달 예상 금액</span>'
@@ -1318,18 +1247,18 @@ function renderSubscription(r) {
   const sm = CATALOG_BY_CODE[subCart.soymilkCode];
   const rows =
     qtyRow('<div class="text-sm font-bold text-gray-900">두유</div><div class="text-xs text-gray-500 truncate">' + sm.note + '</div>',
-           sm.icon, subCart.soymilk, 'soymilk', soymilkSelect)
+           '', subCart.soymilk, 'soymilk', soymilkSelect)
     + qtyRow('<div class="text-sm font-bold text-gray-900">' + phyto.name + '</div><div class="text-xs text-gray-500">' + phyto.pack + ' · ' + won(phyto.price) + ' · 1회 ' + phyto.nut.energy + ' kcal</div>',
-             phyto.icon, subCart.phyto, 'phyto')
+             '', subCart.phyto, 'phyto')
     + qtyRow('<div class="text-sm font-bold text-gray-900">' + bar.name + '</div><div class="text-xs text-gray-500">' + bar.pack + ' · ' + won(bar.price) + ' · 1회 ' + bar.nut.energy + ' kcal</div>',
-             bar.icon, subCart.bar, 'bar');
+             '', subCart.bar, 'bar');
 
   const addonChips = BOBSNU_CATALOG.filter(p => p.kind === 'addon').map(p => {
     const on = subCart.addon.has(p.code);
     const recommended = rec.cart.addon.includes(p.code);
     return '<button type="button" onclick="toggleAddon(\'' + p.code + '\')" aria-pressed="' + on + '" '
       + 'class="text-xs px-3 py-1.5 rounded-full border-2 ' + (on ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-bold' : 'border-gray-200 text-gray-600 hover:border-gray-400') + '">'
-      + p.icon + ' ' + p.name + ' ' + won(p.price) + (recommended ? ' <span class="text-emerald-600">★</span>' : '') + '</button>';
+      + p.name + ' ' + won(p.price) + (recommended ? ' <span class="text-emerald-700 font-bold">추천</span>' : '') + '</button>';
   }).join('');
 
   const presetBtns = SUBSCRIPTION_PRESETS.map(ps => {
@@ -1345,7 +1274,7 @@ function renderSubscription(r) {
 
   // ── 가격 ──
   const lineItems = quote.lines.map(l =>
-    '<li class="flex items-center gap-2 text-xs py-1"><span>' + l.product.icon + '</span>'
+    '<li class="flex items-center gap-2 text-xs py-1">'
     + '<span class="flex-1 min-w-0 truncate text-gray-700">' + l.product.name + (l.product.pack ? ' (' + l.product.pack + ')' : '') + ' × ' + l.qty + '</span>'
     + '<span class="font-bold text-gray-800">' + won(l.amount) + '</span></li>').join('');
 
@@ -1361,7 +1290,7 @@ function renderSubscription(r) {
   el.innerHTML =
     '<div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-4 mb-4">'
     + '<div class="flex flex-wrap items-center gap-2 mb-2">'
-    + '<span class="text-sm font-bold text-emerald-900">🎯 이렇게 골랐어요</span>'
+    + '<span class="text-sm font-bold text-emerald-900">이렇게 골랐어요</span>'
     + '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-white text-emerald-800">' + ruleLabel + '</span>'
     + '</div>'
     + '<div class="flex flex-wrap gap-1.5 mb-2">' + lackChips + '</div>'
@@ -1384,7 +1313,7 @@ function renderSubscription(r) {
 
     + '<div class="rounded-2xl border-2 p-4" style="border-color:#05966933">'
     + '<div class="text-sm font-bold text-gray-900 mb-2">결제 금액</div>'
-    + '<ul class="divide-y divide-gray-50 mb-3">' + (lineItems || '<li class="text-xs text-gray-400 py-2">담긴 제품이 없습니다</li>') + '</ul>'
+    + '<ul class="divide-y divide-gray-50 mb-3">' + (lineItems || '<li class="text-xs text-gray-400 py-2">담긴 제품이 없어요</li>') + '</ul>'
     + '<div class="flex items-center justify-between text-sm py-1"><span class="text-gray-500">정가</span>'
     + '<span class="' + (quote.rate ? 'line-through text-gray-400' : 'font-bold text-gray-900') + '">' + won(quote.listPrice) + '</span></div>'
     + (quote.rate
@@ -1393,6 +1322,10 @@ function renderSubscription(r) {
           + '<div class="flex items-end justify-between pt-2 mt-1 border-t border-gray-100">'
           + '<span class="text-sm font-bold text-gray-700">월 결제액</span>'
           + '<span class="text-3xl font-black text-emerald-700">' + won(quote.finalPrice) + '</span></div>'
+          + (quote.perServing
+              ? '<div class="text-xs text-gray-500 text-right mt-1">한 끼 ' + won(quote.perServing)
+                + ' · 한 달 ' + quote.servings + '회분</div>'
+              : '')
         : '')
     + (quote.rate
         ? '<button type="button" onclick="goPage(\'pay\')" class="w-full mt-3 py-3 bg-emerald-700 text-white text-sm font-bold">'
@@ -1406,15 +1339,15 @@ function renderSubscription(r) {
       '<div class="mt-4 rounded-2xl border-2 p-4" style="border-color:' + (planFresh() ? '#E5E7EB' : '#05966966') + ';background:' + (planFresh() ? '#F9FAFB' : '#ECFDF5') + '">'
     + '<div class="flex flex-wrap items-center justify-between gap-3">'
     + '<div class="min-w-0"><div class="text-sm font-bold text-gray-900">'
-    + (planFresh() ? '✓ 이 구성으로 만든 30일 식단이 아래에 있습니다' : '🗓 이 구성으로 30일 식단을 받아보세요') + '</div>'
+    + (planFresh() ? '이 구성으로 만든 30일 식단이 아래에 있어요' : '이 구성으로 30일 식단을 받아보세요') + '</div>'
     + '<div class="text-xs text-gray-500 mt-0.5">'
     + (planFresh()
-        ? '수량을 바꾸면 그 구성에 맞춰 다시 추천받을 수 있습니다'
-        : '구독한 제품을 30일에 나눠 넣고, 목표 칼로리와 영양 균형에 맞춘 끼니를 짜드립니다')
+        ? '수량을 바꾸면 그 구성에 맞춰 다시 추천받을 수 있어요'
+        : '구독한 제품을 30일에 나눠 넣고, 목표 칼로리와 영양 균형에 맞춘 끼니를 짜드려요')
     + '</div></div>'
     + '<button type="button" onclick="requestMealPlan()" class="flex-shrink-0 px-5 py-2.5 rounded-xl font-bold text-sm transition '
     + (planFresh() ? 'border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50' : 'bg-emerald-700 text-white hover:bg-emerald-800') + '">'
-    + (planFresh() ? '다시 추천받기' : '식단 추천받기 →') + '</button>'
+    + (planFresh() ? '다시 추천받기' : '식단 추천받기') + '</button>'
     + '</div></div>')
 
     + '';
@@ -1429,27 +1362,27 @@ function renderGuide(r) {
   const ps = r.phytoScore;
 
   if (r.allergyHits.length) {
-    warn.push(['🚫', '알레르기 주의', r.allergyHits.map(h => h.name + '(' + h.allergens.join('·') + ')').join(', ')]);
+    warn.push(['알레르기 주의', r.allergyHits.map(h => h.name + '(' + h.allergens.join('·') + ')').join(', ')]);
   }
-  if (ps.coveredCount < 6) warn.push(['🥗', '채소·과일 종류 부족', '색이 다른 채소·과일·콩을 번갈아 드시면 영양소 종류가 늘어납니다.']);
-  if (r.intake.wholeGrainPct < 5) warn.push(['🌾', '통곡물 섭취 부족', '흰쌀밥을 잡곡밥·현미밥으로 바꿔보세요.']);
-  if (r.intake.vegG < 200) warn.push(['🥬', '채소 섭취 부족', '끼니마다 채소 반찬 1–2접시(하루 350g 이상)를 권장합니다.']);
-  if (r.intake.fruitG < 100) warn.push(['🍎', '과일 섭취 부족', '하루 1–2회(주먹 1개 크기) 과일을 드세요.']);
-  if (!r.categoryMap.legumes) warn.push(['🫘', '콩 식품 미섭취', '두부·된장·콩밥 같은 콩 식품을 끼니에 넣어보세요.']);
+  if (ps.coveredCount < 6) warn.push(['채소·과일 종류 부족', '색이 다른 채소·과일·콩을 번갈아 드시면 영양소 종류가 늘어나요.']);
+  if (r.intake.wholeGrainPct < 5) warn.push(['통곡물 섭취 부족', '흰쌀밥을 잡곡밥·현미밥으로 바꿔보세요.']);
+  if (r.intake.vegG < 200) warn.push(['채소 섭취 부족', '끼니마다 채소 반찬 1–2접시(하루 350g 이상)를 권해요.']);
+  if (r.intake.fruitG < 100) warn.push(['과일 섭취 부족', '하루 1–2회(주먹 1개 크기) 과일을 드세요.']);
+  if (!r.categoryMap.legumes) warn.push(['콩 식품 미섭취', '두부·된장·콩밥 같은 콩 식품을 끼니에 넣어보세요.']);
   if (r.categoryMap.refined && r.categoryMap.refined.percentage > 40) {
-    warn.push(['🍞', '정제 식품 비율 높음', '흰 곡물·당류 비율 ' + r.categoryMap.refined.percentage.toFixed(0) + '% — 가공식품을 줄여보세요.']);
+    warn.push(['정제 식품 비율 높음', '흰 곡물·당류 비율 ' + r.categoryMap.refined.percentage.toFixed(0) + '% — 가공식품을 줄여보세요.']);
   }
-  if (r.body.abdominal) warn.push(['📏', '복부비만', '허리둘레가 기준(남 90cm·여 85cm) 이상입니다. 체중 관리 루틴을 꾸준히 실천하세요.']);
+  if (r.body.abdominal) warn.push(['복부비만', '허리둘레가 기준(남 90cm·여 85cm) 이상이에요. 체중 관리 루틴을 꾸준히 실천하세요.']);
 
   el.innerHTML =
-    '<h3 class="text-xl font-bold text-gray-900 mb-4">주의사항 &amp; 관리 가이드</h3>'
+    '<h3 class="text-xl font-bold text-gray-900 mb-4">주의할 점</h3>'
     + (warn.length
-        ? '<div class="grid md:grid-cols-2 gap-3">' + warn.map(([icon, title, body]) =>
-            '<div class="flex gap-3 bg-amber-50 border border-amber-100 rounded-xl p-3.5">'
-            + '<span class="text-xl leading-none">' + icon + '</span>'
-            + '<div><div class="text-sm font-bold text-amber-900">' + title + '</div><div class="text-xs text-amber-800 mt-0.5">' + body + '</div></div></div>'
+        ? '<div class="grid md:grid-cols-2 gap-3">' + warn.map(([title, body]) =>
+            '<div class="rounded-xl p-4" style="border:1px solid var(--line)">'
+            + '<div class="text-sm font-bold text-gray-900">' + title + '</div>'
+            + '<div class="text-sm text-gray-600 mt-1">' + body + '</div></div>'
           ).join('') + '</div>'
-        : '<div class="bg-emerald-50 rounded-xl p-4 text-sm text-emerald-800">🎉 큰 문제 없이 균형 잡힌 식단입니다.</div>');
+        : '<div class="rounded-xl p-4 text-sm" style="background:var(--tint);color:var(--deep)">큰 문제 없이 균형 잡힌 식단이에요.</div>');
 }
 
 // ── 관리 목표 렌더링 ─────────────────────────
@@ -1463,7 +1396,6 @@ function renderHealthGoals() {
       : (sel ? 'border-emerald-500 bg-emerald-50 cursor-pointer' : 'border-gray-100 bg-white hover:border-gray-300 cursor-pointer');
     return '<button type="button"' + (goal.base ? ' disabled' : ' onclick="toggleGoal(\'' + goal.id + '\')"') + ' aria-pressed="' + sel + '"'
       + ' class="border-2 rounded-2xl p-4 text-center transition-all ' + cls + '">'
-      + '<div class="text-3xl mb-2">' + goal.icon + '</div>'
       + '<div class="text-sm font-bold ' + (goal.base ? '' : 'text-gray-800') + '">' + goal.name + '</div>'
       + (goal.base
           ? '<div class="mt-1 text-xs opacity-90">기본 관리</div>'
@@ -1478,39 +1410,6 @@ function toggleGoal(id) {
   if (selectedGoals.has(id)) selectedGoals.delete(id);
   else selectedGoals.add(id);
   renderHealthGoals();
-}
-
-// ── 제품 목록 ────────────────────────────────
-// 가격·영양성분이 있는 카탈로그(products.js)를 그대로 보여줍니다
-const KIND_COLOR = { soymilk: '#8B5CF6', phyto: '#059669', bar: '#EA580C', addon: '#0D9488' };
-function renderProductGrid() {
-  const el = document.getElementById('product-grid');
-  if (!el) return;
-  el.innerHTML = BOBSNU_CATALOG.map(p => {
-    const color = KIND_COLOR[p.kind] || '#6B7280';
-    const n = p.nut;
-    return '<div class="rounded-3xl border-2 p-6 bg-white hover:shadow-lg transition-shadow flex flex-col" style="border-color:' + color + '20">'
-      + '<div class="flex items-start justify-between mb-3">'
-      + '<span class="text-4xl">' + p.icon + '</span>'
-      + '<span class="text-xs font-bold px-2 py-1 rounded-full text-white" style="background:' + color + '">' + p.code + ' · ' + CATALOG_KIND_LABEL[p.kind] + '</span>'
-      + '</div>'
-      + '<h3 class="text-lg font-bold text-gray-900 mb-1">' + p.name + '</h3>'
-      + '<p class="text-sm text-gray-600 mb-3">' + p.note + '</p>'
-      + '<div class="flex flex-wrap gap-1 mb-3">'
-      + p.funcs.map(t => '<span class="text-xs px-2 py-1 rounded-full font-medium" style="background:' + color + '15;color:' + color + '">' + t + '</span>').join('')
-      + '</div>'
-      + '<div class="text-xs text-gray-500 space-y-0.5 mb-3">'
-      + '<div>' + n.energy + ' kcal · 단백질 ' + n.protein + 'g · 식이섬유 ' + n.fiber + 'g'
-      + (n.calcium ? ' · 칼슘 ' + n.calcium + 'mg' : '') + '</div>'
-      + '<div class="text-gray-400">1회 제공량 ' + n.weight + (p.kind === 'soymilk' || p.code === '1' ? ' mL' : ' g') + ' 기준 · 제품소개서 표시값</div>'
-      + '</div>'
-      + '<div class="mt-auto pt-3 border-t border-gray-100">'
-      + '<div class="flex items-baseline justify-between mb-2">'
-      + '<span class="text-xs text-gray-500">' + p.pack + '</span>'
-      + '<span class="text-lg font-black text-gray-900">' + won(p.price) + '</span></div>'
-      + '<button onclick="startService()" class="w-full py-2.5 rounded-xl text-white text-sm font-medium transition" style="background:' + color + '">맞춤 구독 추천받기</button>'
-      + '</div></div>';
-  }).join('');
 }
 
 // 「다른 음식」 입력용 datalist — 레시피 + 단품 식재료

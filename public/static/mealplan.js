@@ -715,7 +715,7 @@ function generateMealPlan({ profile, targets, cart, days, allergies, seed, onPro
   // days 는 상한. 실제 설계 일수는 구독량이 커버하는 만큼만 (남는 날을 일반 식단으로 채우지 않음)
   const maxDays = days || 30;
   days = subscriptionDays(cart, maxDays);
-  if (days < 1) return { error: '제품을 1개 이상 담으면 식단을 설계할 수 있습니다.' };
+  if (days < 1) return { error: '제품을 1개 이상 담으면 식단을 설계할 수 있어요.' };
   const rng = makeRng(seed != null ? seed : hashSeed(JSON.stringify([profile.gender, profile.age, profile.height, profile.weight, targets.targetKcal])));
 
   const pools = buildSlotPools({ allergies, rng, cap: 150 });

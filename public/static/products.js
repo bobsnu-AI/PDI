@@ -208,9 +208,9 @@ function catalogAllergyHits(p, allergySet) {
 // 단가 합계와 정확히 일치합니다. 따라서 138,000·69,000 을 정가로 보고 할인율을 적용합니다.
 const SUBSCRIPTION_PRESETS = [
   { id: 'optimal', title: '⭐ 최적 구독 세트', rate: 20, counts: { soymilk: 2, phyto: 2, bar: 3 },
-    desc: '두유 2 · 파이토 2 · 프로틴바 3', excelRef: 138000, accent: '#059669' },
+    desc: '두유 2 · 파이토 2 · 프로틴바 3', excelRef: 138000 },
   { id: 'minimum', title: '👍 최소 권장 세트', rate: 15, counts: { soymilk: 1, phyto: 1, bar: 2 },
-    desc: '두유 1 · 파이토 1 · 프로틴바 2', excelRef: 69000, accent: '#2563EB' },
+    desc: '두유 1 · 파이토 1 · 프로틴바 2', excelRef: 69000 },
 ];
 
 // 할인율 판정 — 엑셀 정책
@@ -249,7 +249,12 @@ function subscriptionQuote(cart) {
   const finalPrice = Math.round(listPrice * (1 - rate / 100) / 10) * 10;
   const preset = SUBSCRIPTION_PRESETS.find(ps =>
     ps.counts.soymilk === counts.soymilk && ps.counts.phyto === counts.phyto && ps.counts.bar === counts.bar && counts.addon === 0);
-  return { lines, counts, listPrice, rate, finalPrice, discount: listPrice - finalPrice, preset: preset || null };
+  // 한 끼 값 — 정·캡슐은 끼니를 대신하지 않으므로 횟수에서 뺍니다
+  const servings = lines.reduce((s, l) =>
+    s + (l.product.supplement ? 0 : packServings(l.product) * l.qty), 0);
+  return { lines, counts, listPrice, rate, finalPrice, discount: listPrice - finalPrice,
+           preset: preset || null, servings,
+           perServing: servings ? Math.round(finalPrice / servings / 10) * 10 : 0 };
 }
 
 // ══════════════════════════════════════════════

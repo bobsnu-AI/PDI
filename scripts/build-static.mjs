@@ -1,7 +1,7 @@
 // GitHub Pages용 정적 빌드
 // src/index.tsx 와 같은 순서로 스크립트를 index.html 에 인라인하여
 // 서버 없이 동작하는 단일 index.html 을 dist-static/ 에 생성
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, cpSync, existsSync } from 'node:fs'
 
 const read = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8')
 
@@ -20,5 +20,8 @@ const out = html.replace(found[0], () => inlined)
 
 mkdirSync(new URL('../dist-static/', import.meta.url), { recursive: true })
 writeFileSync(new URL('../dist-static/index.html', import.meta.url), out)
+// 제품 사진 — index.html 이 /static/img/… 로 참조하므로 같은 경로에 둡니다
+const img = new URL('../public/static/img/', import.meta.url)
+if (existsSync(img)) cpSync(img, new URL('../dist-static/static/img/', import.meta.url), { recursive: true })
 // out.length 는 UTF-16 코드 단위라 한글이 섞이면 실제 파일 크기와 다름 → 바이트로 계산
 console.log(`dist-static/index.html (${(Buffer.byteLength(out, 'utf8') / 1024 / 1024).toFixed(1)} MB)`)

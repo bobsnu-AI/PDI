@@ -1,6 +1,6 @@
 // 구독 할인 · 추천 룰 · 30일 식단 다목적 최적화 자체 점검
 //   실행: node scripts/test-mealplan.mjs
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
 import assert from 'node:assert/strict'
 import vm from 'node:vm'
 
@@ -724,7 +724,7 @@ ok('② 목표 관리 팁 · ③ 주의사항이 따로 그려짐', () => {
   const tips = html('tips-section'), guide = html('guide-section')
   assert.ok(tips.includes('목표 관리 팁'), '관리 팁 제목 없음')
   assert.ok(tips.includes('체중 관리'), '기본 목표(체중 관리) 팁이 없음')
-  assert.ok(guide.includes('주의사항'), '주의사항 제목 없음')
+  assert.ok(guide.includes('주의할 점'), '주의사항 제목 없음')
   // 목표치는 주의사항 카드에서 빠져야 한다 (중복 표시 금지)
   assert.ok(!guide.includes('권장 영양 섭취량') && !guide.includes('체중 유형'), '주의사항에 목표치가 남아 있음')
 })
@@ -833,9 +833,9 @@ ok('제품 섭취 가이드가 카드·막대로 보임', () => {
   assert.ok(widths.length >= 3, '칼로리 막대가 없음: ' + widths.length)
   assert.equal(Math.max(...widths), 100, '가장 긴 막대가 100% 가 아님')
   // 제품 카드 — 담은 품목마다 아이콘·횟수·끼니
-  for (const [key, icon] of [['soymilk', '🥛'], ['phyto', '💊'], ['bar', '🍫']]) {
+  for (const [key, label] of [['soymilk', '두유'], ['phyto', '파이토100'], ['bar', '프로틴바']]) {
     if (!g.cov.stock[key]) continue
-    assert.ok(h.includes(icon), '제품 아이콘이 없음: ' + icon)
+    assert.ok(h.includes(label), '제품 이름이 없음: ' + label)
     assert.ok(h.includes('한 달 ' + g.cov.stock[key] + '회분'), key + ' 회분이 안 나옴')
     assert.ok(g.where[key].length, key + ' 가 어느 끼니에 들어가는지 비어 있음')
     for (const slot of g.where[key]) assert.ok(h.includes('>' + slot + '</span>'), '끼니 표시 없음: ' + slot)
@@ -872,7 +872,7 @@ ok('식단 전에는 「식단 추천받기」 안내가 보임', () => {
 ok('구독 구성이 바뀌면 다시 추천받기 안내로 바뀜', () => {
   vm.runInContext("const __k = tracker.planKey; tracker.planKey = 'changed'; renderMealPlan(); tracker.planKey = __k;", ctx)
   const h = html('mealplan-section')
-  assert.ok(h.includes('구독 구성이 바뀌었습니다'), '변경 안내 없음')
+  assert.ok(h.includes('구독 구성이 바뀌었어요'), '변경 안내 없음')
   assert.ok(h.includes('requestMealPlan'), '다시 추천받기 버튼 없음')
   vm.runInContext('renderMealPlan();', ctx)        // 원래 상태로 복구
 })
@@ -895,7 +895,7 @@ ok('실천 기록 → 실제 섭취 반영', () => {
   console.log('    Day1 실제 ' + a.kcal + ' kcal · PDI ' + a.pdi + '% · 실천율 ' + ad.pct + '%')
 })
 ok('없는 음식은 거부', () => {
-  assert.ok($('addSubstitute')(1, 'dinner', '존재하지않는음식xyz', 1).includes('찾을 수 없습니다'))
+  assert.ok($('addSubstitute')(1, 'dinner', '존재하지않는음식xyz', 1).includes('찾을 수 없어요'))
 })
 ok('모니터링 렌더 (체중 입력·목표 재조정)', () => {
   const h = html('monitor-section')
@@ -925,7 +925,7 @@ ok('구독 전에는 앞 7일만 열리고 나머지는 잠김', () => {
   assert.ok(h.includes('7일 미리보기'), '미리보기 표시 없음')
   const cards = [...h.matchAll(/font-black text-gray-900">Day (\d+)</g)].map(m => +m[1])
   assert.deepEqual(cards, [1, 2, 3, 4, 5, 6, 7], '열린 날이 7일이 아님: ' + cards.join(','))
-  assert.ok(h.includes('구독 후에 열립니다'), '잠금 안내 없음')
+  assert.ok(h.includes('구독 후에 열려요'), '잠금 안내 없음')
   assert.ok(h.includes("goPage('pay')"), '구독 시작 버튼 없음')
   // 8일째로 넘기려 해도 열린 범위를 벗어나지 않는다
   vm.runInContext('setPlanView(8);', ctx)
@@ -945,17 +945,17 @@ ok('시연용이므로 결제 정보를 받는 입력칸이 없음', () => {
   const h = html('pay-section') + htmlSrc.slice(htmlSrc.indexOf('id="page-pay"'), htmlSrc.indexOf('id="page-log"'))
   for (const t of ['카드번호', 'card', 'cvc', 'password', 'type="tel"'])
     assert.ok(!h.toLowerCase().includes(t.toLowerCase()), '결제 정보 입력칸: ' + t)
-  assert.ok(htmlSrc.includes('실제 결제는 되지 않습니다'), '시연 안내가 없음')
+  assert.ok(htmlSrc.includes('실제 결제는 되지 않아요'), '시연 안내가 없음')
 })
 ok('구독을 시작하면 30일 전체가 열림', () => {
   vm.runInContext('startDemoSubscription();', ctx)
   assert.equal($('tracker').paid, true)
   assert.equal($('openPlanDays')(), 30)
-  assert.ok(html('pay-section').includes('구독이 시작되었습니다'), '구독 중 안내 없음')
+  assert.ok(html('pay-section').includes('구독이 시작됐어요'), '구독 중 안내 없음')
   vm.runInContext('setPlanView(8); renderMealPlan();', ctx)
   const h = html('mealplan-section')
   assert.ok(h.includes('font-black text-gray-900">Day 8<'), '구독 후에도 Day 8 이 안 열림')
-  assert.ok(!h.includes('구독 후에 열립니다'), '잠금 안내가 남아 있음')
+  assert.ok(!h.includes('구독 후에 열려요'), '잠금 안내가 남아 있음')
   // 시연 상태를 되돌려 다음 검사는 미구독 화면으로 본다
   vm.runInContext('stopDemoSubscription(); planViewFrom = 1; renderMealPlan();', ctx)
   assert.equal($('tracker').paid, false)
@@ -1039,7 +1039,7 @@ ok('끼니·양 선택이 다시 그려도 유지됨', () => {
 ok('없는 음식은 거부하고 안내', () => {
   vm.runInContext("diaryAdd('존재하지않는음식xyz');", ctx)
   assert.equal($('tracker').diary['2026-10-11'].length, 1, '없는 음식이 들어감')
-  assert.ok(sandbox.document.getElementById('diary-error').textContent.includes('찾을 수 없습니다'))
+  assert.ok(sandbox.document.getElementById('diary-error').textContent.includes('찾을 수 없어요'))
 })
 ok('기준 대비 바가 미달·적정·초과를 표시', () => {
   vm.runInContext("setDiaryDate('2026-10-10');", ctx)
@@ -1095,6 +1095,68 @@ ok('서비스 흐름이 네 단계 순환 패널로만 소개됨', () => {
   vm.runInContext('shiftFlow(-1);', ctx)
   assert.equal($('flowIndex'), 3, '처음에서 마지막으로 안 돌아감')
 })
+ok('화면 문구는 해요체로 쓴다', () => {
+  // 한국 건강 서비스(필리·닥터나우·굿닥)와 토스 라이팅 가이드가 모두 해요체입니다.
+  // 합니다체는 법적 고지에만 남깁니다 — 필리도 토스도 고지만 예외로 둡니다.
+  const LEGAL = ['의학적 진단을 대체하지 않습니다', '일부 표현이 제한될 수 있습니다']
+  const END = /(습니다|합니다|됩니다|입니다)/
+  const STR = new RegExp("'([^'\\\\\\n]*)'", 'g')
+  const legal = v => LEGAL.some(x => v.includes(x))
+
+  for (const f of ['public/static/app.js', 'public/static/patterns.js',
+                   'public/static/tracker.js', 'public/static/mealplan.js']) {
+    const bad = []
+    read(f).split('\n').forEach((l, i) => {
+      if (/^\s*(\/\/|\*|\/\*)/.test(l)) return        // 주석은 개발자용이라 그대로 둡니다
+      const code = l.replace(/\/\/.*$/, '')
+      for (const m of code.matchAll(STR))
+        if (END.test(m[1]) && !legal(m[1])) bad.push((i + 1) + ': ' + m[1].trim())
+    })
+    assert.equal(bad.length, 0, f + ' 에 합니다체가 남음 — ' + bad.join(' / '))
+  }
+
+  const bad = []
+  htmlSrc.split('\n').forEach((l, i) => {
+    const t = l.trim()
+    if (/^(\/\/|\*|\/\*)/.test(t)) return
+    const text = l.replace(/<[^>]*>/g, ' ').trim()
+    if (END.test(text) && !legal(text)) bad.push((i + 1) + ': ' + text.slice(0, 50))
+  })
+  assert.equal(bad.length, 0, 'public/index.html 에 합니다체가 남음 — ' + bad.join(' / '))
+})
+
+ok('화면에 이모지를 아이콘으로 쓰지 않는다', () => {
+  // 이모지는 기기마다 그림이 달라 통제가 안 되고, 옆에 이름이 이미 있어 정보도 더하지 않습니다
+  const srcs = ['public/index.html', 'public/static/app.js', 'public/static/tracker.js']
+  const pic = /\p{Extended_Pictographic}/u
+  for (const f of srcs) {
+    const bad = read(f).split('\n')
+      .map((l, i) => [i + 1, l])
+      // 데이터 정의(icon: '…')는 그리지 않으므로 둡니다
+      .filter(([, l]) => pic.test(l) && !/icon:\s*'/.test(l) && !/BENEFIT_ICON|PHYTOCHEMICAL_GROUPS/.test(l))
+      .filter(([, l]) => !/^\s*(\/\/|\*)/.test(l) && !/©/.test(l))
+    assert.equal(bad.length, 0, f + ' 에 이모지가 그려짐: ' + bad.map(([n]) => n).join(', '))
+  }
+})
+
+ok('첫 화면은 제품을 나열하지 않고 사진 한 장으로 소개한다', () => {
+  // 품목은 진단 결과로 정해집니다 — 진단 전에 카탈로그를 펼치면 그 말과 어긋납니다
+  assert.ok(!htmlSrc.includes('id="product-grid"'), '첫 화면에 제품 목록이 남아 있음')
+  assert.ok(!read('public/static/app.js').includes('renderProductGrid'), '안 쓰는 카탈로그 그리기가 남아 있음')
+  // 하위 경로(/PDI/)로 서비스되므로 반드시 상대 경로여야 합니다
+  assert.ok(!/<img src="\//.test(htmlSrc), '이미지가 절대 경로라 하위 경로 배포에서 깨집니다')
+  const img = /<img src="static\/img\/([a-z0-9.]+)" alt="([^"]+)"/.exec(htmlSrc)
+  assert.ok(img, '제품 사진이 없음')
+  assert.ok(img[2].length > 4, '사진 설명(alt)이 비었음')
+  assert.ok(existsSync(new URL('../public/static/img/' + img[1], import.meta.url)), '사진 파일이 없음: ' + img[1])
+  assert.ok(htmlSrc.includes('진단 결과에 따라'), '품목이 진단으로 정해진다는 설명이 없음')
+})
+
+ok('정적 빌드가 제품 사진도 함께 내보낸다', () => {
+  const b = read('scripts/build-static.mjs')
+  assert.ok(/static\/img/.test(b), '빌드가 이미지 폴더를 복사하지 않음')
+})
+
 ok('index.html 에 페이지 6개가 있고 상단·하단 고정이 없음', () => {
   for (const p of ['home', 'intake', 'result', 'plan', 'log', 'pay'])
     assert.ok(htmlSrc.includes('id="page-' + p + '"'), '페이지 없음: ' + p)
@@ -1179,7 +1241,7 @@ ok('구독 수량·제품 변경이 오류 없이 다시 그려짐', () => {
     for (const code of [...subCart.addon]) toggleAddon(code);
   `, ctx)
   const empty = html('product-recommendations')
-  assert.ok(empty.includes('담긴 제품이 없습니다'), '빈 구성 안내가 없음')
+  assert.ok(empty.includes('담긴 제품이 없어요'), '빈 구성 안내가 없음')
   assert.ok(!empty.includes('undefined') && !empty.includes('NaN'))
   vm.runInContext(`resetSubCart();`, ctx)
   assert.ok(html('product-recommendations').length > before * 0.5)
@@ -1315,8 +1377,26 @@ ok('결과 화면에 식단 점수 영역이 그려짐', () => {
   for (const n of ['심혈관질환', '2형당뇨', '암 전체'])
     assert.ok(sec.includes(n), n + ' 칸이 없음')
   assert.ok(sec.includes('Nat Med'), '출처 표기가 없음')
-  assert.ok(sec.includes('이렇게 바꾸면'), '개선 제안이 없음')
+  assert.ok(sec.includes('먼저 이것부터 바꿔보세요'), '개선 제안이 없음')
   assert.ok(!sec.includes('<svg'), '없앤 위험도 그림이 아직 남아 있음')
+  // 할 일이 점수보다 위에 와야 합니다 — 결과를 열면 먼저 보이는 것이 할 일입니다
+  assert.ok(sec.indexOf('먼저 이것부터') < sec.indexOf('식단 점수'), '점수가 할 일보다 위에 있음')
+  // 처음 보는 사람이 모르는 영어 약자는 접힌 칸 밖에 나오지 않아야 합니다
+  const open = sec.slice(0, sec.indexOf('<details'))
+  for (const k of ['AHEI', 'hPDI', 'DRRD', 'AMED', 'DASH'])
+    assert.ok(!open.includes(k), k + ' 가 펼쳐진 화면에 그대로 보임')
+  assert.ok(!open.includes('위험비'), '「위험비」가 펼쳐진 화면에 그대로 보임')
+})
+
+ok('구독 금액은 한 끼 값으로도 보여준다', () => {
+  const q = $('subscriptionQuote')({ soymilk: ['A', 'A'], phyto: ['가', '가'], bar: ['나', '나', '나'], addon: [] })
+  // 두유 24입 × 2 + 파이토 14포 × 2 + 바 10입 × 3 = 106 회분
+  assert.equal(q.servings, 24 * 2 + 14 * 2 + 10 * 3)
+  assert.ok(q.perServing > 0 && q.perServing < q.finalPrice, '한 끼 값이 이상함 ' + q.perServing)
+  assert.equal(q.perServing, Math.round(q.finalPrice / q.servings / 10) * 10)
+  // 정·캡슐은 끼니를 대신하지 않으므로 회분에서 빠집니다
+  const withPill = $('subscriptionQuote')({ soymilk: ['A'], phyto: [], bar: [], addon: ['2'] })
+  assert.equal(withPill.servings, 24, '영양제가 끼니 수에 들어감')
 })
 
 ok('바지 사이즈를 안 골라도 결과를 낼 수 있다', () => {
