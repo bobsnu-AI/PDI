@@ -698,11 +698,18 @@ ok('프로필·목표가 저장됨', () => {
 })
 
 const html = id => els.get(id) ? els.get(id)._html : ''
-ok('구독 세트 렌더 (추천 근거·수량·가격)', () => {
+ok('구독 세트 렌더 (수량·가격·다음 할인)', () => {
   const h = html('product-recommendations')
   assert.ok(h.length > 2000, 'len=' + h.length)
-  for (const s of ['이렇게 골랐어요', '구독 구성', '결제 금액', '정가', '할인', '추가 구성품'])
+  for (const s of ['구독 구성', '월 결제액', '정가', '할인', '추가 구성품'])
     assert.ok(h.includes(s), '누락: ' + s)
+  // 같은 제품이 구성·금액 두 곳에 두 번 나오면 읽기 힘들다 — 줄마다 금액을 붙이고 목록은 하나만 둔다
+  assert.equal(h.split('밥스누 파이토100').length - 1, 1, '제품 이름이 두 번 나옴')
+  // 추천 근거는 앞 화면에서 이미 설명했으므로 여기서는 빼고 간략하게 보여준다
+  assert.ok(!h.includes('이렇게 골랐어요'), '추천 근거 상자가 남아 있음')
+  assert.ok(!h.includes('예상 변화'), '점수 예상 변화가 남아 있음')
+  // 구독 시작 버튼 아래에는 무엇을 더 담으면 할인되는지가 나와야 한다
+  assert.ok(/더 담으면 \d+% 할인/.test(h), '다음 할인 안내가 없음')
   // 내부 용어·할인 근거 설명은 화면에 나오지 않아야 한다
   for (const s of ['추천 룰', '할인 근거', 'PDI', '엑셀', 'Sheet3'])
     assert.ok(!h.includes(s), '내부 용어 노출: ' + s)
@@ -711,6 +718,45 @@ ok('구독 세트 렌더 (추천 근거·수량·가격)', () => {
   assert.ok(!h.includes('requestMealPlan'), '가이드 버전인데 식단 추천 버튼이 보임')
   assert.ok(!h.includes('undefined') && !h.includes('NaN'), 'undefined/NaN 포함')
 })
+ok('좁은 화면에서 구독 구성이 넘치지 않는다', () => {
+  const h = html('product-recommendations')
+  // 그리드 칸의 기본 min-width 는 auto 라, 긴 제품명이 들어가면 칸이 화면 밖으로 밀린다.
+  // 360px 에서 실제로 넘쳤던 자리 — 두 칸 모두 min-w-0 이어야 한다
+  assert.ok(h.includes('lg:grid-cols-2'), '두 칸 배치가 아님')
+  assert.ok((h.match(/class="min-w-0/g) || []).length >= 2, '그리드 칸에 min-w-0 이 없음')
+  // 좁은 화면에서는 제품명 아래로 수량·금액이 내려가야 이름이 잘리지 않는다
+  assert.ok(h.includes('sm:flex sm:items-center'), '좁은 화면에서 줄이 쌓이지 않음')
+  assert.ok(h.includes('truncate'), '긴 제품명이 줄여지지 않음')
+})
+
+ok('알레르기 품목은 구독 구성·팁에 아예 나오지 않는다', () => {
+  // 대두·우유 알레르기 → 두유 9종·프로틴바·뼈건강 칼마디케이가 모두 빠진다
+  const h = vm.runInContext(`
+    pdiResult.profile.allergies = new Set(['soy', 'milk']);
+    subCart = null;
+    renderSubscription(pdiResult);
+    renderTips(pdiResult);
+    document.getElementById('product-recommendations').innerHTML;
+  `, ctx)
+  for (const s of ['약콩 프로틴바', '뼈건강 칼마디케이', '오리지널 약콩 두유'])
+    assert.ok(!h.includes('>' + s) && !h.includes(s + ' ('), '알레르기 품목이 보임: ' + s)
+  assert.ok(h.includes('밥스누 파이토100'), '남아야 할 파이토100 이 없음')
+  assert.ok(h.includes('알레르기로 뺀 제품'), '무엇이 빠졌는지 알려주지 않음')
+  // 담을 수 없는 품목이 든 세트 버튼도 보이면 안 된다
+  assert.ok(!h.includes('최적 구독 세트') && !h.includes('최소 권장 세트'), '못 담는 세트가 보임')
+  const tips = html('tips-section')
+  for (const s of ['콩', '두부', '두유', '된장', '우유'])
+    assert.ok(!tips.includes(s), '알레르기 식품이 팁에 남음: ' + s)
+  assert.ok(tips.includes('멸치'), '팁에서 남아야 할 음식까지 지워짐')
+  // 뒤 검사들이 쓰는 공용 상태를 되돌린다
+  vm.runInContext(`
+    pdiResult.profile.allergies = new Set();
+    subCart = null;
+    renderSubscription(pdiResult);
+    renderTips(pdiResult);
+  `, ctx)
+})
+
 ok('① 목표치가 먼저 — 기준 칼로리·BMI·복부비만·영양소 목표치', () => {
   const h = html('target-section')
   for (const s of ['하루 목표치', '목표 칼로리', 'BMI', '복부비만', '표준 체중',
@@ -993,7 +1039,9 @@ ok('다단 그리드에 모바일 분기가 있음', () => {
 ok('터치 영역이 확보됨 (수량 ± · 끼니 상태 버튼)', () => {
   const app = read('public/static/app.js'), trk = read('public/static/tracker.js')
   assert.ok(!/w-7 h-7[^"]*aria-label="(줄이기|늘리기)"/.test(app), '수량 버튼이 28px 로 남아 있음')
-  assert.ok(app.includes('w-9 h-9'), '수량 버튼이 36px 로 커지지 않음')
+  // 수량 ± 는 .qty-btn 으로 크기를 잡는다 (2.25rem = 36px)
+  assert.ok(/\.qty-btn\s*\{[^}]*width:\s*2\.25rem/.test(htmlSrc), '수량 버튼이 36px 로 커지지 않음')
+  assert.ok(/\.qty-btn:active\s*\{[^}]*scale/.test(htmlSrc), '누른 순간 반응이 없음')
   assert.ok(!trk.includes('px-2.5 py-1 rounded-full'), '끼니 상태 버튼 터치 영역이 작음')
 })
 
@@ -1150,6 +1198,43 @@ ok('첫 화면은 제품을 나열하지 않고 사진 한 장으로 소개한�
   assert.ok(img[2].length > 4, '사진 설명(alt)이 비었음')
   assert.ok(existsSync(new URL('../public/static/img/' + img[1], import.meta.url)), '사진 파일이 없음: ' + img[1])
   assert.ok(htmlSrc.includes('진단 결과에 따라'), '품목이 진단으로 정해진다는 설명이 없음')
+})
+
+ok('제품 15종 모두 공식몰 상세 페이지로 이어진다', () => {
+  const seen = new Set()
+  for (const p of $('BOBSNU_CATALOG')) {
+    const u = $('productUrl')(p)
+    assert.ok(/^https:\/\/bobsnu\.com\/#\/p\/[a-z0-9]+$/.test(u), '주소가 없거나 모양이 다름: ' + p.name + ' → ' + u)
+    assert.ok(!seen.has(u), '두 제품이 같은 주소를 봄: ' + p.name)
+    seen.add(u)
+  }
+  // 구독 구성 화면에 링크가 실제로 걸려야 한다
+  const h = html('product-recommendations')
+  assert.ok(h.includes('href="https://bobsnu.com/#/p/'), '구독 구성에 상세 링크가 없음')
+  assert.ok(h.includes('rel="noopener"'), '새 창 링크에 noopener 가 없음')
+})
+
+ok('먹은 음식은 입력한 글자로 전체 DB에서 찾는다', () => {
+  const opts = q => vm.runInContext(
+    `updateFoodList(${JSON.stringify(q)}); document.getElementById('plan-food-list').innerHTML;`, ctx)
+  // 종전에는 앞 1,600개만 목록에 넣어 흔한 음식이 검색되지 않았다
+  for (const food of ['김치찌개', '제육볶음', '된장찌개', '비빔밥', '떡볶이', '라면'])
+    assert.ok(opts(food).includes('value="' + food + '"'), '못 찾는 음식: ' + food)
+  assert.ok(opts('김치').split('<option').length - 1 <= 30, '한 번에 너무 많이 보여줌')
+  // 단종된 구 제품은 자동완성에 나오지 않는다
+  for (const old of ['파이토100 시즌2', '파이토블랙'])
+    assert.ok(!opts(old).includes('value="' + old + '"'), '단종 제품이 보임: ' + old)
+})
+
+ok('먹은 음식·체중은 엔터로도 기록된다', () => {
+  const t = read('public/static/tracker.js')
+  for (const [id, fn] of [['diary-food', 'diaryAdd'], ['diary-weight', 'submitDiaryWeight'],
+                          ['sub-', 'submitSubstitute']]) {
+    const i = t.indexOf("id=\"" + id)
+    assert.ok(i > 0, '입력칸 없음: ' + id)
+    assert.ok(t.slice(i, i + 600).includes("event.key===\\'Enter\\'") , '엔터 처리 없음: ' + id)
+    assert.ok(t.slice(i, i + 600).includes(fn), '엔터가 부르는 함수가 다름: ' + id)
+  }
 })
 
 ok('정적 빌드가 제품 사진도 함께 내보낸다', () => {

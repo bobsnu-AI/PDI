@@ -640,6 +640,8 @@ function renderMealPlan() {
       const otherForm = e.status === 'other'
         ? '<div class="mt-1.5 flex flex-wrap gap-1.5 items-center">'
           + '<input id="sub-' + d.day + '-' + meal.type + '" list="plan-food-list" placeholder="실제로 먹은 음식" '
+          + 'oninput="updateFoodList(this.value)" '
+          + 'onkeydown="if(event.key===\'Enter\'){event.preventDefault();submitSubstitute(' + d.day + ',&quot;' + meal.type + '&quot;)}" '
           + 'class="flex-1 min-w-32 text-xs px-2 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-amber-400">'
           + '<select id="subp-' + d.day + '-' + meal.type + '" class="text-xs px-2 py-1.5 border border-gray-200 rounded-lg">'
           + [0.5, 1, 1.5, 2, 3].map(p => '<option value="' + p + '"' + (p === 1 ? ' selected' : '') + '>' + p + '인분</option>').join('')
@@ -971,6 +973,7 @@ function renderDiary() {
     + '<div class="flex flex-wrap items-center gap-2 bg-gray-50 rounded-2xl p-4 mb-3">'
     + '<label for="diary-weight" class="text-sm font-bold text-gray-700 w-12">체중</label>'
     + '<input id="diary-weight" type="number" step="0.1" min="10" max="300" value="' + (wt !== null ? wt : '') + '" '
+    + 'onkeydown="if(event.key===\'Enter\'){event.preventDefault();submitDiaryWeight()}" '
     + 'placeholder="예: 65.0" class="w-24 h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-emerald-500">'
     + '<span class="text-sm text-gray-400">kg</span>'
     + '<button type="button" onclick="submitDiaryWeight()" class="h-11 px-5 bg-emerald-700 text-white text-sm font-bold">기록</button>'
@@ -986,6 +989,8 @@ function renderDiary() {
     + [0.5, 1, 1.5, 2].map(p => '<option value="' + p + '"' + (p === diaryPortion ? ' selected' : '') + '>' + p + '인분</option>').join('')
     + '</select>'
     + '<input id="diary-food" list="plan-food-list" placeholder="먹은 음식" autocomplete="off" '
+    + 'oninput="updateFoodList(this.value)" '
+    + 'onkeydown="if(event.key===\'Enter\'){event.preventDefault();diaryAdd()}" '
     + 'class="flex-1 min-w-32 h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-emerald-500">'
     + '<button type="button" onclick="diaryAdd()" class="h-11 px-5 bg-emerald-700 text-white text-sm font-bold">추가</button>'
     + '</div>'

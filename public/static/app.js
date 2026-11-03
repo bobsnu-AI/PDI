@@ -127,16 +127,30 @@ function calculatePhytoScore(phytoMap, selectedGoals) {
 // 체중 관리가 핵심(항상 포함), 추가 건강 관리는 4가지만 선택 제공
 const HEALTH_GOALS = [
   { id: 'weight',      name: '체중 관리', icon: '⚖️', base: true, phytos: ['glucosinolates', 'catechins', 'phenolicAcids'],
-    tip: '식사량보다 구성이 중요해요. 통곡물·채소·콩으로 포만감을 높이고 가공식품·단 음료를 줄이세요.' },
+    tip: '식사량보다 먹는 구성이 중요해요. 포만감은 {foods}에서 오니 이쪽을 늘리고 가공식품·단 음료를 줄이세요.' },
   { id: 'gut',         name: '장 건강',   icon: '🌿', phytos: ['phenolicAcids', 'saponins', 'gingerols'],
-    tip: '식이섬유(잡곡·채소·해조류)와 된장·김치 같은 발효식품을 매일 챙기세요.' },
+    tip: '식이섬유와 발효식품이 장에 좋아요. {foods} 중에서 매일 하나는 챙기세요.' },
   { id: 'blood_sugar', name: '혈당 관리', icon: '🩸', phytos: ['phenolicAcids', 'isoflavones', 'lignans'],
     tip: '흰쌀 대신 잡곡밥, 채소·단백질 반찬을 먼저 먹고 밥은 나중에 드세요.' },
   { id: 'bone',        name: '뼈 건강',   icon: '🦴', phytos: ['isoflavones', 'lignans', 'flavonols'],
-    tip: '두부·두유 등 콩 식품과 멸치·우유·녹색 채소로 칼슘을 보충하고 햇볕을 쬐세요.' },
+    tip: '칼슘은 {foods}에 많아요. 햇볕도 하루 15분은 쬐세요.' },
   { id: 'fatigue',     name: '피로 회복', icon: '🔋', phytos: ['saponins', 'anthocyanins', 'catechins'],
     tip: '아침 식사를 거르지 말고 단백질을 끼니마다 나눠 드세요. 충분한 수면이 기본이에요.' },
 ];
+
+// 팁에 드는 음식 — [이름, 알레르기 id]. 고른 알레르기 품목은 팁에서 빼고 보여줍니다
+const GOAL_FOODS = {
+  weight: [['통곡물'], ['채소'], ['콩', 'soy']],
+  gut:    [['잡곡'], ['채소'], ['해조류'], ['된장', 'soy'], ['김치']],
+  bone:   [['두부', 'soy'], ['두유', 'soy'], ['멸치'], ['우유', 'milk'], ['녹색 채소']],
+};
+
+function goalTipText(g, allergySet) {
+  if (!g.tip.includes('{foods}')) return g.tip;
+  const foods = (GOAL_FOODS[g.id] || [])
+    .filter(([, a]) => !a || !allergySet.has(a)).map(([n]) => n);
+  return g.tip.replace('{foods}', foods.join('·'));
+}
 
 // ── 식재료 식품군 보정 ──────────────────────────
 // recipes.js 는 자동 생성 DB라 차·코코아 원료가 「정제 곡물·당류」로 분류되어 있습니다.
@@ -1023,11 +1037,12 @@ function renderTips(r) {
   const el = document.getElementById('tips-section');
   if (!el) return;
   const tips = HEALTH_GOALS.filter(g => selectedGoals.has(g.id));
+  const allergySet = r.profile.allergies;
   el.innerHTML =
     '<h3 class="text-xl font-bold text-gray-900 mb-4">목표 관리 팁</h3>'
     + '<ul class="space-y-3">' + tips.map(g =>
         '<li class="text-sm"><b class="text-gray-800">' + g.name + '</b> '
-        + '<span class="text-gray-600">' + g.tip + '</span></li>').join('')
+        + '<span class="text-gray-600">' + goalTipText(g, allergySet) + '</span></li>').join('')
     + '</ul>';
 }
 
@@ -1044,63 +1059,6 @@ function renderSidePick(r) {
     + '<div class="flex items-center justify-between gap-2 pt-3 mt-3 border-t border-emerald-600">'
     + '<span class="text-emerald-100 text-xs">한 달 예상 금액</span>'
     + '<span class="text-white font-bold">' + won(q.finalPrice) + '</span></div>';
-}
-
-// ══════════════════════════════════════════════
-// 점수 개선 시뮬레이션
-// 밥스누 제품 1회분을 현재 식단에 가산했을 때
-// PDI 점수·파이토 점수가 얼마나 오르는지 계산
-// ══════════════════════════════════════════════
-function simulateAddFood(prodName) {
-  // 현재 pdiResult 없으면 계산 불가
-  if (!pdiResult) return null;
-
-  // INGREDIENTS에서 제품 데이터 가져오기
-  const ing = INGREDIENTS[prodName];
-  if (!ing || ing.cat !== 'bobsnu') return null;
-
-  // ─ 현재 기준값 ─
-  const curPDI   = pdiResult.pdiScore;
-  const curPhyto = pdiResult.phytoScore ? pdiResult.phytoScore.total : 0;
-  const curTotal = pdiResult.totalCalories;
-  const curPRF   = pdiResult.prfCalories;
-
-  // ─ 1회 가산 ─
-  // 밥스누 제품은 kcal가 이미 1회 제공량 기준
-  const addKcal  = ing.kcal || 0;
-  const addPhytos = ing.phytos || {};
-
-  // 가상 PDI 계산
-  // 밥스누 제품은 prf:true → PRF kcal에 포함
-  const newTotal  = curTotal + addKcal;
-  const newPRF    = curPRF + (ing.prf ? addKcal : 0);
-  const newPDI    = newTotal > 0 ? (newPRF / newTotal) * 100 : 0;
-  const deltaPDI  = newPDI - curPDI;
-
-  // 가상 파이토 점수 계산
-  const newPhytoMap = { ...pdiResult.phytoMap };
-  for (const [key, mg] of Object.entries(addPhytos)) {
-    newPhytoMap[key] = (newPhytoMap[key] || 0) + (mg || 0);
-  }
-  const newPhytoScore = calculatePhytoScore(newPhytoMap, selectedGoals);
-  const deltaPhyto    = newPhytoScore.total - curPhyto;
-
-  // 추가되는 파이토케미컬 계열 (기존에 없던 신규 계열)
-  const newKeys = Object.keys(addPhytos).filter(k => !(pdiResult.phytoMap[k] > 0) && addPhytos[k] > 0);
-
-  return {
-    kcal:       ing.kcal || 0,
-    deltaPDI:   +deltaPDI.toFixed(1),
-    deltaPhyto: +deltaPhyto.toFixed(0),
-    newPDI:     +newPDI.toFixed(1),
-    newPhyto:   newPhytoScore.total,
-    newKeys,    // 신규 추가 파이토 계열
-  };
-}
-
-function simBadges(sim) {
-  if (!sim) return '';
-  return '<span class="text-xs text-gray-400">1회 ' + Math.round(sim.kcal || 0) + ' kcal</span>';
 }
 
 // ══════════════════════════════════════════════
@@ -1200,18 +1158,26 @@ function resetSubCart() {
 
 function won(v) { return v.toLocaleString('ko-KR') + '원'; }
 
-function qtyRow(label, icon, qty, kind, extra) {
-  // 모바일: 제품 선택 드롭다운은 아래 줄로 내리고, ± 버튼은 터치 영역을 36px 로 키움
-  return '<div class="flex flex-wrap items-center gap-2 py-2.5 border-b border-gray-100 last:border-0">'
-    + '<span class="text-2xl">' + icon + '</span>'
-    + '<div class="flex-1 min-w-0">' + label + '</div>'
-    + '<div class="flex items-center gap-1 flex-shrink-0">'
-    + '<button type="button" onclick="setSubQty(\'' + kind + '\',-1)" class="w-9 h-9 text-lg rounded-lg border border-gray-200 text-gray-600 hover:border-gray-400 active:bg-gray-100" aria-label="줄이기">−</button>'
-    + '<span class="w-8 text-center text-base font-black text-gray-900">' + qty + '</span>'
-    + '<button type="button" onclick="setSubQty(\'' + kind + '\',1)" class="w-9 h-9 text-lg rounded-lg border border-gray-200 text-gray-600 hover:border-gray-400 active:bg-gray-100" aria-label="늘리기">+</button>'
+// ── 구독 구성 한 줄 ──────────────────────────
+// 제품명 · 수량 · 그 줄의 금액을 한 줄에 둡니다.
+// 종전에는 왼쪽 카드에 제품, 오른쪽 카드에 같은 제품의 금액을 또 적어 두 번 읽어야 했습니다.
+function subRow({ name, meta, qty, kind, amount }) {
+  return '<div class="py-3.5" style="border-top:1px solid var(--line)">'
+    + '<div class="sm:flex sm:items-center sm:gap-3">'
+    + '<div class="min-w-0 sm:flex-1">'
+    + '<div class="text-[0.95rem] font-semibold text-gray-900 truncate">' + name + '</div>'
+    + '<div class="text-xs text-gray-500 mt-0.5">' + meta + '</div>'
     + '</div>'
-    + (extra ? '<div class="w-full sm:w-auto sm:order-2">' + extra + '</div>' : '')
-    + '</div>';
+    // 좁은 화면에서는 아랫줄로 내려 수량은 왼쪽·금액은 오른쪽에 둡니다
+    + '<div class="flex items-center justify-between gap-3 mt-2.5 sm:mt-0 sm:justify-start">'
+    + '<div class="inline-flex items-center flex-shrink-0 rounded-full" style="border:1px solid var(--line)">'
+    + '<button type="button" class="qty-btn" aria-label="줄이기" onclick="setSubQty(\'' + kind + '\',-1)">−</button>'
+    + '<span class="w-7 text-center text-sm font-semibold text-gray-900">' + qty + '</span>'
+    + '<button type="button" class="qty-btn" aria-label="늘리기" onclick="setSubQty(\'' + kind + '\',1)">+</button>'
+    + '</div>'
+    + '<div class="text-right text-sm font-semibold sm:w-[4.5rem] flex-shrink-0 '
+    + (qty ? 'text-gray-900' : 'text-gray-300') + '">' + (qty ? won(amount) : '—') + '</div>'
+    + '</div></div></div>';
 }
 
 function renderSubscription(r) {
@@ -1219,124 +1185,120 @@ function renderSubscription(r) {
   if (!el) return;
   if (!subCart) initSubCart(r);
 
-  const quote = subscriptionQuote(subCartToQuoteInput());
   const rec = subRecommendation;
   const allergySet = r.profile.allergies;
-  const soymilks = BOBSNU_CATALOG.filter(p => p.kind === 'soymilk' && !catalogAllergens(p).some(a => allergySet.has(a)));
+  const blocked = p => catalogAllergyHits(p || {}, allergySet).length > 0;
+  const soymilks = BOBSNU_CATALOG.filter(p => p.kind === 'soymilk' && !blocked(p));
   const phyto = CATALOG_BY_CODE['가'], bar = CATALOG_BY_CODE['나'];
+  const addons = BOBSNU_CATALOG.filter(p => p.kind === 'addon' && !blocked(p));
 
-  // ── 추천 근거 — 부족한 항목만 짧게 보여준다 ──
-  const ruleLabel = rec.bodyType.name + ' · ' + (AGE_BANDS.find(a => a.id === rec.rule.ageBand) || {}).name;
-  const lackChips = [
-    ['통곡물 섭취 부족', rec.lacks.wholeGrain], ['채소 섭취 부족', rec.lacks.veg], ['단백질 섭취 부족', rec.lacks.protein],
-  ].filter(([, bad]) => bad)
-   .map(([n]) => '<span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">' + n + '</span>').join('');
+  // 알레르기 품목은 화면에 아예 띄우지 않고, 장바구니에도 남지 않게 비웁니다
+  const avail = { soymilk: soymilks.length > 0, phyto: !blocked(phyto), bar: !blocked(bar) };
+  for (const kind of ['soymilk', 'phyto', 'bar']) if (!avail[kind]) subCart[kind] = 0;
+  for (const code of [...subCart.addon]) if (blocked(CATALOG_BY_CODE[code])) subCart.addon.delete(code);
 
-  const reasonsHtml = rec.reasons.map(x => {
-    const names = String(x.code).split('·').map(c => (CATALOG_BY_CODE[c] || {}).name || c).join(' · ');
-    return '<li class="flex gap-2 text-xs"><span class="font-bold text-emerald-800 flex-shrink-0">' + names + '</span>'
-      + '<span class="text-gray-500">' + x.why + '</span></li>';
-  }).join('');
+  const quote = subscriptionQuote(subCartToQuoteInput());
 
-  // ── 제품 선택 ──
-  const soymilkSelect = '<select onchange="setSoymilkCode(this.value)" class="w-full sm:w-auto text-xs px-2 py-2 border border-gray-200 rounded-lg sm:max-w-48">'
+  // 상세 페이지가 있는 제품에만 「상세」 링크를 답니다 — 설명줄 안에 두어 이름과 다투지 않게 합니다
+  const detailLink = p => {
+    const u = productUrl(p);
+    return u ? '<a href="' + u + '" target="_blank" rel="noopener" class="underline hover:text-emerald-700">상세</a>' : '';
+  };
+  const meta = (p, kindLabel) => [kindLabel, p.pack, won(p.price), detailLink(p)].filter(Boolean).join(' · ');
+
+  // ── 구성 ──
+  const sm = CATALOG_BY_CODE[subCart.soymilkCode];
+  const soymilkTitle = '<select onchange="setSoymilkCode(this.value)" aria-label="두유 종류" class="title-select">'
     + soymilks.map(p => '<option value="' + p.code + '"' + (p.code === subCart.soymilkCode ? ' selected' : '') + '>'
-        + p.code + '. ' + p.name + ' (' + p.pack + ' ' + won(p.price) + ')</option>').join('')
+        + p.name + '</option>').join('')
     + '</select>';
 
-  const sm = CATALOG_BY_CODE[subCart.soymilkCode];
   const rows =
-    qtyRow('<div class="text-sm font-bold text-gray-900">두유</div><div class="text-xs text-gray-500 truncate">' + sm.note + '</div>',
-           '', subCart.soymilk, 'soymilk', soymilkSelect)
-    + qtyRow('<div class="text-sm font-bold text-gray-900">' + phyto.name + '</div><div class="text-xs text-gray-500">' + phyto.pack + ' · ' + won(phyto.price) + ' · 1회 ' + phyto.nut.energy + ' kcal</div>',
-             '', subCart.phyto, 'phyto')
-    + qtyRow('<div class="text-sm font-bold text-gray-900">' + bar.name + '</div><div class="text-xs text-gray-500">' + bar.pack + ' · ' + won(bar.price) + ' · 1회 ' + bar.nut.energy + ' kcal</div>',
-             '', subCart.bar, 'bar');
+    (avail.soymilk ? subRow({ name: soymilkTitle, meta: meta(sm, '두유 9종 중에서'), qty: subCart.soymilk,
+                              kind: 'soymilk', amount: sm.price * subCart.soymilk }) : '')
+    + (avail.phyto ? subRow({ name: phyto.name, meta: meta(phyto, '생식 분말'), qty: subCart.phyto, kind: 'phyto',
+                              amount: phyto.price * subCart.phyto }) : '')
+    + (avail.bar ? subRow({ name: bar.name, meta: meta(bar, '간식'), qty: subCart.bar, kind: 'bar',
+                            amount: bar.price * subCart.bar }) : '');
 
-  const addonChips = BOBSNU_CATALOG.filter(p => p.kind === 'addon').map(p => {
+  // 추가 구성품도 같은 줄 모양으로 — 종전의 알약 버튼은 줄바꿈이 들쭉날쭉했습니다
+  const addonRows = addons.map(p => {
     const on = subCart.addon.has(p.code);
-    const recommended = rec.cart.addon.includes(p.code);
-    return '<button type="button" onclick="toggleAddon(\'' + p.code + '\')" aria-pressed="' + on + '" '
-      + 'class="text-xs px-3 py-1.5 rounded-full border-2 ' + (on ? 'border-emerald-600 bg-emerald-50 text-emerald-800 font-bold' : 'border-gray-200 text-gray-600 hover:border-gray-400') + '">'
-      + p.name + ' ' + won(p.price) + (recommended ? ' <span class="text-emerald-700 font-bold">추천</span>' : '') + '</button>';
+    return '<div class="flex items-center gap-3 py-2.5" style="border-top:1px solid var(--line)">'
+      + '<button type="button" onclick="toggleAddon(\'' + p.code + '\')" aria-pressed="' + on + '" '
+      + 'class="addon-mark flex-shrink-0" style="' + (on ? 'background:var(--sage);border-color:var(--sage);color:#fff' : '') + '">'
+      + (on ? '✓' : '') + '</button>'
+      + '<div class="flex-1 min-w-0">'
+      + '<div class="text-sm ' + (on ? 'font-semibold text-gray-900' : 'text-gray-700') + ' truncate">' + p.name + '</div>'
+      + '<div class="text-xs text-gray-500 mt-0.5">' + p.pack + ' · ' + won(p.price) + ' · ' + detailLink(p) + '</div>'
+      + '</div></div>';
   }).join('');
 
-  const presetBtns = SUBSCRIPTION_PRESETS.map(ps => {
+  // 담을 수 없는 품목이 든 세트는 보여주지 않습니다
+  const presetBtns = SUBSCRIPTION_PRESETS.filter(ps =>
+    ['soymilk', 'phyto', 'bar'].every(k => avail[k] || !ps.counts[k])).map(ps => {
     const on = quote.preset && quote.preset.id === ps.id;
     const q = subscriptionQuote({
       soymilk: Array(ps.counts.soymilk).fill(subCart.soymilkCode),
       phyto: Array(ps.counts.phyto).fill('가'), bar: Array(ps.counts.bar).fill('나'), addon: [],
     });
-    return '<button type="button" onclick="applyPreset(\'' + ps.id + '\')" '
-      + 'class="text-xs px-3 py-1.5 rounded-full border-2 ' + (on ? 'border-emerald-600 bg-emerald-600 text-white font-bold' : 'border-gray-200 text-gray-600 hover:border-emerald-400') + '">'
-      + ps.title + ' · ' + ps.desc + ' → ' + q.rate + '% ' + won(q.finalPrice) + '</button>';
+    return '<button type="button" onclick="applyPreset(\'' + ps.id + '\')" class="pick-chip' + (on ? ' on' : '') + '">'
+      + ps.title + ' <span class="text-gray-400">' + q.rate + '% ' + won(q.finalPrice) + '</span></button>';
   }).join('');
 
-  // ── 가격 ──
-  const lineItems = quote.lines.map(l =>
-    '<li class="flex items-center gap-2 text-xs py-1">'
-    + '<span class="flex-1 min-w-0 truncate text-gray-700">' + l.product.name + (l.product.pack ? ' (' + l.product.pack + ')' : '') + ' × ' + l.qty + '</span>'
-    + '<span class="font-bold text-gray-800">' + won(l.amount) + '</span></li>').join('');
-
-  const c = quote.counts;
-
-  // ── 1회분 더 먹었을 때의 예상 점수 변화 ──
-  const simRows = ['soymilk', 'phyto', 'bar'].map(kind => {
-    const p = kind === 'soymilk' ? sm : (kind === 'phyto' ? phyto : bar);
-    const sim = simulateAddFood(p.name);
-    return sim ? '<div class="flex items-center gap-2 text-xs"><span class="flex-1 truncate text-gray-600">' + p.name + '</span>' + simBadges(sim) + '</div>' : '';
-  }).join('');
+  // 「이거 더 담으면 얼마 더 깎인다」 — 다른 구독 서비스의 장바구니 안내와 같은 자리
+  const hints = discountHints(quote.counts, avail);
 
   el.innerHTML =
-    '<div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-4 mb-4">'
-    + '<div class="flex flex-wrap items-center gap-2 mb-2">'
-    + '<span class="text-sm font-bold text-emerald-900">이렇게 골랐어요</span>'
-    + '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-white text-emerald-800">' + ruleLabel + '</span>'
-    + '</div>'
-    + '<div class="flex flex-wrap gap-1.5 mb-2">' + lackChips + '</div>'
-    + '<ul class="space-y-1">' + reasonsHtml + '</ul>'
-    + (rec.excluded.length ? '<p class="text-xs text-red-600 mt-2"><i class="fas fa-exclamation-triangle mr-1"></i>알레르기로 제외: ' + rec.excluded.map(p => p.name).join(', ') + '</p>' : '')
-    + '</div>'
+    (rec.excluded.length
+      ? '<p class="text-xs text-gray-500">알레르기로 뺀 제품: ' + rec.excluded.map(p => p.name).join(', ') + '</p>'
+      : '')
 
+    + '<div class="grid lg:grid-cols-2 gap-5 lg:gap-8 items-start">'
 
-    + '<div class="flex flex-wrap gap-1.5 mb-3">' + presetBtns
-    + '<button type="button" onclick="resetSubCart()" class="text-xs px-3 py-1.5 rounded-full border-2 border-gray-200 text-gray-500 hover:border-gray-400">추천 구성으로 되돌리기</button></div>'
-
-    + '<div class="grid lg:grid-cols-2 gap-4">'
-    + '<div class="rounded-2xl border-2 border-gray-100 p-4">'
-    + '<div class="text-sm font-bold text-gray-900 mb-1">구독 구성 (월 기준)</div>'
-    + '<div class="text-xs text-gray-400 mb-2">수량을 늘리면 할인율이 올라갑니다</div>'
+    // 왼쪽: 무엇을 받는지
+    + '<div class="min-w-0">'
+    + '<div class="text-sm font-bold text-gray-900">구독 구성</div>'
+    + '<div class="text-xs text-gray-500 mt-0.5 mb-1">한 달에 받을 수량이에요</div>'
     + rows
-    + '<div class="mt-3 pt-3 border-t border-gray-100"><div class="text-xs font-bold text-gray-500 mb-1.5">추가 구성품 <span class="font-normal text-gray-400">(넣으면 +5%p · ★ 추천)</span></div>'
-    + '<div class="flex flex-wrap gap-1.5">' + addonChips + '</div></div>'
+    + '<div class="text-sm font-bold text-gray-900 mt-6 mb-1">추가 구성품</div>'
+    + addonRows
+    + '<div class="flex flex-wrap gap-1.5 mt-5">' + presetBtns
+    + '<button type="button" onclick="resetSubCart()" class="pick-chip">처음 추천으로</button></div>'
     + '</div>'
 
-    + '<div class="rounded-2xl border-2 p-4" style="border-color:#05966933">'
-    + '<div class="text-sm font-bold text-gray-900 mb-2">결제 금액</div>'
-    + '<ul class="divide-y divide-gray-50 mb-3">' + (lineItems || '<li class="text-xs text-gray-400 py-2">담긴 제품이 없어요</li>') + '</ul>'
-    + '<div class="flex items-center justify-between text-sm py-1"><span class="text-gray-500">정가</span>'
-    + '<span class="' + (quote.rate ? 'line-through text-gray-400' : 'font-bold text-gray-900') + '">' + won(quote.listPrice) + '</span></div>'
+    // 오른쪽: 얼마인지
+    + '<div class="min-w-0 rounded-2xl p-5 lg:sticky lg:top-6" style="border:1px solid var(--line);background:var(--cream)">'
+    + '<div class="flex items-baseline justify-between py-1">'
+    + '<span class="text-sm text-gray-500">정가</span>'
+    + '<span class="text-sm ' + (quote.rate ? 'line-through text-gray-400' : 'font-semibold text-gray-900') + '">'
+    + won(quote.listPrice) + '</span></div>'
     + (quote.rate
-        ? '<div class="flex items-center justify-between text-sm py-1"><span class="text-gray-500">구독 할인</span>'
-          + '<span class="font-bold text-emerald-700">' + quote.rate + '% · −' + won(quote.discount) + '</span></div>'
-          + '<div class="flex items-end justify-between pt-2 mt-1 border-t border-gray-100">'
-          + '<span class="text-sm font-bold text-gray-700">월 결제액</span>'
-          + '<span class="text-3xl font-black text-emerald-700">' + won(quote.finalPrice) + '</span></div>'
+        ? '<div class="flex items-baseline justify-between py-1">'
+          + '<span class="text-sm text-gray-500">구독 할인 ' + quote.rate + '%</span>'
+          + '<span class="text-sm font-semibold text-emerald-700">−' + won(quote.discount) + '</span></div>'
+          + '<div class="flex items-baseline justify-between pt-4 mt-3" style="border-top:1px solid var(--line)">'
+          + '<span class="text-sm font-semibold text-gray-700">월 결제액</span>'
+          + '<span class="font-bold" style="font-size:2rem;letter-spacing:-0.03em;color:var(--deep)">'
+          + won(quote.finalPrice) + '</span></div>'
           + (quote.perServing
-              ? '<div class="text-xs text-gray-500 text-right mt-1">한 끼 ' + won(quote.perServing)
+              ? '<div class="text-xs text-gray-500 text-right">한 끼 ' + won(quote.perServing)
                 + ' · 한 달 ' + quote.servings + '회분</div>'
               : '')
-        : '')
-    + (quote.rate
-        ? '<button type="button" onclick="goPage(\'pay\')" class="w-full mt-3 py-3 bg-emerald-700 text-white text-sm font-bold">'
+          + '<button type="button" onclick="goPage(\'pay\')" class="w-full mt-5 py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-bold transition">'
           + (isPaid() ? '구독 정보 보기' : '이 구성으로 구독 시작하기') + '</button>'
+        : '<p class="text-sm text-gray-400 py-6 text-center">담긴 제품이 없어요</p>')
+    + (hints.length
+        ? '<ul class="mt-4 pt-4 space-y-1.5 text-xs text-gray-600" style="border-top:1px solid var(--line)">'
+          + hints.map(h => '<li>' + h + '</li>').join('') + '</ul>'
         : '')
-    + (simRows ? '<div class="mt-3 pt-3 border-t border-gray-100 space-y-1"><div class="text-xs font-bold text-gray-500 mb-1">1회분 추가 시 예상 변화</div>' + simRows + '</div>' : '')
-    + '</div></div>'
+    + '</div>'
+
+    + '</div>'
 
     // 구독 → 식단 추천 흐름의 연결점 (식단까지 받는 버전에서만 보여준다)
     + (planMode() === 'guide' ? '' :
-      '<div class="mt-4 rounded-2xl border-2 p-4" style="border-color:' + (planFresh() ? '#E5E7EB' : '#05966966') + ';background:' + (planFresh() ? '#F9FAFB' : '#ECFDF5') + '">'
+      '<div class="rounded-2xl p-4" style="border:1px solid ' + (planFresh() ? 'var(--line)' : '#05966666') + ';background:' + (planFresh() ? '#F9FAFB' : '#ECFDF5') + '">'
     + '<div class="flex flex-wrap items-center justify-between gap-3">'
     + '<div class="min-w-0"><div class="text-sm font-bold text-gray-900">'
     + (planFresh() ? '이 구성으로 만든 30일 식단이 아래에 있어요' : '이 구성으로 30일 식단을 받아보세요') + '</div>'
@@ -1352,7 +1314,6 @@ function renderSubscription(r) {
 
     + '';
 }
-
 // ── 기록 요약 — 식사를 기록했을 때만 보여준다 ──
 function renderGuide(r) {
   const el = document.getElementById('guide-section');
@@ -1412,14 +1373,21 @@ function toggleGoal(id) {
   renderHealthGoals();
 }
 
-// 「다른 음식」 입력용 datalist — 레시피 + 단품 식재료
-// ponytail: 14,715개를 한 번에 넣으면 무거워 상위 2,000개만
-function initPlanFoodList() {
+// 「먹은 음식」 입력용 datalist
+// 14,715개를 한 번에 넣으면 무거워서, 입력한 글자가 든 이름만 30개 추려 넣습니다.
+// 앞쪽에서 맞는 이름·짧은 이름을 먼저 보여줍니다 (「김치」 → 「김치」, 「김치찌개」 …)
+function updateFoodList(q) {
   const dl = document.getElementById('plan-food-list');
   if (!dl) return;
-  const names = RECIPE_NAMES.slice(0, 1600).concat(INGREDIENT_NAMES.slice(0, 400));
+  q = (q || '').trim();
+  const names = q
+    ? RECIPE_NAMES.concat(INGREDIENT_NAMES).filter(n => n.includes(q))
+        .sort((a, b) => a.indexOf(q) - b.indexOf(q) || a.length - b.length).slice(0, 30)
+    : RECIPE_NAMES.slice(0, 200);
   dl.innerHTML = names.map(n => '<option value="' + n.replace(/"/g, '&quot;') + '">').join('');
 }
+
+function initPlanFoodList() { updateFoodList(''); }
 
 // ── 재시작 ───────────────────────────────────
 function restartAssessment() {

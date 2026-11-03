@@ -169,7 +169,8 @@ function registerCatalogProducts() {
 }
 // 카탈로그 제품으로 대체된 구 제품명 — 식재료 DB(phytoBase·설문)에는 남겨두고
 // 자동완성 목록에서만 숨겨서 같은 제품이 두 이름으로 보이지 않게 합니다
-const LEGACY_PRODUCT_ALIASES = { '약콩두유': 'A', '파이토100': '가', '약콩차': '1', '약콩100': 'H' };
+const LEGACY_PRODUCT_ALIASES = { '약콩두유': 'A', '파이토100': '가', '약콩차': '1', '약콩100': 'H',
+                                 '파이토100 시즌2': '가', '파이토블랙': '가' };
 
 function hideLegacyProductNames() {
   for (const legacy of Object.keys(LEGACY_PRODUCT_ALIASES)) {
@@ -207,9 +208,9 @@ function catalogAllergyHits(p, allergySet) {
 // 엑셀 프리셋 정가는 「두유 2 + 파이토 2 = 138,000원」 / 「두유 1 + 파이토 1 = 69,000원」으로
 // 단가 합계와 정확히 일치합니다. 따라서 138,000·69,000 을 정가로 보고 할인율을 적용합니다.
 const SUBSCRIPTION_PRESETS = [
-  { id: 'optimal', title: '⭐ 최적 구독 세트', rate: 20, counts: { soymilk: 2, phyto: 2, bar: 3 },
+  { id: 'optimal', title: '최적 구독 세트', rate: 20, counts: { soymilk: 2, phyto: 2, bar: 3 },
     desc: '두유 2 · 파이토 2 · 프로틴바 3', excelRef: 138000 },
-  { id: 'minimum', title: '👍 최소 권장 세트', rate: 15, counts: { soymilk: 1, phyto: 1, bar: 2 },
+  { id: 'minimum', title: '최소 권장 세트', rate: 15, counts: { soymilk: 1, phyto: 1, bar: 2 },
     desc: '두유 1 · 파이토 1 · 프로틴바 2', excelRef: 69000 },
 ];
 
@@ -227,6 +228,44 @@ function subscriptionRate(counts, addonCount) {
   else                                 rate = total >= 2 ? 10 : 5;
   if (rate > 0 && addonCount > 0) rate += 5;
   return rate;
+}
+
+// 제품 상세 페이지 — 공식몰(bobsnu.com) 주소. 비어 있는 코드는 링크를 걸지 않습니다
+//   2026-11-03 공식몰에서 15종 모두 확인. 공식몰 이름이 우리 표기와 다른 것은 뒤에 적었습니다
+const PRODUCT_URL = {
+  A: 'https://bobsnu.com/#/p/original',      // 오리지널 약콩두유
+  B: 'https://bobsnu.com/#/p/ssalnun',       // 쌀눈으로 더 똑똑한! 약콩100
+  C: 'https://bobsnu.com/#/p/protein',       // 배로 맛있는 약콩100 고단백
+  D: 'https://bobsnu.com/#/p/postbio',       // 포스트바이오틱스 약콩100
+  E: 'https://bobsnu.com/#/p/calmadi',       // 칼마디 약콩100
+  F: 'https://bobsnu.com/#/p/whole',         // 껍질째 통째로 약콩100
+  G: 'https://bobsnu.com/#/p/thick',         // The 진한 약콩100
+  H: 'https://bobsnu.com/#/p/healthy',       // The 건강한 약콩100
+  I: 'https://bobsnu.com/#/p/supergreen',    // The 건강한 약콩100 슈퍼그린
+  '가': 'https://bobsnu.com/#/p/phyto100',   // 파이토100 생식
+  '나': 'https://bobsnu.com/#/p/bar',        // 약콩 프로틴바 비건
+  '1': 'https://bobsnu.com/#/p/tea',         // The 건강한 약콩차
+  '2': 'https://bobsnu.com/#/p/calmadik',    // 에스랩 뼈건강 칼마디케이
+  '3': 'https://bobsnu.com/#/p/banaba',      // 에스랩 혈압 혈당 바나바Q10
+  '4': 'https://bobsnu.com/#/p/magnesium',   // 에스랩 에너지 마그네슘B
+};
+function productUrl(p) { return PRODUCT_URL[p.code] || ''; }
+
+// 다음 할인 구간까지 무엇을 더 담으면 되는지 — 알레르기로 못 담는 품목은 제안하지 않습니다
+//   avail: { soymilk, phyto, bar } — false 면 그 품목이 들어간 구간은 아예 못 가므로 건너뜁니다
+function discountHints(counts, avail) {
+  const KINDS = ['soymilk', 'phyto', 'bar'];
+  const rate = subscriptionRate(counts, counts.addon);
+  const hints = [];
+  for (const [want, r] of [[{ soymilk: 1, phyto: 1, bar: 2 }, 15], [{ soymilk: 2, phyto: 2, bar: 3 }, 20]]) {
+    if (r <= rate) continue;
+    if (!KINDS.every(k => avail[k] || !want[k])) continue;
+    const miss = KINDS.filter(k => (counts[k] || 0) < want[k])
+      .map(k => CATALOG_KIND_LABEL[k] + ' ' + (want[k] - (counts[k] || 0)) + '개');
+    if (miss.length) hints.push(miss.join(' · ') + ' 더 담으면 ' + r + '% 할인');
+  }
+  if (rate > 0 && !counts.addon) hints.push('추가 구성품을 하나 담으면 ' + (rate + 5) + '% 할인');
+  return hints;
 }
 
 // cart: { soymilk: ['A','E'], phyto: ['가','가'], bar: ['나','나','나'], addon: ['1','2'] }
