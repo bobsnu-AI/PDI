@@ -348,6 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSurvey();
   renderHealthGoals();
   initPlanFoodList();
+  rotateHomePhoto();
 
   // 저장된 설문 응답을 복원해 결과를 미리 계산한다 (두 번째 방문)
   if (tracker.survey) {
@@ -1388,6 +1389,28 @@ function updateFoodList(q) {
 }
 
 function initPlanFoodList() { updateFoodList(''); }
+
+// 첫 화면 제품 사진 — 파이토100 과 약콩두유를 열 때마다 번갈아 보여줍니다
+// fit — 연출 사진은 꽉 채우고(cover), 흰 바탕 제품 사진은 잘리지 않게 둡니다(contain)
+const HOME_PHOTOS = [
+  { src: 'static/img/phyto100.jpg', alt: '밥스누 파이토100 상자와 채소',   fit: 'object-cover' },
+  { src: 'static/img/soymilk.jpg',  alt: '밥스누 오리지널 약콩두유 상자', fit: 'object-contain p-8' },
+];
+
+function rotateHomePhoto() {
+  const img = document.getElementById('home-photo');
+  if (!img) return;
+  let n = 0;
+  // 기기에 저장이 막혀 있으면(사생활 보호 모드 등) 그냥 첫 사진을 씁니다
+  try {
+    n = (Number(localStorage.getItem('bobsnu-home-photo')) || 0) + 1;
+    localStorage.setItem('bobsnu-home-photo', String(n));
+  } catch (e) { n = 0; }
+  const photo = HOME_PHOTOS[n % HOME_PHOTOS.length];
+  img.src = photo.src;
+  img.alt = photo.alt;
+  img.className = 'w-full h-full ' + photo.fit;
+}
 
 // ── 재시작 ───────────────────────────────────
 function restartAssessment() {

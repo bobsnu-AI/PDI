@@ -429,34 +429,46 @@ const PT_DISEASE_LABELS = [
 // ── 질환별 등급과 내 위험비 ───────────────────
 // 질환마다 관련이 깊은 점수에 더 큰 몫을 줘서 묶습니다.
 //   가중치  w = |ln(위험비)| — 위험비가 1.0 에서 멀수록 큰 값입니다.
-//   내 위치 P = Σ(w · 논문축 위치) ÷ Σw        (ptPaperPos 로 옮긴 위치)
-//   묶은 위험비 HR = exp( Σ(w·ln 위험비) ÷ Σw )   (가중 기하평균)
-//   내 위험비    = HR^P
-//     P = 0 이면 1.00(논문 하위 10% 집단), P = 1 이면 논문의 상위 10% 값입니다.
-//     논문이 관측한 구간 안에만 머물러서, 1.00 을 넘거나 HR 아래로는 가지 않습니다.
+//
+// 축을 둘 씁니다. 같은 수를 두 군데에 쓰면 한쪽이 반드시 틀립니다.
+//   등급 위치 P    = Σ(w · 점수 위치) ÷ Σw            — 점수 띠와 같은 축
+//   논문축 위치 Pp = Σ(w · ptPaperPos(점수 위치)) ÷ Σw — 위험비 계산에만 씀
+//   묶은 위험비 HR = exp( Σ(w·ln 위험비) ÷ Σw )        (가중 기하평균)
+//   내 위험비      = HR^Pp
+//
+// ※ 등급을 논문축에서 내면 거의 모두 「안전」이 됩니다. 논문의 10~90백분위 구간이
+//   우리 점수 축의 0.36~0.59 쯤에 불과해, 점수가 0.6 만 넘어도 5종 중 3종이 1.0 에
+//   붙어 버립니다. 그러면 붉은 고기·가공육·단 음료를 많이 먹는다고 답해도 등급이
+//   안 내려갑니다. 등급은 화면의 점수 띠와 같은 축에서 내야 띠와 말이 맞습니다.
+//
+// ※ 위험비는 논문축을 그대로 씁니다. 논문이 상위 10%와 하위 10%만 비교해 보고했으니
+//   그 구간 밖으로는 늘릴 근거가 없습니다. Pp = 0 이면 1.00, 1 이면 논문 값입니다.
 //
 // ※ 가정 하나가 들어갑니다 — 구간 안에서 점수와 위험이 로그 직선 관계라고 봅니다.
-//   논문은 상위 10%와 하위 10%만 비교해 보고했고, 그 사이는 보고하지 않았습니다.
-//   화면에도 이 가정을 적습니다. 진단이나 발병 확률이 아닙니다.
+//   논문은 그 사이를 보고하지 않았습니다. 진단이나 발병 확률이 아닙니다.
 //
 // ※ 기준 집단이 한국인이 아닙니다. 논문 집단(미국 간호사·의료인)의 점수 분포를
 //   그대로 썼습니다. 한국인 분포 자료가 모이면 PT_PAPER_SCORE 만 바꾸면 됩니다.
 function diseaseGrades(scored) {
   const out = [];
   for (const d of PT_DISEASE_LABELS) {
-    let sumW = 0, sumP = 0, sumLn = 0, strongest = null;
+    let sumW = 0, sumP = 0, sumPaper = 0, sumLn = 0, strongest = null;
     for (const p of scored.patterns) {
       const hr = (PT_DISEASE_HR[p.key] || {})[d.key];
       if (!hr) continue;
       const w = Math.abs(Math.log(hr));
-      sumW += w; sumP += w * ptPaperPos(p.key, p.position); sumLn += w * Math.log(hr);
+      sumW += w;
+      sumP += w * p.position;
+      sumPaper += w * ptPaperPos(p.key, p.position);
+      sumLn += w * Math.log(hr);
       if (!strongest || hr < strongest.hr) strongest = { hr, name: p.name, key: p.key };
     }
     if (!sumW) continue;
     const position = sumP / sumW;
+    const paperPos = sumPaper / sumW;
     const groupHr = Math.exp(sumLn / sumW);
-    const myHr = Math.pow(groupHr, position);
-    out.push({ ...d, position, score: Math.round(position * 100), tier: ptTier(position),
+    const myHr = Math.pow(groupHr, paperPos);
+    out.push({ ...d, position, paperPos, score: Math.round(position * 100), tier: ptTier(position),
                groupHr, myHr, pct: Math.round((1 - myHr) * 100), strongest });
   }
   return out;
@@ -578,9 +590,11 @@ function renderDietScore(meals, servings, gender) {
     + '<details class="rounded-2xl p-4 text-xs" style="background:var(--tint);color:var(--deep)">'
     + '<summary class="cursor-pointer font-bold">이 등급은 어떻게 계산했나요</summary>'
     + '<div class="mt-3">'
-    + '<b>기준 집단이 한국인이 아닙니다.</b> 내 점수가 어디쯤인지는 '
-    + '논문이 조사한 집단(미국 간호사·의료인 20만 5천여 명)의 점수 분포에 맞춰 계산했어요. '
-    + '한국인 분포로 보면 위치가 달라질 수 있어요.'
+    + '<b>등급은 위 식단 점수에서 바로 냈어요.</b> 질환마다 관련이 깊은 점수에 더 큰 몫을 '
+    + '줘서 평균을 냈고, 그 위치가 위 띠의 위험·보통·안전 구역 중 어디인지가 등급이에요.'
+    + '<br><br><b>아래 % 는 기준 집단이 한국인이 아닙니다.</b> 내 점수가 논문 집단'
+    + '(미국 간호사·의료인 20만 5천여 명) 안에서 어디쯤인지로 계산했어요. '
+    + '한국인 분포로 보면 달라질 수 있어요.'
     + '<br><br><b>가정 하나가 들어갑니다.</b> 근거 논문(Wang P 외. Nat Med. 2023;29:719–728)은 '
     + '점수 상위 10%가 하위 10%보다 그 질환이 얼마나 적었는지만 보고했고 그 사이는 보고하지 '
     + '않았어요. 그래서 그 구간에서 점수와 위험이 로그 직선 관계라고 보고 「내 위험비 = '

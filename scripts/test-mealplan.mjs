@@ -1198,6 +1198,15 @@ ok('첫 화면은 제품을 나열하지 않고 사진 한 장으로 소개한�
   assert.ok(img[2].length > 4, '사진 설명(alt)이 비었음')
   assert.ok(existsSync(new URL('../public/static/img/' + img[1], import.meta.url)), '사진 파일이 없음: ' + img[1])
   assert.ok(htmlSrc.includes('진단 결과에 따라'), '품목이 진단으로 정해진다는 설명이 없음')
+  // 사진은 파이토100 과 약콩두유를 번갈아 보여준다
+  const photos = $('HOME_PHOTOS')
+  assert.equal(photos.length, 2, '번갈아 보여줄 사진이 두 장이 아님')
+  for (const ph of photos) {
+    assert.ok(/^static\/img\/[a-z0-9.]+$/.test(ph.src), '사진 경로가 상대 경로가 아님: ' + ph.src)
+    assert.ok(existsSync(new URL('../public/' + ph.src, import.meta.url)), '사진 파일이 없음: ' + ph.src)
+    assert.ok(ph.alt && ph.alt.length > 4, '사진 설명(alt)이 비었음: ' + ph.src)
+  }
+  assert.ok(htmlSrc.includes('id="home-photo"'), '사진을 바꿔 끼울 자리가 없음')
 })
 
 ok('제품 15종 모두 공식몰 상세 페이지로 이어진다', () => {
@@ -1505,15 +1514,17 @@ ok('질환별 등급은 위험비가 센 점수를 더 크게 반영한다', () 
   // 2형당뇨에서 가장 크게 반영되는 점수는 DRRD (위험비 0.56)
   const dm = ds.find(d => d.key === 'diabetes')
   assert.equal(dm.strongest.key, 'DRRD')
-  // 손으로 계산한 가중 평균과 같다 (위치는 논문 축으로 옮긴 값)
+  // 손으로 계산한 가중 평균과 같다
+  //   등급 위치는 점수 축에서, 위험비 위치는 논문 축에서 낸다
   const hr = { 'AHEI-2010': 0.62, DASH: 0.66, hPDI: 0.70, AMED: 0.71, DRRD: 0.56 }
   const pp = $('ptPaperPos')
-  let sw = 0, sp = 0
+  let sw = 0, sp = 0, spp = 0
   for (const p of s.patterns) {
     const w = Math.abs(Math.log(hr[p.key]))
-    sw += w; sp += w * pp(p.key, p.position)
+    sw += w; sp += w * p.position; spp += w * pp(p.key, p.position)
   }
   assert.ok(Math.abs(dm.position - sp / sw) < 1e-12, dm.position + ' vs ' + sp / sw)
+  assert.ok(Math.abs(dm.paperPos - spp / sw) < 1e-12, dm.paperPos + ' vs ' + spp / sw)
   // 암은 지표 간 위험비 차이가 작아 가중치가 당뇨보다 고르다
   const spread = k => {
     const w = s.patterns.map(x => Math.abs(Math.log($('PT_DISEASE_HR')[x.key][k])))
@@ -1553,7 +1564,7 @@ ok('내 위험비는 하위 10% 를 1.00 으로 둔 보간값', () => {
   const s = scoreDiet(mkMeals(['쌀밥', '시금치나물']))
   for (const d of $('diseaseGrades')(s)) {
     // 정의 그대로인지
-    assert.ok(Math.abs(d.myHr - Math.pow(d.groupHr, d.position)) < 1e-12, d.key)
+    assert.ok(Math.abs(d.myHr - Math.pow(d.groupHr, d.paperPos)) < 1e-12, d.key)
     // 묶은 위험비는 논문 값들 사이에 있다
     assert.ok(d.groupHr > 0.5 && d.groupHr < 1, d.key + ' 집단 위험비 ' + d.groupHr)
     // 논문이 관측한 범위를 넘지 않는다 — 1.00 초과도, 상위 10% 미만도 없다
@@ -1567,6 +1578,40 @@ ok('내 위험비는 하위 10% 를 1.00 으로 둔 보간값', () => {
   // 양 끝값 — 최상위면 논문 값 그대로, 최하위면 1.00
   assert.ok(Math.abs(Math.pow(0.64, 1) - 0.64) < 1e-12)
   assert.equal(Math.pow(0.64, 0), 1)
+})
+
+ok('질환 등급이 식단에 따라 위험·보통·안전으로 갈린다', () => {
+  // 설문 응답을 세 가지로 넣어 본다. 종전에는 논문 10~90백분위 구간이 우리 점수 축의
+  // 0.36~0.59 뿐이라 점수가 0.6 만 넘어도 5종 중 3종이 1.0 에 붙어 거의 안전만 나왔다.
+  const PROFILES = {
+    bad:  { refinedGrain: 0, wholeGrain: 3, veg: 2, fruit: 3, redMeat: 1, processedMeat: 1,
+            fish: 3, egg: 2, legumes: 3, nuts: 3, dairy: 3, dairyLow: 2,
+            sweets: 1, coffeeTea: 1, ssb: 1, alcohol: 2, salty: 2 },
+    mid:  { refinedGrain: 1, wholeGrain: 2, veg: 2, fruit: 2, redMeat: 2, processedMeat: 2,
+            fish: 2, egg: 2, legumes: 2, nuts: 3, dairy: 2, dairyLow: 1,
+            sweets: 2, coffeeTea: 1, ssb: 2, alcohol: 2, salty: 1 },
+    good: { refinedGrain: 2, wholeGrain: 0, veg: 0, fruit: 1, redMeat: 3, processedMeat: 3,
+            fish: 1, egg: 2, legumes: 0, nuts: 0, dairy: 1, dairyLow: 0,
+            sweets: 3, coffeeTea: 1, ssb: 3, alcohol: 3, salty: 0 },
+  }
+  const gradeOf = ans => {
+    const sc = $('scoreDietPatterns')($('buildSurveyDiet')(ans), $('surveyServings')(ans), 'female')
+    return { grades: $('diseaseGrades')(sc), overall: $('ptOverall')(sc) }
+  }
+  const want = { bad: '위험', mid: '보통', good: '안전' }
+  const seen = {}
+  for (const [k, ans] of Object.entries(PROFILES)) {
+    const { grades, overall } = gradeOf(ans)
+    assert.equal(grades.length, 3, k)
+    for (const g of grades)
+      assert.equal(g.tier.label, want[k], k + ' 의 ' + g.name + ' 등급이 ' + g.tier.label)
+    // 등급은 점수 띠와 같은 축이라, 합산 점수와 같은 구역이어야 한다
+    assert.equal(overall.tier.label, want[k], k + ' 합산 ' + overall.tier.label)
+    seen[k] = grades[0].position
+  }
+  assert.ok(seen.bad < seen.mid && seen.mid < seen.good, '식단이 좋아져도 위치가 안 오름')
+  console.log('    위치 — 나쁨 ' + seen.bad.toFixed(2) + ' · 무난 ' + seen.mid.toFixed(2)
+    + ' · 좋음 ' + seen.good.toFixed(2))
 })
 
 ok('합산 등급이 점수 5종의 평균 위치로 나온다', () => {
