@@ -41,20 +41,29 @@ const DATA = path.join(ROOT, 'scripts/data');
 const API  = 'https://apis.data.go.kr/1471000/FoodNtrCpntDbInfo03/getFoodNtrCpntDbInq03';
 const ROWS = 1000;   // 한 번에 받을 건수
 
-// 응답 칸 이름 → 우리가 쓰는 이름. probe 로 확인한 뒤 맞춥니다.
-// 요청 칸이 FOOD_NM_KR·MAKER_NM 식이라 출력도 같은 꼴일 것으로 보고 적어 뒀습니다.
+// 응답 칸은 AMT_NUM1~157 로 번호만 있습니다. 번호가 무슨 영양소인지는 포털에
+// 공개돼 있지 않아 probe 로 확인했습니다 (2026-11-04, 국밥_돼지머리 100 g).
+//   1 에너지 137 kcal · 2 수분 71.60 · 3 단백질 6.70 · 4 지방 5.16 ·
+//   5 회분 0.63 · 6 탄수화물 15.94  →  합이 100.03 g 이고
+//   4×6.70 + 9×5.16 + 4×15.94 = 137 kcal 로 떨어져 1~6 은 확실합니다.
+// 7~13 은 국가표준식품성분표 차례(당류·식이섬유·칼슘·철·인·칼륨·나트륨)와 값이 맞습니다.
+// 콜레스테롤·포화지방산·트랜스지방산 자리는 아래 CHECK 로 한 번 더 봅니다.
 const NUT_FIELD = {
-  code:    ['FOOD_CD', 'FOOD_CODE'],
-  carb:    ['AMT_NUM7',  'NUTR_CONT3'],
-  protein: ['AMT_NUM4',  'NUTR_CONT2'],
-  fat:     ['AMT_NUM5',  'NUTR_CONT4'],
-  sugar:   ['AMT_NUM8',  'NUTR_CONT5'],
-  fiber:   ['AMT_NUM9',  'NUTR_CONT6'],
-  satfat:  ['AMT_NUM23', 'NUTR_CONT7'],
-  trans:   ['AMT_NUM24', 'NUTR_CONT8'],
-  chol:    ['AMT_NUM22', 'NUTR_CONT9'],
-  sodium:  ['AMT_NUM13', 'NUTR_CONT10'],
+  code:    ['FOOD_CD'],
+  protein: ['AMT_NUM3'],
+  fat:     ['AMT_NUM4'],
+  carb:    ['AMT_NUM6'],
+  sugar:   ['AMT_NUM7'],
+  fiber:   ['AMT_NUM8'],
+  sodium:  ['AMT_NUM13'],
+  chol:    ['AMT_NUM23'],
+  satfat:  ['AMT_NUM24'],
+  trans:   ['AMT_NUM25'],
 };
+
+// 받은 값이 말이 되는지 보는 검사. 버터는 지방이 80 g 쯤이고 포화지방이 그 절반,
+// 콜레스테롤이 200 mg 쯤입니다. 숫자가 엉뚱하면 칸 번호가 밀린 것입니다.
+const CHECK = { name: '버터', fat: [60, 95], satfat: [35, 70], chol: [100, 300] };
 
 function keyOrDie() {
   const raw = (process.env.FOOD_API_KEY || '').trim();
@@ -138,13 +147,30 @@ function pick(row, names) {
   return null;
 }
 
-async function probe() {
-  const { rows, total } = await fetchPage(keyOrDie(), 1, 1);
-  if (!rows.length) { console.error('받은 자료가 없습니다.'); process.exit(1); }
-  console.log('전체 건수:', total);
-  console.log('응답 칸 이름과 값 —');
-  for (const [k, v] of Object.entries(rows[0])) console.log('  ' + k.padEnd(22) + String(v).slice(0, 40));
-  console.log('\n위 이름을 NUT_FIELD 에 맞춘 뒤 다시 돌리세요.');
+async function probe(name) {
+  const key = keyOrDie();
+  const url = API + '?' + new URLSearchParams(Object.assign(
+    { serviceKey: key, pageNo: '1', numOfRows: '3', type: 'json' },
+    name ? { FOOD_NM_KR: name } : {}));
+  const res = await fetch(url);
+  const text = await res.text();
+  if (!res.ok) throw new Error('HTTP ' + res.status + ' — ' + text.slice(0, 300));
+  const json = JSON.parse(text);
+  const body = json.body || (json.response && json.response.body) || {};
+  const items = body.items || [];
+  const rows = (Array.isArray(items) ? items : (items.item || [])).map(r => r.item || r);
+  if (!rows.length) { console.log('그 이름으로 찾은 것이 없습니다:', name); return; }
+  console.log('전체 건수:', body.totalCount || body.total_count);
+  for (const r of rows.slice(0, 1)) {
+    console.log('\n■ ' + r.FOOD_NM_KR + '  (' + r.SERVING_SIZE + ', 코드 ' + r.FOOD_CD + ')');
+    // 값이 있는 칸만 찍습니다 — 157개를 다 보면 읽기 어렵습니다
+    for (const [k, v] of Object.entries(r)) {
+      if (!/^AMT_NUM/.test(k)) continue;
+      if (v == null || String(v).trim() === '') continue;
+      console.log('  ' + k.padEnd(12) + String(v));
+    }
+  }
+  console.log('\n이 숫자로 NUT_FIELD 를 맞춥니다.');
 }
 
 async function build() {
@@ -163,6 +189,31 @@ async function build() {
     console.error('probe 로 칸 이름을 확인해 NUT_FIELD 를 맞추세요 — 0 을 써 넣지 않습니다.');
     console.error('받은 칸: ' + Object.keys(first.rows[0]).join(', '));
     process.exit(1);
+  }
+
+  // 칸 번호가 밀리지 않았는지 버터로 한 번 봅니다
+  {
+    const url = API + '?' + new URLSearchParams({
+      serviceKey: key, pageNo: '1', numOfRows: '5', type: 'json', FOOD_NM_KR: CHECK.name });
+    const r = await fetch(url).then(x => x.json()).catch(() => null);
+    const body = (r && (r.body || (r.response && r.response.body))) || {};
+    const items = body.items || [];
+    const rows2 = (Array.isArray(items) ? items : (items.item || [])).map(x => x.item || x);
+    if (rows2.length) {
+      const bad = [];
+      for (const k of ['fat', 'satfat', 'chol']) {
+        const v = Number(pick(rows2[0], NUT_FIELD[k]));
+        const [lo, hi] = CHECK[k];
+        if (!(v >= lo && v <= hi)) bad.push(k + ' = ' + v + ' (' + lo + '~' + hi + ' 이어야 함)');
+      }
+      if (bad.length) {
+        const e = new Error(CHECK.name + ' 값이 말이 안 됩니다 — 칸 번호가 밀렸습니다.\n  '
+          + bad.join('\n  ') + '\nprobe 로 다시 보고 NUT_FIELD 를 고치세요.');
+        e.quiet = true;
+        throw e;
+      }
+      console.log(CHECK.name + ' 로 칸 번호 확인했습니다.');
+    }
   }
 
   const byCode = {};
@@ -223,7 +274,7 @@ async function build() {
 
 const cmd = process.argv[2];
 try {
-  await (cmd === 'probe' ? probe() : build());
+  await (cmd === 'probe' ? probe(process.argv[3] || CHECK.name) : build());
 } catch (e) {
   // 받는 중이던 요청이 남아 있으면 process.exit 이 윈도우에서 경고를 뱉습니다.
   // 코드만 정해 두고 그냥 끝냅니다.

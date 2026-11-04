@@ -1350,6 +1350,23 @@ ok('직접 고른 원재료·가공식품이 기록되고 검색에도 뜬다', 
   assert.equal(noG.length, 0, '1인분 그램이 없는 단품: ' + noG.map(([n]) => n).join(', '))
 })
 
+ok('초가공식품에서 온 열량 비율을 낸다', () => {
+  // 암 예방 권고 점수의 한 항목. 후보 121개 가운데 직접 고른 51개다 (2026-11-04).
+  const pct = ns => $('ptComponents')(ns.map(n => ({ name: n, analysis: af(n) }))).serv.upfPctE
+  // 적은 이름이 그대로 초가공식품이면 그 끼니 열량을 다 센다
+  assert.equal(Math.round(pct(['햄버거'])), 100)
+  assert.equal(Math.round(pct(['쌀밥'])), 0)
+  const mixed = pct(['쌀밥', '햄버거'])
+  assert.ok(mixed > 10 && mixed < 90, '섞인 식단 비율이 이상함: ' + mixed.toFixed(0))
+  // 가당음료·가공육·술은 넣지 않는다 — 다른 항목에서 이미 세기 때문이다
+  for (const n of ['소주', '맥주', '베이컨', '햄'])
+    assert.ok(!$('PT_UPF').has(n), '두 번 세는 이름이 들어감: ' + n)
+  // 빵과 얼린 것은 뺐다
+  for (const n of ['식빵', '통밀식빵', '냉동 참치', '냉동 바나나'])
+    assert.ok(!$('PT_UPF').has(n), '뺀 이름이 들어감: ' + n)
+  assert.equal($('PT_UPF').size, 51)
+})
+
 ok('주당 운동 시간을 받아 모자라면 알려준다', () => {
   // WCRF/AICR·WHO 권고는 중·고강도 운동 주 150분이다. 고강도 1분을 중강도 2분으로 센다
   const mv = $('weeklyMvpaMin')

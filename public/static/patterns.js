@@ -58,6 +58,39 @@ const PT_NAME_RULES = [
 ];
 
 // cat 기본 매핑 (이름 규칙에 걸리지 않은 식재료)
+// ── 초가공식품 ────────────────────────────────
+// 암 예방 권고 점수(WCRF/AICR)의 「패스트푸드와 지방·전분·당이 많은 가공식품을
+// 제한」항목에 쓰는 목록입니다. 원문(Shams-White 2019)은 음식 목록을 주지 않고
+// NOVA 4군의 열량 비율을 재라고만 하므로, 후보 121개를 소장님이 직접 보고
+// 고른 51개입니다 (2026-11-04).
+//
+// 가당음료·가공육·술은 넣지 않습니다 — 다른 항목에서 이미 세기 때문에
+// 두 번 깎입니다. 원문이 정한 규칙입니다.
+// 빵은 뺐습니다 — 이 DB 의 빵은 대부분 집·빵집에서 굽는 것입니다.
+// 얼리기만 한 것(냉동 참치·냉동 바나나)도 뺐습니다.
+const PT_UPF = new Set([
+  // 외식 패스트푸드 — 8
+  '치킨버거', '불고기버거', '햄버거', '후라이드치킨', '양념치킨', '타코', '핫도그', '감자튀김',
+  // 과자·스낵 — 17
+  '딸기칩', '코코넛칩', '콘칩', '나쵸', '초코쿠키', '크래커', '계란과자', '오레오과자', '프레첼',
+  '통밀쿠키', '허니버터향과자', '다이제비스켓', '참크래커', '튀밥', '건빵', '쿠키앤크림아이스크림', '뻥튀기',
+  // 초콜릿·사탕·젤리 — 8
+  '민트초코아이스크림', '다크초콜릿', '초콜릿', '빼빼로', '초코파이', '초코볼', '마시멜로우', '초코아이스크림',
+  // 아이스크림 — 2
+  '바닐라아이스크림', '초코우유',
+  // 라면 — 2
+  '진라면', '짜장라면',
+  // 시리얼 — 1
+  '시리얼',
+  // 만두·돈까스·너겟 — 10
+  '미니돈까스', '새우왕교자만두', '감자수제비물만두', '치킨텐더', '교자만두',
+  '개성생제주돼지왕만두', '냉동 고기만두', '매운김치만두', '냉동 김치만두', '돈까스소스',
+  // 즉석밥 — 1
+  '즉석밥',
+  // 스프 — 2
+  '머쉬룸어니언스프', '버섯크림스프',
+]);
+
 const PT_CAT_FALLBACK = {
   vegetables: 'veg', fruits: 'fruit', grains: 'refinedGrain', legumes: 'legumes',
   nuts: 'nuts', dairy: 'dairyHigh', protein: 'fish', tea: 'coffeeTea',
@@ -95,9 +128,17 @@ function ptComponents(meals, servings) {
   for (const k of Object.keys(PT_SERVING_G)) grams[k] = 0;
   grams.wholeGrain = 0; grams.alcohol = 0; grams.other = 0;
 
+  // 초가공식품에서 온 열량과 전체 열량. 적은 이름이 그대로 한 끼면(햄버거)
+  // 그 끼니 열량을 다 세고, 아니면 재료 가운데 걸리는 것만 셉니다.
+  let upfKcal = 0, dishKcal = 0;
   for (const m of meals || []) {
     const ings = (m.analysis && m.analysis.ingredients) || [];
+    const dish = m.name || (m.analysis && m.analysis.name) || '';
+    const whole = PT_UPF.has(dish);
+    dishKcal += (m.analysis && m.analysis.totalCal) || 0;
+    if (whole) upfKcal += (m.analysis && m.analysis.totalCal) || 0;
     for (const ing of ings) {
+      if (!whole && PT_UPF.has(ing.name)) upfKcal += ing.kcal || 0;
       // 밥스누 제품은 grams 가 '1회' 로 들어오므로 제품 1회 제공량(g)으로 바꿉니다
       const g = typeof ing.grams === 'number' ? ing.grams : ptProductWeight(ing.name);
       if (!(g > 0)) continue;
@@ -138,6 +179,9 @@ function ptComponents(meals, servings) {
   }
   serv.sodium = sodium;
   serv.fiber  = fiber;
+  // 초가공식품에서 온 열량 비율(%). 암 예방 권고 점수의 한 항목입니다.
+  // 점수를 내려면 한국인 분포의 3분위 경계가 더 있어야 합니다 (PATTERN_PENDING).
+  serv.upfPctE = dishKcal > 0 ? (upfKcal / dishKcal) * 100 : 0;
   // 트랜스지방은 섭취 열량 대비 비율(%)로 봅니다
   serv.transPctE = energy > 0 ? (trans * 9 / energy) * 100 : 0;
 
@@ -240,12 +284,11 @@ const PATTERN_DEFS = [
 
 // 계산에 필요한 자료가 없어 점수를 내지 않는 종류
 const PATTERN_PENDING = {
-  // 8개 항목 가운데 체중·운동·통곡물·채소·과일·붉은고기·가당음료·음주는 모을 수 있습니다.
-  // 남은 하나가 「패스트푸드·고지방 가공식품」인데, 원문(Shams-White 2019)이 음식 목록이나
-  // 절대 기준을 주지 않습니다 — 초가공식품(NOVA 4군, 가당음료·가공육·술 제외)에서 온
-  // 열량 비율을 재고, 그 집단의 3분위로 점수를 줍니다. 혼자 쓰는 앱에는 비교할 집단이
-  // 없으므로 한국인 분포(국민건강영양조사 등)가 필요합니다.
-  'WCRF/AICR': { name: '암 예방 권고 점수', need: '한국인 초가공식품 섭취 분포 필요' },
+  // 8개 항목 가운데 일곱은 모읍니다 — 체중·운동(주당 중·고강도 분)·통곡물·채소·과일·
+  // 붉은고기·가당음료·음주. 초가공식품 열량 비율(serv.upfPctE)도 PT_UPF 로 냅니다.
+  // 남은 것은 경계값 하나뿐입니다. 원문(Shams-White 2019)은 그 집단의 3분위로 끊는데,
+  // 혼자 쓰는 앱에는 비교할 집단이 없어 한국인 분포의 경계 두 개가 필요합니다.
+  'WCRF/AICR': { name: '암 예방 권고 점수', need: '한국인 초가공식품 비율 3분위 경계 필요' },
 };
 
 // 점수를 보여주기 위한 최소 기록량 (하루 섭취 열량)
