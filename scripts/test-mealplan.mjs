@@ -1297,7 +1297,8 @@ ok('요리 이름의 일부를 재료 표기로 오인하지 않는다', () => {
 ok('많이 먹는데 숨어 있던 것이 기록 목록에 나온다', () => {
   // 이 DB 는 달걀·우유·식빵을 refined 로 분류해 둬서 기록 자체가 안 됐다.
   // 레시피 사용량으로 골랐다 — 달걀 2,190개 레시피·50g, 소금 5,833개·0.5g
-  for (const n of ['달걀', '우유', '배추김치', '식빵', '라면', '떡볶이떡', '메추리알', '또띠아']) {
+  // 떡볶이떡·라면사리는 뒤에 재료로 보기로 해서 빠졌다 (아래 「한 끼가 아닌 재료」 검사)
+  for (const n of ['달걀', '우유', '배추김치', '식빵', '라면', '메추리알', '또띠아']) {
     assert.ok(af(n), '기록할 수 없음: ' + n)
     assert.ok(logSet.has(n), '목록에 없음: ' + n)
   }
@@ -1325,6 +1326,34 @@ ok('직접 고른 조리식품이 기록되고 검색에도 뜬다', () => {
   // 레시피에 이미 있는 이름을 단품으로도 적으면 검색창에 두 번 뜬다
   const dup = Object.keys($('SINGLE_FOOD_EXTRA')).filter(n => $('RECIPES')[n])
   assert.equal(dup.length, 0, '레시피와 겹치는 단품 이름: ' + dup.join(', '))
+})
+
+ok('직접 고른 원재료·가공식품이 기록되고 검색에도 뜬다', () => {
+  // 기록 안 되던 R·P 516개를 직접 보고 고른 137개 (2026-11-04).
+  for (const n of ['식빵', '베이글', '크래커', '초콜릿', '소주', '맥주', '막걸리',
+                   '캐슈넛', '즉석밥', '마요네즈', '낫또', '단백질파우더', '녹차티백']) {
+    assert.ok(af(n), '기록할 수 없음: ' + n)
+    assert.ok(logSet.has(n), '검색에 안 뜸: ' + n)
+  }
+  // 1인분 그램이 없으면 100 g 으로 떨어져 칼로리가 틀어진다
+  const noG = Object.entries($('SINGLE_FOOD_EXTRA')).filter(([, g]) => !(g > 0))
+  assert.equal(noG.length, 0, '1인분 그램이 없는 단품: ' + noG.map(([n]) => n).join(', '))
+})
+
+ok('한 끼가 아닌 재료는 단품으로 열리지 않는다', () => {
+  // 1인분이 한 끼로 잡혀 있던 207개 가운데 직접 고른 158개를 SINGLE_FOOD_DENY 로 막았다.
+  // 버터가 200 g·1,522 kcal 로 기록되던 문제다.
+  for (const n of ['버터', '생크림', '밀가루', '백미', '전분', '멸치', '매실청', '레몬즙',
+                   '대두', '진미채', '쇠고기']) {
+    assert.ok(!af(n), '재료가 기록됨: ' + n)
+    assert.ok(!logSet.has(n), '재료가 검색에 뜸: ' + n)
+  }
+  // 재료를 막아도 밥·음식은 레시피로 그대로 기록된다
+  for (const n of ['쌀밥', '현미밥', '잡곡밥', '우유', '달걀', '두부'])
+    assert.ok(af(n), '음식이 막힘: ' + n)
+  // 막은 이름은 INGREDIENTS 에 남아 있어야 한다 — 레시피가 영양 계산에 쓴다
+  const gone = [...$('SINGLE_FOOD_DENY')].filter(n => !$('INGREDIENTS')[n])
+  assert.equal(gone.length, 0, 'DB 에 없는 이름을 막았다: ' + gone.join(', '))
 })
 
 ok('흔한 음식은 기록 목록에 남는다', () => {
@@ -1384,7 +1413,8 @@ await okAsync('DB 이름이 더 긴 음식은 비슷한 이름을 제안한다',
   // 글자 포함 방향이 반대라 규칙으로는 못 찾으므로 골라 쓰게 보여준다
   assert.equal($('analyzeFood')('삼겹살'), null)
   const r = await parseFood('어제 저녁에 삼겹살에 소주 한 병', 'dinner')
-  assert.equal(r.entries.length, 0)
+  // 소주는 직접 고른 단품이라 기록되고, 못 찾은 것은 삼겹살뿐이다
+  assert.deepEqual(plain(r.entries).map(e => e.name), ['소주'])
   const sug = plain(r.unmatched).flatMap(u => u.suggestions)
   assert.ok(sug.length, '제안이 하나도 없음')
   assert.ok(sug.every(n => $('analyzeFood')(n)), '제안에 DB 에 없는 이름이 섞임')

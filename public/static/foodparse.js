@@ -81,7 +81,9 @@ let FP_LOG_NAMES = null;
 function logFoodNames() {
   if (FP_LOG_NAMES) return FP_LOG_NAMES;
   const recipes = new Set(RECIPE_NAMES);
-  const known = new Set(RECIPE_NAMES.concat(INGREDIENT_NAMES));
+  // 「차조(생것)」을 가리려면 「차조」가 DB 에 있는지만 보면 됩니다. 기록 목록으로 보면
+  // 차조처럼 단품에서 막은 이름이 빠져서, 가려야 할 「(생것)」이 되살아납니다.
+  const known = new Set(RECIPE_NAMES.concat(Object.keys(INGREDIENTS)));
   FP_LOG_NAMES = [];
   for (const n of RECIPE_NAMES.concat(INGREDIENT_NAMES)) {
     // 직접 고른 단품은 꼬리말이 무엇이든 그대로 둡니다. 「갈비탕(시판)」·「돈까스(시판)」은
@@ -307,13 +309,19 @@ function fpRules(text, defaultMeal) {
     });
     prevTookAfter = fromAfter > 0;
   }
+  // 한 덩어리에서 찾은 이름을 지우고, 남는 말이 있으면 그것도 알립니다.
+  //   "삼겹살에 소주 한 병" → 소주만 찾고 삼겹살을 말없이 버리면 안 됩니다.
+  // 「두 개」·「한 병」처럼 수량만 남은 것은 알리지 않습니다 (두 글자 이름이 없으면 건너뜀).
   const found = entries.map(e => fpNorm(e.name));
-  const unmatched = fpChunks(text).filter(c => {
-    const n = fpNorm(c);
-    if (!/[가-힣]/.test(n)) return false;
-    if (found.some(f => n.includes(f))) return false;
-    return !fpIsNoise(n);
-  }).map(c => ({ text: c, suggestions: fpSuggest(c, 6) }));
+  const unmatched = [];
+  for (const c of fpChunks(text)) {
+    const norm = fpNorm(c);
+    let rest = norm;
+    for (const f of found) rest = rest.split(f).join('|');
+    const left = rest === norm ? c : rest.replace(/\|+/g, ' ').trim();
+    if (!fpTokens(left).length || fpIsNoise(left)) continue;
+    unmatched.push({ text: left, suggestions: fpSuggest(left, 6) });
+  }
   return { entries, unmatched };
 }
 
