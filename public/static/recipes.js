@@ -21394,6 +21394,9 @@ const SINGLE_FOOD_DENY = new Set([
   '미역(생것)', '미역(말린것)', '미역(불린것)', '김(말린것)',
   '실미역(말린것)', '쌀밥(불린것)',
 
+  // 괄호 안에 세 가지가 든 이름 — 꺼내도 자연스러운 이름이 안 나옵니다 (2026-11-04).
+  '홍게(껍질포함_찐것_냉동)', '재첩(껍질포함_생것)', '랍스터(자숙_껍질포함)', '죽순(생것_손질된것)',
+
   // 손질만 해 둔 생고기 — 그대로 먹지 않습니다 (2026-11-04).
   // 닭다리찜·닭날개튀김·족발처럼 요리 이름으로 기록합니다.
   '쇠고기(갈은것)', '오리고기(뼈포함)', '오리고기(토막_뼈포함)', '돼지고기(채)', '닭고기(다리_살코기)', '닭고기(넓적다리_살코기)',
@@ -21506,6 +21509,16 @@ const RAW_HIDE = new Set();           // 검색에서 가릴 원래 이름
     // 맨 이름을 새로 만들지는 않습니다 — 「우거지(삶은것_냉동)」에서 「우거지」를 꺼내면
     // 그 상태로 먹지 않는다고 빼 둔 이름이 되살아납니다.
     if (INGREDIENTS[m[1]] || RECIPES[m[1]]) RAW_HIDE.add(name);
+  }
+
+  // 괄호 안이 밑줄로 두 조각 이상인데 맨 이름이 이미 있으면 겹치는 이름입니다.
+  //   「밀가루(박력분_파이지)」·「파프리카(적색_쿠스쿠스샐러드볼)」는 레시피 계산용이고,
+  //   먹은 것은 밀가루·파프리카입니다. 직접 고른 이름(「불막창(냉동_시판)」)은 둡니다.
+  for (const name of Object.keys(INGREDIENTS)) {
+    if (RAW_HIDE.has(name) || RAW_ALIAS[name]) continue;
+    if (Object.prototype.hasOwnProperty.call(SINGLE_FOOD_EXTRA, name)) continue;
+    const m = name.match(/^(.+)\(([^()]*_[^()]*)\)$/);
+    if (m && (INGREDIENTS[m[1]] || RECIPES[m[1]])) RAW_HIDE.add(name);
   }
 
   for (const [show, name] of Object.entries(RAW_ALIAS)) {

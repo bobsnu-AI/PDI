@@ -330,6 +330,7 @@ function restoreProfileForm() {
   const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
   set('profile-age', p.age); set('profile-height', p.height); set('profile-weight', p.weight);
   set('profile-waist', p.waist ? Math.round(p.waist / 2.54) : ''); set('profile-activity', p.activity);
+  set('profile-mod-min', p.modMin); set('profile-vig-min', p.vigMin);
   selectedAllergies.clear();
   for (const a of (p.allergies || [])) selectedAllergies.add(a);
   selectedGoals.clear();
@@ -459,8 +460,19 @@ function readProfile() {
     weight:     num('profile-weight'),
     waist:      waistCmFromInch(num('profile-waist')),
     activity:   document.getElementById('profile-activity').value,
+    modMin:     num('profile-mod-min'),
+    vigMin:     num('profile-vig-min'),
     allergies:  new Set(selectedAllergies),
   };
+}
+
+// 주당 중·고강도 운동 시간 (분). 고강도는 2배로 셉니다 —
+// WHO·WCRF 권고가 중강도 150분과 고강도 75분을 같게 봅니다.
+function weeklyMvpaMin(p) {
+  if (!p) return null;
+  const mod = p.modMin, vig = p.vigMin;
+  if (mod == null && vig == null) return null;
+  return (mod || 0) + (vig || 0) * 2;
 }
 
 // 나이·키·체중은 기준 칼로리 산출에 필수
@@ -1341,6 +1353,12 @@ function renderGuide(r) {
   if (!r.categoryMap.legumes) warn.push(['콩 식품 미섭취', '두부·된장·콩밥 같은 콩 식품을 끼니에 넣어보세요.']);
   if (r.intake.refinedPct > 40) {
     warn.push(['정제 식품 비율 높음', '흰 곡물·당류 비율 ' + r.intake.refinedPct.toFixed(0) + '% — 흰쌀밥·밀가루·단 간식을 줄여보세요.']);
+  }
+  // 운동은 식단과 함께 암 예방 권고에 들어가는 항목입니다 (WCRF/AICR·WHO 기준 주 150분)
+  const mvpa = weeklyMvpaMin(tracker.profile);
+  if (mvpa != null && mvpa < 150) {
+    warn.push(['운동 부족', '중·고강도 운동이 주 ' + mvpa + '분이에요. 주 150분을 권해요 — '
+      + (mvpa < 75 ? '하루 20분 빠르게 걷기부터 시작해보세요.' : '지금보다 ' + (150 - mvpa) + '분만 더 늘려보세요.')]);
   }
   if (r.body.abdominal) warn.push(['복부비만', '허리둘레가 기준(남 90cm·여 85cm) 이상이에요. 체중 관리 루틴을 꾸준히 실천하세요.']);
 

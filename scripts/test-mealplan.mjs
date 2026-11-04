@@ -1342,6 +1342,20 @@ ok('직접 고른 원재료·가공식품이 기록되고 검색에도 뜬다', 
   assert.equal(noG.length, 0, '1인분 그램이 없는 단품: ' + noG.map(([n]) => n).join(', '))
 })
 
+ok('주당 운동 시간을 받아 모자라면 알려준다', () => {
+  // WCRF/AICR·WHO 권고는 중·고강도 운동 주 150분이다. 고강도 1분을 중강도 2분으로 센다
+  const mv = $('weeklyMvpaMin')
+  assert.equal(mv({ modMin: 100, vigMin: 30 }), 160)
+  assert.equal(mv({ modMin: 90, vigMin: null }), 90)
+  assert.equal(mv({ modMin: null, vigMin: 40 }), 80)
+  // 안 적으면 아무 말도 하지 않는다 — 0 분으로 보고 경고를 띄우면 안 된다
+  assert.equal(mv({ modMin: null, vigMin: null }), null)
+  assert.equal(mv(null), null)
+  // 입력칸이 화면에 있어야 한다
+  for (const id of ['profile-mod-min', 'profile-vig-min'])
+    assert.ok(htmlSrc.includes('id="' + id + '"'), '입력칸 없음: ' + id)
+})
+
 ok('정제 식품 경고는 흰 곡물·당류만 센다', () => {
   // 이 DB 는 달걀·우유·김치를 refined 로 분류한다. 카테고리로 비율을 내면
   // 달걀·우유를 먹었다는 이유로 「정제 식품 비율 높음」이 떴다.
