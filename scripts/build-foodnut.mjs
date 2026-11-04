@@ -39,7 +39,9 @@ const DATA = path.join(ROOT, 'scripts/data');
 // 찾았습니다 — 경로가 틀리면 「해당 오픈API 서비스가 없거나 폐기됨」, 맞으면
 // 「등록되지 않은 서비스키」가 돌아옵니다.
 const API  = 'https://apis.data.go.kr/1471000/FoodNtrCpntDbInfo03/getFoodNtrCpntDbInq03';
-const ROWS = 1000;   // 한 번에 받을 건수
+// 한 번에 받을 건수. 상한이 공개돼 있지 않아 큰 쪽부터 넣어 보고 되는 것을 씁니다.
+// 1000 으로 부르면 빈 응답이 옵니다.
+const ROW_TRY = [500, 200, 100, 50];
 
 // 응답 칸은 AMT_NUM1~157 로 번호만 있습니다. 번호가 무슨 영양소인지는 포털에
 // 공개돼 있지 않아 probe 로 확인했습니다 (2026-11-04, 국밥_돼지머리 100 g).
@@ -191,16 +193,29 @@ async function build() {
   const want = new Set(Object.values(codes).filter(Boolean));
   console.log('맞출 식품코드', want.size, '개');
 
-  const first = await fetchPage(key, 1, ROWS);
-  if (!first.rows.length) { console.error('받은 자료가 없습니다.'); process.exit(1); }
+  // 한 번에 몇 건까지 주는지 찾습니다
+  let ROWS = 0, first = null;
+  for (const n of ROW_TRY) {
+    const r = await fetchPage(key, 1, n);
+    if (r.rows.length) { ROWS = n; first = r; break; }
+    console.log('한 번에 ' + n + '건은 안 됩니다 — 줄여서 다시 해봅니다.');
+  }
+  if (!first) {
+    const e = new Error('받은 자료가 없습니다. 하루 호출 한도를 넘었거나 서비스가 잠시 멎었을 수 있습니다.');
+    e.quiet = true;
+    throw e;
+  }
+  console.log('한 번에 ' + ROWS + '건씩 받습니다. 전체 ' + first.total + '건.');
+
   const missing = Object.entries(NUT_FIELD)
     .filter(([, names]) => pick(first.rows[0], names) == null)
     .map(([k]) => k);
   if (missing.length) {
-    console.error('응답에서 못 찾은 칸: ' + missing.join(', '));
-    console.error('probe 로 칸 이름을 확인해 NUT_FIELD 를 맞추세요 — 0 을 써 넣지 않습니다.');
-    console.error('받은 칸: ' + Object.keys(first.rows[0]).join(', '));
-    process.exit(1);
+    const e = new Error('응답에서 못 찾은 칸: ' + missing.join(', ')
+      + '\nprobe 로 칸 이름을 확인해 NUT_FIELD 를 맞추세요 — 0 을 써 넣지 않습니다.'
+      + '\n받은 칸: ' + Object.keys(first.rows[0]).join(', '));
+    e.quiet = true;
+    throw e;
   }
 
   // 칸 번호가 밀리지 않았는지 달걀로 한 번 봅니다
@@ -223,11 +238,24 @@ async function build() {
     }
   }
 
-  const byCode = {};
-  let page = 1, got = 0;
+  // 받다가 끊겨도 다시 받지 않게 중간에 저장해 둡니다. 하루 10,000번 한도가 있고
+  // 3,400번쯤 불러야 해서, 처음부터 다시 받으면 하루치를 날립니다.
+  const CACHE = path.join(DATA, 'foodnut-cache.json');
+  let byCode = {}, page = 1, got = 0;
+  if (fs.existsSync(CACHE)) {
+    try {
+      const c = JSON.parse(fs.readFileSync(CACHE, 'utf8'));
+      byCode = c.byCode || {}; page = c.page || 1; got = c.got || 0;
+      console.log('이어서 받습니다 — ' + Object.keys(byCode).length + '개는 이미 받아 뒀습니다.');
+    } catch { byCode = {}; }
+  }
+  const saveCache = () => {
+    try { fs.writeFileSync(CACHE, JSON.stringify({ byCode, page, got })); } catch {}
+  };
   for (;;) {
     const { rows, total } = page === 1 ? first : await fetchPage(key, page, ROWS);
     if (!rows.length) break;
+    if (page % 50 === 0) saveCache();
     for (const r of rows) {
       const code = String(pick(r, NUT_FIELD.code) || '').trim();
       if (!code || !want.has(code) || byCode[code]) continue;
@@ -240,11 +268,15 @@ async function build() {
       byCode[code] = nut;
     }
     got += rows.length;
-    process.stdout.write('\r받는 중 ' + got + (total ? ' / ' + total : ''));
+    const found = Object.keys(byCode).length;
+    process.stdout.write('\r받는 중 ' + got + (total ? ' / ' + total : '')
+      + ' · 찾은 식품 ' + found + ' / ' + want.size + '   ');
+    if (found >= want.size) break;          // 쓸 것을 다 찾으면 그만 받습니다
     if (total && got >= total) break;
     page++;
   }
   console.log('');
+  saveCache();
 
   // 식품코드 → 이름으로 바꿔 둡니다. 앱에는 코드가 없고 이름만 있습니다.
   const out = {};
