@@ -986,7 +986,7 @@ function displayResults() {
   const r = pdiResult;
 
   renderTargets(r);        // ① 기준·목표 칼로리 · BMI · 복부비만 · 영양소 목표치
-  renderDietScore(r.meals, r.servings, r.profile.gender); // ② 식단 점수 · 질환 위험도 · 개선 제안
+  renderDietScore(r.meals, r.servings, r.profile.gender, r.profile); // ② 식단 점수 · 질환 위험도 · 개선 제안
   renderTips(r);           // ③ 목표 관리 팁
   renderGuide(r);          // ④ 주의사항
 
@@ -1120,7 +1120,7 @@ function dietGrade(scored) {
 }
 
 function initSubCart(r) {
-  const scored = scoreDietPatterns(r.meals, r.servings, r.profile.gender);
+  const scored = scoreDietPatterns(r.meals, r.servings, r.profile.gender, r.profile);
   const lacks = dietLacks(scored);
   subRecommendation = recommendSubscription({
     grade: dietGrade(scored),

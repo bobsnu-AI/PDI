@@ -256,10 +256,10 @@ ok('유제품은 저지방 비율로 나뉜다', () => {
 console.log('\n── 설문과 점수가 맞물리는지 ──')
 const scoredAll = (ans) => $('scoreDietPatterns')($('buildSurveyDiet')(ans), servingsOf(ans), 'female')
 
-ok('17문항으로 점수 5종이 모두 계산되고, 빈 문항이 없다', () => {
+ok('17문항으로 점수 6종이 모두 계산되고, 빈 문항이 없다', () => {
   assert.equal(SQ.length, 17, '문항 ' + SQ.length + '개')
   const sc = scoredAll(least)
-  assert.equal(sc.patterns.length, 5)
+  assert.equal(sc.patterns.length, 6)
   // 모든 문항이 적어도 한 점수를 움직인다 — 답을 바꿔 확인한다.
   // 기준 답안을 둘 쓴다: 성분값이 기준 범위를 벗어나 있으면 점수가 0이나 1에
   // 붙어 버려서(나트륨이 이미 4,000mg 을 넘은 경우 등) 한쪽에서만 움직인다.
@@ -276,12 +276,17 @@ ok('17문항으로 점수 5종이 모두 계산되고, 빈 문항이 없다', ()
   }
 })
 
-ok('남은 「뺀 항목」은 지방산 조성과 혈당지수뿐', () => {
+ok('남은 「뺀 항목」은 지방산 조성·혈당지수와 프로필에서 오는 것뿐', () => {
+  // 설문만 풀면 키·체중·허리둘레·운동 시간이 없어 암 예방 점수의 세 항목이 빠진다.
+  // 0 으로 보고 깎지 않고 「알 수 없어 뺀 항목」으로 적는 것이 맞다.
+  const FROM_PROFILE = ['체질량지수', '허리둘레', '주당 운동']
   const sc = scoredAll(least)
   const left = []
   for (const p of sc.patterns) for (const m of p.missing || []) left.push(m)
   for (const m of left)
-    assert.ok(m.includes('지방') || m.includes('혈당지수'), '설명 못한 뺀 항목: ' + m)
+    assert.ok(m.includes('지방') || m.includes('혈당지수') || FROM_PROFILE.includes(m),
+      '설명 못한 뺀 항목: ' + m)
+  for (const m of FROM_PROFILE) assert.ok(left.includes(m), '빠져야 할 항목이 안 빠짐: ' + m)
 })
 
 ok('AHEI·AMED 음주는 논문 기준대로 채점된다', () => {
@@ -1810,9 +1815,9 @@ ok('식재료가 성분으로 분류됨 (고기·생선·통곡물·콩)', () =>
   assert.equal(cls('약콩두유', 'bobsnu'), 'legumes')
 })
 
-ok('5가지 점수가 0~100 범위로 계산됨', () => {
+ok('6가지 점수가 0~100 범위로 계산됨', () => {
   const s = scoreDiet(mkMeals(['쌀밥', '된장국', '고등어구이', '시금치나물']))
-  assert.equal(s.patterns.length, 5)   // 가중치 방식 2종은 설문 상한이 있어야 계산된다
+  assert.equal(s.patterns.length, 6)   // 가중치 방식 2종은 설문 상한이 있어야 계산된다
   for (const p of s.patterns) {
     assert.ok(p.score >= 0 && p.score <= 100, p.key + ' 점수 범위 이탈: ' + p.score)
     assert.ok(p.tier && p.tier.label, p.key + ' 등급 없음')
@@ -1855,14 +1860,43 @@ ok('점수 띠가 위험·보통·안전 구역과 내 위치를 보여준다', 
   assert.equal(widths.slice(0, 3).reduce((a, b) => a + b, 0), 100)
 })
 
-ok('설문으로 5가지 점수가 모두 계산됨 (WCRF/AICR 만 자료 필요)', () => {
+ok('설문으로 6가지 점수가 모두 계산됨', () => {
   const ans = {}, SQ2 = $('SURVEY_QUESTIONS')
   SQ2.forEach(q => ans[q.id] = Math.min(1, q.options.length - 1))
   const s = $('scoreDietPatterns')($('buildSurveyDiet')(ans), $('surveyServings')(ans))
-  assert.equal(s.patterns.length, 5)
+  assert.equal(s.patterns.length, 6)
   for (const p of s.patterns) assert.ok(p.score >= 0 && p.score <= 100, p.key + ' ' + p.score)
-  assert.deepEqual(Object.keys(s.pending), ['WCRF/AICR'])
-  assert.ok(s.pending['WCRF/AICR'].need)
+  // 자료가 없어 못 내는 점수는 이제 없다 — 암 예방 권고 점수까지 나온다
+  assert.deepEqual(Object.keys(s.pending), [])
+  const wcrf = s.patterns.find(p => p.key === 'WCRF/AICR')
+  assert.ok(wcrf, '암 예방 권고 점수가 없음')
+  // 7개 권고를 1 / 0.5 / 0 으로 매긴다. 설문만 풀면 프로필 세 항목이 빠진다
+  for (const c of wcrf.comps) assert.ok([0, 0.5, 1].includes(c.sub), c.label + ' = ' + c.sub)
+})
+
+ok('암 예방 권고 점수가 7개 항목을 논문 기준으로 매긴다', () => {
+  const prof = { height: 170, weight: 65, waist: 85, modMin: 200, vigMin: 0, gender: 'male' }
+  const sc = (meals, p) => $('scoreDietPatterns')(meals, null, 'male', p)
+    .patterns.find(x => x.key === 'WCRF/AICR')
+  const by = w => Object.fromEntries(w.comps.map(c => [c.label, c.sub]))
+
+  const good = by(sc(mkMeals(['현미밥', '시금치나물무침', '두부조림', '사과']), prof))
+  assert.equal(good['체질량지수'], 1, 'BMI 22.5 는 만점이어야 한다')
+  assert.equal(good['허리둘레'], 1, '남성 85 cm 는 94 미만이라 만점')
+  assert.equal(good['주당 운동'], 1, '주 200분은 만점')
+  assert.equal(good['초가공식품 비율'], 1, '초가공식품이 없으면 만점')
+
+  // 프로필을 안 주면 세 항목이 빠지고, 0 으로 깎지 않는다
+  const none = sc(mkMeals(['현미밥']), null)
+  for (const m of ['체질량지수', '허리둘레', '주당 운동'])
+    assert.ok(none.missing.includes(m), '안 빠짐: ' + m)
+  assert.ok(!none.comps.some(c => c.label === '허리둘레'), '값 없는 항목이 채점됨')
+
+  // 비만·운동부족이면 깎인다
+  const bad = by(sc(mkMeals(['현미밥']), { height: 170, weight: 95, waist: 105, modMin: 30, vigMin: 0 }))
+  assert.equal(bad['체질량지수'], 0, 'BMI 32.9 는 0점')
+  assert.equal(bad['허리둘레'], 0, '남성 105 cm 는 0점')
+  assert.equal(bad['주당 운동'], 0, '주 30분은 0점')
 })
 
 ok('개선 제안이 부족한 항목을 찍고 오를 점수를 함께 준다', () => {
@@ -1934,6 +1968,7 @@ ok('질환별 등급은 위험비가 센 점수를 더 크게 반영한다', () 
   const pp = $('ptPaperPos')
   let sw = 0, sp = 0, spp = 0
   for (const p of s.patterns) {
+    if (!hr[p.key]) continue          // 암 예방 권고 점수는 질환별 위험비가 없어 빠집니다
     const w = Math.abs(Math.log(hr[p.key]))
     sw += w; sp += w * p.position; spp += w * pp(p.key, p.position)
   }
@@ -1941,7 +1976,8 @@ ok('질환별 등급은 위험비가 센 점수를 더 크게 반영한다', () 
   assert.ok(Math.abs(dm.paperPos - spp / sw) < 1e-12, dm.paperPos + ' vs ' + spp / sw)
   // 암은 지표 간 위험비 차이가 작아 가중치가 당뇨보다 고르다
   const spread = k => {
-    const w = s.patterns.map(x => Math.abs(Math.log($('PT_DISEASE_HR')[x.key][k])))
+    const w = s.patterns.filter(x => $('PT_DISEASE_HR')[x.key])
+      .map(x => Math.abs(Math.log($('PT_DISEASE_HR')[x.key][k])))
     return Math.max(...w) / Math.min(...w)
   }
   assert.ok(spread('cancer') < spread('diabetes'), '암 가중치가 당뇨보다 고르지 않음')
@@ -2028,7 +2064,7 @@ ok('질환 등급이 식단에 따라 위험·보통·안전으로 갈린다', (
     + ' · 좋음 ' + seen.good.toFixed(2))
 })
 
-ok('합산 등급이 점수 5종의 평균 위치로 나온다', () => {
+ok('합산 등급이 점수 6종의 평균 위치로 나온다', () => {
   const s = scoreDiet(mkMeals(['쌀밥', '시금치나물']))
   const o = $('ptOverall')(s)
   const avg = s.patterns.reduce((a, p) => a + p.position, 0) / s.patterns.length

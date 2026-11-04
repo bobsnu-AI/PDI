@@ -123,13 +123,19 @@ function ptClassify(name, cat) {
 //   servings : 설문 응답에서 만든 { 성분: 1일 회분 } — 있으면 식품군은 이 값을 그대로 씁니다
 //              (설문이 이미 식품군 단위로 묻기 때문에 대표 음식으로 다시 환산하지 않습니다)
 //   출력: { serv:{성분: 1회분 수}, grams:{성분: 그램}, sodium, fiber, trans, energy }
-function ptComponents(meals, servings) {
+function ptComponents(meals, servings, profile) {
   const grams = {};
   for (const k of Object.keys(PT_SERVING_G)) grams[k] = 0;
   grams.wholeGrain = 0; grams.alcohol = 0; grams.other = 0;
 
   // 초가공식품에서 온 열량과 전체 열량. 적은 이름이 그대로 한 끼면(햄버거)
   // 그 끼니 열량을 다 세고, 아니면 재료 가운데 걸리는 것만 셉니다.
+  //
+  // 가당음료·가공육·술도 함께 셉니다. 원문(Shams-White 2019)은 두 번 깎이지 않게
+  // 이 셋을 빼라고 하지만, 그러면 경계값을 빌려 올 데가 없습니다. 쓸 수 있는
+  // 한국인 숫자는 Sung 2021(국민건강영양조사 2016~2018) 하나뿐이고 그 논문은
+  // 셋을 넣고 재기 때문에, 기준을 맞추려면 우리도 넣어야 합니다.
+  const UPF_ALSO = new Set(['ssb', 'juice', 'processedMeat', 'alcohol']);
   let upfKcal = 0, dishKcal = 0;
   for (const m of meals || []) {
     const ings = (m.analysis && m.analysis.ingredients) || [];
@@ -138,7 +144,8 @@ function ptComponents(meals, servings) {
     dishKcal += (m.analysis && m.analysis.totalCal) || 0;
     if (whole) upfKcal += (m.analysis && m.analysis.totalCal) || 0;
     for (const ing of ings) {
-      if (!whole && PT_UPF.has(ing.name)) upfKcal += ing.kcal || 0;
+      if (!whole && (PT_UPF.has(ing.name) || UPF_ALSO.has(ptClassify(ing.name, ing.cat))))
+        upfKcal += ing.kcal || 0;
       // 밥스누 제품은 grams 가 '1회' 로 들어오므로 제품 1회 제공량(g)으로 바꿉니다
       const g = typeof ing.grams === 'number' ? ing.grams : ptProductWeight(ing.name);
       if (!(g > 0)) continue;
@@ -179,9 +186,21 @@ function ptComponents(meals, servings) {
   }
   serv.sodium = sodium;
   serv.fiber  = fiber;
-  // 초가공식품에서 온 열량 비율(%). 암 예방 권고 점수의 한 항목입니다.
-  // 점수를 내려면 한국인 분포의 3분위 경계가 더 있어야 합니다 (PATTERN_PENDING).
+  // 초가공식품에서 온 열량 비율(%)
   serv.upfPctE = dishKcal > 0 ? (upfKcal / dishKcal) * 100 : 0;
+
+  // 암 예방 권고 점수(WCRF/AICR)가 쓰는 값들 — 하루 그램·주당 그램으로 냅니다.
+  // 설문으로 받은 경우에도 맞게 나오도록 회분 수에 1회분 그램을 곱합니다.
+  serv.fvG        = sv('veg') * PT_SERVING_G.veg + sv('fruit') * PT_SERVING_G.fruit;
+  serv.redMeatWk  = sv('redMeat') * PT_SERVING_G.redMeat * 7;
+  serv.procMeatWk = sv('processedMeat') * PT_SERVING_G.processedMeat * 7;
+  serv.ssbG       = sv('ssb') * PT_SERVING_G.ssb;
+  serv.ethanolG   = sv('alcohol') * 14;            // 한 잔 = 순알코올 14 g
+  const p = profile || {};
+  serv.bmi      = (p.height > 0 && p.weight > 0) ? p.weight / ((p.height / 100) ** 2) : null;
+  serv.waistCm  = p.waist > 0 ? p.waist : null;
+  serv.mvpaMin  = (p.modMin == null && p.vigMin == null)
+    ? null : (p.modMin || 0) + (p.vigMin || 0) * 2;
   // 트랜스지방은 섭취 열량 대비 비율(%)로 봅니다
   serv.transPctE = energy > 0 ? (trans * 9 / energy) * 100 : 0;
 
@@ -280,15 +299,58 @@ const PATTERN_DEFS = [
     ],
     missing: ['불포화지방 대 포화지방 비율', '혈당지수'],
   },
+  {
+    key: 'WCRF/AICR', name: '암 예방 권고 점수', full: '2018 WCRF/AICR Score',
+    comps: [
+      { c: 'bmi',       label: '체질량지수',        unit: '',    range: [30, 22],  w: 0.5, score: ptWcrfBmi },
+      { c: 'waistCm',   label: '허리둘레',          unit: 'cm',  range: [102, 80], w: 0.5, score: ptWcrfWaist },
+      { c: 'mvpaMin',   label: '주당 운동',         unit: '분',  range: [0, 150],  score: ptWcrfPa },
+      { c: 'fvG',       label: '채소·과일',         unit: 'g',   range: [0, 400],  w: 0.5, score: ptWcrfFv },
+      { c: 'fiber',     label: '식이섬유',          unit: 'g',   range: [0, 30],   w: 0.5, score: ptWcrfFiber },
+      { c: 'upfPctE',   label: '초가공식품 비율',    unit: '%',   range: [39.1, 12.5], score: ptWcrfUpf },
+      { c: 'redMeatWk', label: '붉은 고기·가공육',   unit: 'g/주', range: [500, 0], score: ptWcrfMeat },
+      { c: 'ssbG',      label: '가당음료',          unit: 'g',   range: [250, 0],  score: ptWcrfSsb },
+      { c: 'ethanolG',  label: '음주(순알코올)',     unit: 'g',   range: [28, 0],   score: ptWcrfAlcohol },
+    ],
+    missing: [],
+  },
 ];
+
+// ── 암 예방 권고 점수 채점 ────────────────────
+// 기준은 UK Biobank 적용 논문(Front Nutr 2023) 표 1 의 「원 채점 체계」 칸 그대로입니다.
+// 7개 권고를 1 / 0.5 / 0 으로 매겨 7점 만점입니다. 체중과 식물성 식품은 두 갈래로
+// 나뉘어 각 0.5 점씩이라, 여기서는 따로 적고 가중치를 0.5 로 둡니다.
+const pt3 = (v, best, mid) => (v <= best ? 1 : v <= mid ? 0.5 : 0);   // 적을수록 좋은 것
+function ptWcrfBmi(v)   { return (v >= 18.5 && v < 25) ? 1 : (v >= 25 && v < 30) ? 0.5 : 0; }
+function ptWcrfWaist(v, gender) {
+  const [ok, mid] = gender === 'male' ? [94, 102] : [80, 88];
+  return v < ok ? 1 : v < mid ? 0.5 : 0;
+}
+function ptWcrfPa(v)    { return v >= 150 ? 1 : v >= 75 ? 0.5 : 0; }
+function ptWcrfFv(v)    { return v >= 400 ? 1 : v >= 200 ? 0.5 : 0; }
+function ptWcrfFiber(v) { return v >= 30 ? 1 : v >= 15 ? 0.5 : 0; }
+function ptWcrfSsb(v)   { return v <= 0 ? 1 : v <= 250 ? 0.5 : 0; }
+function ptWcrfAlcohol(v, gender) {
+  const hi = gender === 'male' ? 28 : 14;            // 순알코올 g/일
+  return v <= 0 ? 1 : v <= hi ? 0.5 : 0;
+}
+// 붉은 고기와 가공육을 함께 봅니다 — 둘 중 하나만 넘어도 0 점입니다.
+// 값은 붉은 고기 g/주 이고, 가공육은 serv 에서 따로 가져옵니다.
+function ptWcrfMeat(redWk, gender, serv) {
+  const proc = (serv && serv.procMeatWk) || 0;
+  if (redWk > 500 || proc >= 100) return 0;
+  return proc < 21 ? 1 : 0.5;
+}
+// 초가공식품 열량 비율 — 경계는 Sung 2021(국민건강영양조사 2016~2018, 19~64세
+// 7,364명)의 성별 4분위입니다. 남 12.5 / 24.1 / 39.1, 여 9.6 / 19.7 / 33.5 (%).
+// 원문은 3분위로 끊지만 한국인 3분위 경계가 어느 논문에도 실려 있지 않아,
+// 실린 숫자 가운데 바깥 두 개를 써서 1 / 0.5 / 0 으로 매깁니다.
+function ptWcrfUpf(v, gender) {
+  return gender === 'male' ? pt3(v, 12.5, 39.1) : pt3(v, 9.6, 33.5);
+}
 
 // 계산에 필요한 자료가 없어 점수를 내지 않는 종류
 const PATTERN_PENDING = {
-  // 8개 항목 가운데 일곱은 모읍니다 — 체중·운동(주당 중·고강도 분)·통곡물·채소·과일·
-  // 붉은고기·가당음료·음주. 초가공식품 열량 비율(serv.upfPctE)도 PT_UPF 로 냅니다.
-  // 남은 것은 경계값 하나뿐입니다. 원문(Shams-White 2019)은 그 집단의 3분위로 끊는데,
-  // 혼자 쓰는 앱에는 비교할 집단이 없어 한국인 분포의 경계 두 개가 필요합니다.
-  'WCRF/AICR': { name: '암 예방 권고 점수', need: '한국인 초가공식품 비율 3분위 경계 필요' },
 };
 
 // 점수를 보여주기 위한 최소 기록량 (하루 섭취 열량)
@@ -320,20 +382,28 @@ function ptDirectional(value, worst, best) {
 
 // ── 점수 계산 ─────────────────────────────────
 //   반환: { patterns:[{key,name,position,score,tier,comps[]}], pending, components }
-function scoreDietPatterns(meals, servings, gender) {
-  const components = ptComponents(meals, servings);
+function scoreDietPatterns(meals, servings, gender, profile) {
+  const components = ptComponents(meals, servings, profile);
   const patterns = PATTERN_DEFS.map(def => {
-    const comps = def.comps.map(c => {
+    // 값이 없는 항목은 빼고 「알 수 없어 뺀 항목」에 적습니다 —
+    // 허리둘레나 운동 시간을 안 적으면 0 으로 보고 깎으면 안 됩니다.
+    const gone = []
+    const comps = def.comps.filter(c => {
+      if (components.serv[c.c] != null) return true
+      gone.push(c.label)
+      return false
+    }).map(c => {
       const value = components.serv[c.c] || 0;
       // 기준이 성별로 다른 항목은 rangeW(여성) 를 함께 적어 둡니다
       const range = (gender !== 'male' && c.rangeW) ? c.rangeW : c.range;
       return { ...c, value, range,
-               sub: c.score ? c.score(value, gender) : ptDirectional(value, range[0], range[1]),
+               sub: c.score ? c.score(value, gender, components.serv) : ptDirectional(value, range[0], range[1]),
                target: range[1], good: range[1] > range[0] };
     });
     const position = ptPosition(comps);
     return {
-      key: def.key, name: def.name, full: def.full, missing: def.missing,
+      key: def.key, name: def.name, full: def.full,
+      missing: def.missing.concat(gone),
       position, score: Math.round(position * 100), tier: ptTier(position), comps,
     };
   });
@@ -562,10 +632,10 @@ function ptScoreBar(score, color) {
 }
 
 // ── 결과 화면의 「식단 점수」 영역 ────────────
-function renderDietScore(meals, servings, gender) {
+function renderDietScore(meals, servings, gender, profile) {
   const el = document.getElementById('diet-score-section');
   if (!el) return;
-  if (meals) ptScored = scoreDietPatterns(meals, servings, gender);
+  if (meals) ptScored = scoreDietPatterns(meals, servings, gender, profile);
   if (!ptScored) { el.innerHTML = ''; return; }
 
   if (ptScored.insufficient) {
