@@ -61,9 +61,9 @@ const NUT_FIELD = {
   trans:   ['AMT_NUM25'],
 };
 
-// 받은 값이 말이 되는지 보는 검사. 버터는 지방이 80 g 쯤이고 포화지방이 그 절반,
-// 콜레스테롤이 200 mg 쯤입니다. 숫자가 엉뚱하면 칸 번호가 밀린 것입니다.
-const CHECK = { name: '버터', fat: [60, 95], satfat: [35, 70], chol: [100, 300] };
+// 받은 값이 말이 되는지 보는 검사. 달걀은 지방이 9 g 쯤인데 콜레스테롤은 370 mg 쯤
+// 이라, 두 칸이 바뀌면 바로 드러납니다. 숫자가 엉뚱하면 칸 번호가 밀린 것입니다.
+const CHECK = { name: '달걀', fat: [5, 15], satfat: [1, 6], chol: [200, 600] };
 
 function keyOrDie() {
   const raw = (process.env.FOOD_API_KEY || '').trim();
@@ -147,23 +147,32 @@ function pick(row, names) {
   return null;
 }
 
-async function probe(name) {
-  const key = keyOrDie();
-  const url = API + '?' + new URLSearchParams(Object.assign(
-    { serviceKey: key, pageNo: '1', numOfRows: '3', type: 'json' },
-    name ? { FOOD_NM_KR: name } : {}));
+// 이름으로 찾아 칸이 가장 많이 찬 줄을 돌려줍니다. 이름이 일부만 맞아도 걸리므로
+// (「버터」로 찾으면 「기타빵_연유버터라우겐」이 나옵니다) 줄을 골라야 합니다.
+async function lookup(key, name, want) {
+  const url = API + '?' + new URLSearchParams({
+    serviceKey: key, pageNo: '1', numOfRows: '100', type: 'json', FOOD_NM_KR: name });
   const res = await fetch(url);
   const text = await res.text();
   if (!res.ok) throw new Error('HTTP ' + res.status + ' — ' + text.slice(0, 300));
-  const json = JSON.parse(text);
-  const body = json.body || (json.response && json.response.body) || {};
+  const body = JSON.parse(text).body || {};
   const items = body.items || [];
   const rows = (Array.isArray(items) ? items : (items.item || [])).map(r => r.item || r);
-  if (!rows.length) { console.log('그 이름으로 찾은 것이 없습니다:', name); return; }
-  console.log('전체 건수:', body.totalCount || body.total_count);
-  for (const r of rows.slice(0, 1)) {
+  const filled = r => Object.entries(r).filter(([k, v]) =>
+    /^AMT_NUM/.test(k) && v != null && String(v).trim() !== '').length;
+  // 이름이 그대로 맞는 것을 먼저, 없으면 칸이 가장 많이 찬 것
+  const exact = rows.filter(r => String(r.FOOD_NM_KR || '').replace(/_.*$/, '') === (want || name));
+  const pool = exact.length ? exact : rows;
+  return pool.sort((a, b) => filled(b) - filled(a))[0] || null;
+}
+
+async function probe(name) {
+  const key = keyOrDie();
+  const names = name ? [name] : ['달걀', '버터', '식용유'];
+  for (const n of names) {
+    const r = await lookup(key, n);
+    if (!r) { console.log('\n■ ' + n + ' — 찾은 것이 없습니다'); continue; }
     console.log('\n■ ' + r.FOOD_NM_KR + '  (' + r.SERVING_SIZE + ', 코드 ' + r.FOOD_CD + ')');
-    // 값이 있는 칸만 찍습니다 — 157개를 다 보면 읽기 어렵습니다
     for (const [k, v] of Object.entries(r)) {
       if (!/^AMT_NUM/.test(k)) continue;
       if (v == null || String(v).trim() === '') continue;
@@ -191,28 +200,23 @@ async function build() {
     process.exit(1);
   }
 
-  // 칸 번호가 밀리지 않았는지 버터로 한 번 봅니다
+  // 칸 번호가 밀리지 않았는지 달걀로 한 번 봅니다
   {
-    const url = API + '?' + new URLSearchParams({
-      serviceKey: key, pageNo: '1', numOfRows: '5', type: 'json', FOOD_NM_KR: CHECK.name });
-    const r = await fetch(url).then(x => x.json()).catch(() => null);
-    const body = (r && (r.body || (r.response && r.response.body))) || {};
-    const items = body.items || [];
-    const rows2 = (Array.isArray(items) ? items : (items.item || [])).map(x => x.item || x);
-    if (rows2.length) {
+    const r = await lookup(key, CHECK.name);
+    if (r) {
       const bad = [];
       for (const k of ['fat', 'satfat', 'chol']) {
-        const v = Number(pick(rows2[0], NUT_FIELD[k]));
+        const v = Number(pick(r, NUT_FIELD[k]));
         const [lo, hi] = CHECK[k];
         if (!(v >= lo && v <= hi)) bad.push(k + ' = ' + v + ' (' + lo + '~' + hi + ' 이어야 함)');
       }
       if (bad.length) {
-        const e = new Error(CHECK.name + ' 값이 말이 안 됩니다 — 칸 번호가 밀렸습니다.\n  '
+        const e = new Error(r.FOOD_NM_KR + ' 값이 말이 안 됩니다 — 칸 번호가 밀렸습니다.\n  '
           + bad.join('\n  ') + '\nprobe 로 다시 보고 NUT_FIELD 를 고치세요.');
         e.quiet = true;
         throw e;
       }
-      console.log(CHECK.name + ' 로 칸 번호 확인했습니다.');
+      console.log('칸 번호 확인했습니다 (' + r.FOOD_NM_KR + ').');
     }
   }
 
