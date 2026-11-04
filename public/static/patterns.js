@@ -47,6 +47,11 @@ const PT_NAME_RULES = [
   ['dairyLow',      ['저지방우유', '무지방우유', '탈지분유', '플레인요구르트', '요구르트(플레인', '호상요구르트(플레인']],
   ['dairyHigh',     ['우유', '치즈', '버터', '생크림', '휘핑', '요구르트', '요거트', '분유', '사워크림']],
   ['wholeGrain',    ['현미', '귀리', '보리', '수수', '기장', '메밀', '통밀', '흑미', '퀴노아', '호밀', '율무', '차조', '발아', '오트', '통곡']],
+  // 흰 곡물. 식재료 DB 는 식빵·밀가루·라면을 refined 로 두는데 그 칸에는 달걀·우유도
+  // 섞여 있어서, 흰 곡물은 이름으로 따로 집습니다. 통곡물 규칙을 먼저 보므로
+  // 「통밀식빵」·「현미국수」는 위에서 통곡물로 걸러집니다.
+  ['refinedGrain',  ['식빵', '밀가루', '빵', '국수', '라면', '우동', '파스타', '스파게티', '소면',
+                     '당면', '떡', '백미', '흰쌀', '쌀가루', '만두피', '또띠아', '누룽지', '시리얼']],
   ['potato',        ['감자', '고구마', '토란', '야콘']],
   ['vegOil',        ['식용유', '올리브유', '참기름', '들기름', '포도씨유', '카놀라', '해바라기유', '콩기름', '옥수수기름', '아보카도오일', '유채유', '팜유', '쌀기름']],
   ['animalFat',     ['라드', '우지', '돈지', '마가린', '쇼트닝']],
@@ -167,7 +172,8 @@ const PATTERN_DEFS = [
     comps: [
       { c: 'veg',         label: '채소',             unit: '접시', range: [0, 5] },
       { c: 'fruit',       label: '과일',             unit: '회',   range: [0, 4] },
-      { c: 'wholeGrain',  label: '통곡물',           unit: 'g',    range: [0, 90] },
+      // 논문의 통곡물 만점은 남성 90 g·여성 75 g 입니다
+      { c: 'wholeGrain',  label: '통곡물',           unit: 'g',    range: [0, 90], rangeW: [0, 75] },
       { c: 'nutsLegumes', label: '견과·콩',          unit: '회',   range: [0, 1] },
       { c: 'fish',        label: '생선',             unit: '회',   range: [0, 0.5] },
       { c: 'ssbAll',      label: '가당음료·주스',     unit: '잔',   range: [1, 0] },
@@ -271,9 +277,11 @@ function scoreDietPatterns(meals, servings, gender) {
   const patterns = PATTERN_DEFS.map(def => {
     const comps = def.comps.map(c => {
       const value = components.serv[c.c] || 0;
-      return { ...c, value,
-               sub: c.score ? c.score(value, gender) : ptDirectional(value, c.range[0], c.range[1]),
-               target: c.range[1], good: c.range[1] > c.range[0] };
+      // 기준이 성별로 다른 항목은 rangeW(여성) 를 함께 적어 둡니다
+      const range = (gender !== 'male' && c.rangeW) ? c.rangeW : c.range;
+      return { ...c, value, range,
+               sub: c.score ? c.score(value, gender) : ptDirectional(value, range[0], range[1]),
+               target: range[1], good: range[1] > range[0] };
     });
     const position = ptPosition(comps);
     return {

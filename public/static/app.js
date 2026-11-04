@@ -949,7 +949,7 @@ function applyRetarget(newTargetKcal) {
 // 통곡물 kcal 비율, 채소·과일 섭취량(g) — 주의사항 판단용
 const WHOLE_GRAIN_RE = /현미|흑미|보리|귀리|오트|잡곡|수수|기장|율무|메밀|통밀|퀴노아|차조|^조$|^조\(/;
 function foodGroupIntake(meals) {
-  let total = 0, wholeGrainKcal = 0, vegG = 0, fruitG = 0;
+  let total = 0, wholeGrainKcal = 0, vegG = 0, fruitG = 0, refinedKcal = 0;
   for (const m of meals) {
     total += m.analysis.totalCal;
     for (const i of m.analysis.ingredients) {
@@ -957,9 +957,17 @@ function foodGroupIntake(meals) {
       if (i.cat === 'grains' && WHOLE_GRAIN_RE.test(i.name)) wholeGrainKcal += i.kcal;
       if (i.cat === 'vegetables') vegG += g;
       if (i.cat === 'fruits') fruitG += g;
+      // 흰 곡물·당류는 음식 이름으로 가립니다. 카테고리(cat)로 보면 안 됩니다 —
+      // 이 DB 는 분류표에 없는 식품군을 전부 refined 로 떨어뜨려서, 달걀·우유·
+      // 김치가 「정제 식품」으로 잡힙니다.
+      const comp = ptClassify(i.name, i.cat);
+      if (comp === 'refinedGrain' || comp === 'sweets') refinedKcal += i.kcal;
     }
   }
-  return { wholeGrainPct: total > 0 ? wholeGrainKcal / total * 100 : 0, vegG, fruitG };
+  return {
+    wholeGrainPct: total > 0 ? wholeGrainKcal / total * 100 : 0, vegG, fruitG,
+    refinedPct: total > 0 ? refinedKcal / total * 100 : 0,
+  };
 }
 
 function displayResults() {
@@ -1331,8 +1339,8 @@ function renderGuide(r) {
   if (r.intake.vegG < 200) warn.push(['채소 섭취 부족', '끼니마다 채소 반찬 1–2접시(하루 350g 이상)를 권해요.']);
   if (r.intake.fruitG < 100) warn.push(['과일 섭취 부족', '하루 1–2회(주먹 1개 크기) 과일을 드세요.']);
   if (!r.categoryMap.legumes) warn.push(['콩 식품 미섭취', '두부·된장·콩밥 같은 콩 식품을 끼니에 넣어보세요.']);
-  if (r.categoryMap.refined && r.categoryMap.refined.percentage > 40) {
-    warn.push(['정제 식품 비율 높음', '흰 곡물·당류 비율 ' + r.categoryMap.refined.percentage.toFixed(0) + '% — 가공식품을 줄여보세요.']);
+  if (r.intake.refinedPct > 40) {
+    warn.push(['정제 식품 비율 높음', '흰 곡물·당류 비율 ' + r.intake.refinedPct.toFixed(0) + '% — 흰쌀밥·밀가루·단 간식을 줄여보세요.']);
   }
   if (r.body.abdominal) warn.push(['복부비만', '허리둘레가 기준(남 90cm·여 85cm) 이상이에요. 체중 관리 루틴을 꾸준히 실천하세요.']);
 

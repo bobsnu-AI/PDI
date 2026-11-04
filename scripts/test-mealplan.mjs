@@ -1342,6 +1342,61 @@ ok('직접 고른 원재료·가공식품이 기록되고 검색에도 뜬다', 
   assert.equal(noG.length, 0, '1인분 그램이 없는 단품: ' + noG.map(([n]) => n).join(', '))
 })
 
+ok('정제 식품 경고는 흰 곡물·당류만 센다', () => {
+  // 이 DB 는 달걀·우유·김치를 refined 로 분류한다. 카테고리로 비율을 내면
+  // 달걀·우유를 먹었다는 이유로 「정제 식품 비율 높음」이 떴다.
+  const fgi = $('foodGroupIntake')
+  const meal = ns => ns.map(n => ({ analysis: af(n) }))
+  // 달걀·우유만 먹으면 흰 곡물은 0 이다 — 종전에는 둘 다 refined 라 경고가 떴다
+  const eggMilk = fgi(meal(['달걀프라이', '우유']))
+  assert.ok(eggMilk.refinedPct < 5, '달걀·우유에 경고가 뜸: ' + eggMilk.refinedPct.toFixed(0) + '%')
+  // 식빵을 더하면 빵의 밀가루만 세어진다 (종전 카테고리 방식은 89% 였다)
+  const bread = fgi(meal(['식빵', '달걀프라이', '우유']))
+  assert.ok(bread.refinedPct > 30 && bread.refinedPct < 55,
+    '식빵 비율이 이상함: ' + bread.refinedPct.toFixed(0) + '%')
+  // 흰쌀밥·라면 위주면 경고가 떠야 한다
+  const white = fgi(meal(['쌀밥', '라면', '초콜릿']))
+  assert.ok(white.refinedPct > 40, '흰 곡물 식단에 경고가 안 뜸: ' + white.refinedPct.toFixed(0) + '%')
+  // 통곡물은 흰 곡물로 세지 않는다
+  assert.equal($('ptClassify')('통밀식빵', 'refined'), 'wholeGrain')
+  assert.equal($('ptClassify')('식빵', 'refined'), 'refinedGrain')
+  assert.equal($('ptClassify')('달걀', 'refined'), 'egg')
+})
+
+ok('통곡물 만점 기준이 성별로 다르다', () => {
+  // AHEI-2010 은 남성 90 g·여성 75 g 을 만점으로 본다
+  const comps = g => $('scoreDietPatterns')(null, { wholeGrain: 75 }, g)
+    .patterns.find(p => p.key === 'AHEI-2010').comps.find(c => c.c === 'wholeGrain')
+  assert.equal(comps('female').target, 75)
+  assert.equal(comps('male').target, 90)
+  assert.equal(comps('female').sub, 1, '여성은 75 g 이면 만점이어야 한다')
+  assert.ok(comps('male').sub < 1, '남성은 75 g 이면 만점이 아니어야 한다')
+})
+
+ok('레시피 안에서만 쓰는 재료는 검색에 안 뜬다', () => {
+  // 「마늘(비트절임소스)」·「매실농축액(소고기밑간)」·「버터(토핑소보로)」는
+  // 레시피 계산용 이름이다. 괄호 안만 보므로 「돈까스소스」는 그대로 남는다.
+  const inner = /밑간|곁들임|국물|드레싱|소스|무침|절임|비빔|토핑|필링|쌈장|초장/
+  const junk = logPool.filter(n => {
+    const m = n.match(/\(([^)]*)\)/)
+    return m && !$('RECIPES')[n] && inner.test(m[1])
+  })
+  assert.equal(junk.length, 0, '레시피용 재료가 검색에 뜸: ' + junk.slice(0, 5).join(', '))
+  assert.ok(logSet.has('돈까스소스'), '괄호 없는 음식 이름이 같이 사라짐')
+  // 가려도 영양 계산은 그대로 된다
+  assert.ok(af('마늘(비트절임소스)'), 'analyzeFood 가 깨짐')
+})
+
+ok('껍질·뼈 표기는 괄호를 떼고 순살은 앞에 붙인다', () => {
+  // 「대하(껍질포함)」은 무게에 껍질이 들어갔다는 표기다. 먹는 것은 대하다.
+  for (const n of ['대하', '꼬막', '킹크랩', '갈치', '치킨', '순살 치킨']) {
+    assert.ok(af(n), '기록할 수 없음: ' + n)
+    assert.ok(logSet.has(n), '검색에 안 뜸: ' + n)
+  }
+  assert.equal($('INGREDIENTS')['치킨'], $('INGREDIENTS')['치킨(뼈포함)'])
+  assert.equal($('INGREDIENTS')['순살 치킨'], $('INGREDIENTS')['치킨(순살)'])
+})
+
 ok('상태 표기를 괄호에서 꺼내 이름 앞에 붙인다', () => {
   // 사람들은 「블루베리(말린것)」이라고 적지 않고 「말린 블루베리」라고 적는다.
   const bracket = logPool.filter(n => /\((생것|생|말린것|건조|반건조|삶은것|데친것|볶은것|구운것|찐것|불린것|냉동|자숙|조리된것)\)$/.test(n))

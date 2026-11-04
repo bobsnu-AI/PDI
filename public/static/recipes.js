@@ -21485,6 +21485,29 @@ const RAW_HIDE = new Set();           // 검색에서 가릴 원래 이름
     if (free(show)) RAW_ALIAS[show] = name;
   }
 
+  // 「껍질포함」·「뼈포함」·「손질된것」은 무게에 껍질·뼈가 들어갔다는 표기입니다.
+  // 먹는 것은 대하·꼬막·치킨이라 괄호를 뗍니다. 맨 이름이 이미 있으면 괄호 쪽만 가립니다.
+  // 「순살」은 뼈를 뺐다는 뜻이라 앞에 붙입니다 — 치킨(순살) → 순살 치킨.
+  for (const name of Object.keys(INGREDIENTS)) {
+    const m = name.match(/^(.+)\((껍질포함|뼈포함|손질된것|순살)\)$/);
+    if (!m || SINGLE_FOOD_DENY.has(name)) continue;
+    const show = m[2] === '순살' ? '순살 ' + m[1] : m[1];
+    RAW_HIDE.add(name);
+    if (free(show)) RAW_ALIAS[show] = name;
+  }
+
+  // 괄호 안이 상태·손질 표기뿐이고 맨 이름이 이미 있으면 괄호 쪽은 가립니다.
+  //   「홍게(껍질포함_찐것_냉동)」·「닭(영계_뼈포함)」은 홍게·닭으로 적습니다.
+  const RAW_WORD_ONLY = /^(생것|생|말린것|건조|반건조|삶은것|데친것|볶은것|구운것|찐것|불린것|냉동|자숙|조리된것|껍질포함|뼈포함|손질된것|순살|절단|영계|토막)$/;
+  for (const name of Object.keys(INGREDIENTS)) {
+    const m = name.match(/^(.+)\(([^()]+)\)$/);
+    if (!m || RAW_HIDE.has(name) || RAW_ALIAS[name]) continue;
+    if (!m[2].split('_').every(w => RAW_WORD_ONLY.test(w))) continue;
+    // 맨 이름을 새로 만들지는 않습니다 — 「우거지(삶은것_냉동)」에서 「우거지」를 꺼내면
+    // 그 상태로 먹지 않는다고 빼 둔 이름이 되살아납니다.
+    if (INGREDIENTS[m[1]] || RECIPES[m[1]]) RAW_HIDE.add(name);
+  }
+
   for (const [show, name] of Object.entries(RAW_ALIAS)) {
     INGREDIENTS[show] = INGREDIENTS[name];
     // 1인분 그램을 직접 적어 둔 것은 같이 옮깁니다 (「달걀(삶은것)」 50 g)
