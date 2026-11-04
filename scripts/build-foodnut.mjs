@@ -35,7 +35,10 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT  = path.join(ROOT, 'public/static/foodnut.js');
 const DATA = path.join(ROOT, 'scripts/data');
-const API  = 'https://apis.data.go.kr/1471000/FoodNtrCpntDbInfo03';
+// 포털 페이지에는 호출주소까지만 적혀 있고 기능 이름이 없습니다. 키 없이 불러 보고
+// 찾았습니다 — 경로가 틀리면 「해당 오픈API 서비스가 없거나 폐기됨」, 맞으면
+// 「등록되지 않은 서비스키」가 돌아옵니다.
+const API  = 'https://apis.data.go.kr/1471000/FoodNtrCpntDbInfo03/getFoodNtrCpntDbInq03';
 const ROWS = 1000;   // 한 번에 받을 건수
 
 // 응답 칸 이름 → 우리가 쓰는 이름. probe 로 확인한 뒤 맞춥니다.
@@ -69,7 +72,17 @@ async function fetchPage(key, pageNo, numOfRows) {
   });
   const res = await fetch(url);
   const text = await res.text();
-  if (!res.ok) throw new Error('HTTP ' + res.status + ' — ' + text.slice(0, 300));
+  if (!res.ok) {
+    const msg = (text.match(/"returnAuthMsg"\s*:\s*"([^"]*)"/) || [])[1];
+    if (msg && msg.includes('서비스키')) {
+      const e = new Error('인증키가 아직 안 먹습니다: ' + msg
+        + '\n포털에서 키를 받은 직후라면 1~2시간 뒤에 다시 해보세요.'
+        + '\n키를 「일반 인증키(Encoding)」 쪽으로 넣었는지도 확인하세요.');
+      e.quiet = true;
+      throw e;
+    }
+    throw new Error('HTTP ' + res.status + ' — ' + text.slice(0, 300));
+  }
   let json;
   try { json = JSON.parse(text); }
   catch { throw new Error('JSON 이 아닙니다 (키가 틀렸을 수 있습니다):\n' + text.slice(0, 400)); }
@@ -205,4 +218,11 @@ async function build() {
 }
 
 const cmd = process.argv[2];
-await (cmd === 'probe' ? probe() : build());
+try {
+  await (cmd === 'probe' ? probe() : build());
+} catch (e) {
+  // 받는 중이던 요청이 남아 있으면 process.exit 이 윈도우에서 경고를 뱉습니다.
+  // 코드만 정해 두고 그냥 끝냅니다.
+  console.error(e.quiet ? e.message : e);
+  process.exitCode = 1;
+}
