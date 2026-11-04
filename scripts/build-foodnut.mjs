@@ -141,7 +141,9 @@ for r in rows:
     for i in (1, 3, 0):
         if r[i]:
             out.setdefault(str(r[i]).strip(), code)
-sys.stdout.write(json.dumps(out, ensure_ascii=False))
+// ensure_ascii 를 끄면 안 됩니다. 윈도우 파이썬은 표준출력을 cp949 로 내보내서
+// 한글 이름이 깨집니다. \\uXXXX 로 내보내면 JSON.parse 가 그대로 되살립니다.
+sys.stdout.write(json.dumps(out))
 `;
   const raw = execFileSync('python', ['-I', '-c', py], { maxBuffer: 1 << 28 });
   return JSON.parse(raw.toString('utf8'));
@@ -277,6 +279,35 @@ async function build() {
   }
   console.log('');
   saveCache();
+
+  // 코드로 못 찾은 것은 이름으로 한 번 더 찾습니다. 이 API 에 없는 식품코드가
+  // 있습니다(달갈·고등어 등). 코드까지 같은 줄이 있을 때만 가져옵니다.
+  const missCodes = [...want].filter(c => !byCode[c]);
+  if (missCodes.length) {
+    const nameOf = {};
+    for (const [n, c] of Object.entries(codes)) if (!nameOf[c]) nameOf[c] = n;
+    console.log('코드로 못 찾은 식품 ' + missCodes.length + '개를 이름으로 찾습니다.');
+    let hit = 0;
+    for (let i = 0; i < missCodes.length; i++) {
+      const code = missCodes[i], nm = nameOf[code];
+      if (!nm) continue;
+      let r = null;
+      try { r = await lookup(key, nm.replace(/\(.*$/, '')); } catch (e) { break; }
+      if (r && String(r.FOOD_CD || '').trim() === code) {
+        const nut = {};
+        for (const [k, names] of Object.entries(NUT_FIELD)) {
+          if (k === 'code') continue;
+          const v = Number(pick(r, names));
+          nut[k] = Number.isFinite(v) ? Math.round(v * 100) / 100 : 0;
+        }
+        byCode[code] = nut;
+        hit++;
+      }
+      if (i % 20 === 0) process.stdout.write('\r  이름으로 찾는 중 ' + (i + 1) + ' / ' + missCodes.length + ' · 찾음 ' + hit + '   ');
+    }
+    console.log('\r  이름으로 찾음 ' + hit + '개                          ');
+    saveCache();
+  }
 
   // 식품코드 → 이름으로 바꿔 둡니다. 앱에는 코드가 없고 이름만 있습니다.
   const out = {};

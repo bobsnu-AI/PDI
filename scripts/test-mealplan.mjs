@@ -20,7 +20,7 @@ const sandbox = {
   clearTimeout: noop,
 }
 const ctx = vm.createContext(sandbox)
-for (const f of ['recipes', 'foodclass', 'pfs', 'patterns', 'products', 'mealplan', 'foodparse', 'tracker', 'app']) {
+for (const f of ['recipes', 'foodnut', 'foodclass', 'pfs', 'patterns', 'products', 'mealplan', 'foodparse', 'tracker', 'app']) {
   vm.runInContext(read(`public/static/${f}.js`), ctx, { filename: f + '.js' })
 }
 const $ = name => vm.runInContext(name, ctx)
@@ -1370,6 +1370,21 @@ ok('초가공식품에서 온 열량 비율을 낸다', () => {
   for (const n of ['식빵', '통밀식빵', '냉동 참치', '냉동 바나나'])
     assert.ok(!$('PT_UPF').has(n), '뺀 이름이 들어감: ' + n)
   assert.equal($('PT_UPF').size, 51)
+})
+
+ok('실측 영양성분이 추정값보다 앞선다', () => {
+  // 식약처 식품영양성분DB 에서 받은 값. 없는 식품은 이름 규칙 추정값을 그대로 쓴다.
+  const ING = $('INGREDIENTS')
+  const withNut = Object.keys(ING).filter(n => ING[n].nut)
+  assert.ok(withNut.length > 4000, '붙은 식품이 너무 적음: ' + withNut.length)
+  // 버터 — 지방 82 g·포화 48 g·콜레스테롤 232 mg. 이름 규칙으로는 이렇게 못 낸다
+  const b = ING['버터'].nut
+  assert.ok(b.fat > 75 && b.fat < 90, '버터 지방 ' + b.fat)
+  assert.ok(b.satfat > 40 && b.satfat < 60, '버터 포화지방 ' + b.satfat)
+  assert.ok(b.chol > 180 && b.chol < 280, '버터 콜레스테롤 ' + b.chol)
+  // pfs.js 가 추정 대신 이 값을 쓴다
+  const r = $('estimateIngredientNutrients')('버터', 100, null)
+  assert.equal(Math.round(r.satfat), Math.round(b.satfat), '추정값이 실측값을 덮어씀')
 })
 
 ok('허리둘레는 줄자로 잰 값을 먼저 쓴다', () => {
