@@ -19,23 +19,6 @@ const FOOD_CATEGORIES = {
   bobsnu:     { name: '밥스누 제품',    icon: '⭐', color: '#7C3AED', isPRF: true  },
 };
 
-// ── 파이토케미컬 계열 ────────────────────────
-const PHYTOCHEMICAL_GROUPS = {
-  isoflavones:    { name: '이소플라본',       benefits: ['여성건강', '골건강', '콜레스테롤'],  color: '#8B5CF6', icon: '💜' },
-  anthocyanins:   { name: '안토시아닌',       benefits: ['항산화', 'LDL 억제', '시력'],        color: '#6D28D9', icon: '🫐' },
-  catechins:      { name: '카테킨',           benefits: ['LDL 억제', '항염', '체지방'],         color: '#059669', icon: '🍃' },
-  carotenoids:    { name: '카로티노이드',     benefits: ['항산화', '황반보호', '눈건강'],        color: '#F59E0B', icon: '🟠' },
-  phenolicAcids:  { name: '페놀산',           benefits: ['항산화', '저GI', '항염'],             color: '#92400E', icon: '🌰' },
-  glucosinolates: { name: '글루코시놀레이트', benefits: ['체지방', '해독효소', '항암'],          color: '#065F46', icon: '🥦' },
-  stilbenes:      { name: '스틸벤',           benefits: ['심혈관', '뇌건강', '항산화'],          color: '#7C3AED', icon: '🍇' },
-  lignans:        { name: '리그난',           benefits: ['콜레스테롤', '여성건강', '항산화'],    color: '#78350F', icon: '🌻' },
-  saponins:       { name: '사포닌',           benefits: ['콜레스테롤', '항산화', '면역'],        color: '#047857', icon: '🫘' },
-  gingerols:      { name: '진저롤·커큐민',    benefits: ['항염', '소화', '관절'],               color: '#D97706', icon: '🫚' },
-  flavonols:      { name: '플라보놀',         benefits: ['항산화', '항염', '심혈관'],            color: '#B45309', icon: '🌼' },
-  thioallyls:     { name: '티오알릴',         benefits: ['항염', '항혈전', '면역'],              color: '#4B5563', icon: '🧄' },
-  flavones:       { name: '플라본',           benefits: ['항산화', '항염', '혈당조절'],          color: '#A16207', icon: '🌾' },
-  tocopherols:    { name: '토코페롤류',        benefits: ['항산화', '세포보호', '면역'],          color: '#CA8A04', icon: '🌿' },
-};
 
 // benefits 키워드 → HEALTH_GOALS 아이콘 매핑
 
@@ -759,13 +742,6 @@ function buildSurveyDiet(ans) {
 //   McCarty 원 공식 그대로 실제 kcal만 산입
 //   (별도 보정값 없음)
 //
-// ※ 파이토케미컬 계열별 커버리지(phytoCoverage)는
-//   McCarty 공식 외 참고용 추정 정보입니다.
-//   개별 식재료-파이토케미컬 매핑은 식품영양학
-//   문헌(Phenol-Explorer, 농촌진흥청 식품성분DB 등)
-//   기반의 '존재 여부(binary)' 추정이며,
-//   정량 함량(mg/100g) 데이터가 아닙니다.
-// ══════════════════════════════════════════════
 function calculatePDI(meals) {
   let totalCalories = 0, prfCalories = 0;
   const categoryMap = {};
@@ -817,27 +793,9 @@ function calculatePDI(meals) {
   // ── PDI 점수 (McCarty 2004 공식) ──
   const pdiScore = totalCalories > 0 ? (prfCalories / totalCalories) * 100 : 0;
 
-  // ── 파이토케미컬 커버리지 (실측 mg 기반) ──
-  const phytoCoverage = Object.keys(PHYTOCHEMICAL_GROUPS).map(key => {
-    const g = PHYTOCHEMICAL_GROUPS[key];
-    const totalMg = phytoMap[key] || 0;
-    // mg 기준 레벨: 0 / 0~5 / 5~20 / 20+
-    let level, levelLabel;
-    if (totalMg === 0)     { level = 'none';   levelLabel = '미검출'; }
-    else if (totalMg < 5)  { level = 'low';    levelLabel = `${totalMg.toFixed(1)}mg 적음`; }
-    else if (totalMg < 20) { level = 'medium'; levelLabel = `${totalMg.toFixed(1)}mg 보통`; }
-    else                   { level = 'high';   levelLabel = `${totalMg.toFixed(1)}mg 풍부`; }
-    return { key, name: g.name, present: totalMg > 0, totalMg: +totalMg.toFixed(2), level, levelLabel,
-             color: g.color, icon: g.icon, benefits: g.benefits };
-  });
-
-  const diversityScore = phytoCoverage.filter(p => p.present).length;
-  const deficient = phytoCoverage.filter(p => !p.present || p.level === 'low').map(p => p.key);
-
   return {
     pdiScore, prfCalories, totalCalories,
-    categoryMap, phytoCoverage, diversityScore,
-    deficient, phytoMap, allIngredients,
+    categoryMap, phytoMap, allIngredients,
   };
 }
 
@@ -859,7 +817,6 @@ function calculateAndShow(silent) {
   pdiResult.profile = profile;
   pdiResult.body = bodyIndices(profile);
   pdiResult.phytoScore = calculatePhytoScore(pdiResult.phytoMap, selectedGoals);
-  pdiResult.pfs = calculateDietPFS(meals, profile);
   pdiResult.intake = foodGroupIntake(meals);
   pdiResult.allergyHits = meals
     .map(m => ({ name: m.name, allergens: findAllergens(m.name, m.analysis, profile.allergies) }))
@@ -1345,7 +1302,7 @@ function renderGuide(r) {
   const el = document.getElementById('guide-section');
   if (!el) return;
   const warn = [];
-  const ratio = r.pfs.eer > 0 ? r.totalCalories / r.pfs.eer : 0;
+  const ratio = r.targets.eer > 0 ? r.totalCalories / r.targets.eer : 0;
   const ps = r.phytoScore;
 
   if (r.allergyHits.length) {

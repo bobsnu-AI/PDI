@@ -1,6 +1,6 @@
 // ============================================
-// 밥스누 PFS 식단 점수 엔진
-// diet_food_scoring.py (FoodRecommendationSystem.PFS_function) JS 포팅
+// 영양 기준치 · 영양소 추정
+// 기준치 수식은 diet_food_scoring.py (NutriSage) 에서 가져왔습니다
 // PDI·파이토 점수와 독립적으로 계산되는 영양 기반 식단 점수
 // ──────────────────────────────────────────────
 //   Basic_score : 9개 영양소 부분점수 합 (탄수화물·단백질·지방·식이섬유 +,
@@ -33,24 +33,6 @@ const PFS_PA_COEF = {
   very_active: { adultM: 1.48, adultF: 1.45, childM: 1.42, childF: 1.56 },
 };
 
-const PFS_TREND_LABELS = {
-  loss:        { name: '감량기', formula: 'Basic + ED',      color: '#0EA5E9' },
-  gain:        { name: '증가기', formula: 'Basic + ED + SI', color: '#F97316' },
-  maintenance: { name: '유지기', formula: 'Basic',           color: '#10B981' },
-};
-
-// 식사 분류별 1일 기준 대비 비율 (diet_food_scoring.py calculate_recommendations)
-const PFS_MEAL_ROLES = {
-  meal:  { name: '본식', per: 0.3 },
-  side:  { name: '반찬', per: 0.2 },
-  snack: { name: '간식', per: 0.1 },
-};
-
-// ──────────────────────────────────────────────
-// calculateEER(profile)
-//   profile: { gender:'male'|'female', age, height(cm), weight(kg), activity }
-//   KDRI 2020 에너지필요추정량 공식 (3–18세는 성장 에너지 가산)
-// ──────────────────────────────────────────────
 function calculateEER(profile) {
   if (!profile) return null;
   const { gender, age, height, weight, activity } = profile;
@@ -268,115 +250,3 @@ function estimateDishNutrients(analysis) {
 }
 
 // 음식 분류: 간식(0.1) / 본식(0.3) / 반찬(0.2)
-const PFS_STAPLE_RE = /밥|죽|국수|면|라면|떡국|덮밥|볶음밥|김밥|주먹밥|리조또|파스타|스파게티|우동|피자|버거|샌드위치|토스트|빵/;
-function classifyMealRole(mealEntry) {
-  const { name, meal, analysis } = mealEntry;
-  if (meal === 'snack') return 'snack';
-  if (analysis.isSingleFood) {
-    const cat = (analysis.ingredients[0] || {}).cat;
-    return (cat === 'grains') ? 'meal' : (['vegetables', 'protein', 'legumes'].includes(cat) ? 'side' : 'snack');
-  }
-  if (PFS_STAPLE_RE.test(name)) return 'meal';
-  // 곡류 칼로리 비중이 절반 이상이면 본식
-  const grainKcal = analysis.ingredients
-    .filter(i => i.cat === 'grains')
-    .reduce((s, i) => s + (i.kcal || 0), 0);
-  return analysis.totalCal > 0 && grainKcal / analysis.totalCal >= 0.5 ? 'meal' : 'side';
-}
-
-// ──────────────────────────────────────────────
-// pfsScore(n, ranges, per, trend)
-//   PFS_function 1행 계산 — 수식은 diet_food_scoring.py 와 동일
-// ──────────────────────────────────────────────
-function pfsRange(v) {
-  return Array.isArray(v) ? v : [v * 0.5, v * 1.5];
-}
-
-function pfsScore(n, ranges, per, trend) {
-  per = per == null ? 1.0 : per;
-  const num = k => { const v = Number(n[k]); return Number.isFinite(v) ? v : 0; };
-  const sub = {};
-
-  // 탄수화물·단백질·지방: 범위 [A, B] 안이면 1, 벗어나면 이차 감점
-  const band = (x, key) => {
-    let [A, B] = pfsRange(ranges[key]);
-    A *= per; B *= per;
-    if (x < A) return 1 - ((x - A) / A) ** 2;
-    if (x > B) return 1 - ((x - B) / A) ** 2;
-    return 1.0;
-  };
-  sub.carb    = band(num('carb'),    'carb');
-  sub.protein = band(num('protein'), 'protein');
-  sub.fat     = band(num('fat'),     'fat');
-
-  // 식이섬유: 기준 미만이면 이차 감점
-  const FiberA = ranges.fiber * per;
-  const fiber  = num('fiber');
-  sub.fiber = fiber < FiberA ? 1 - ((fiber - FiberA) / FiberA) ** 2 : 1.0;
-
-  // 콜레스테롤: 0 → 0점, 기준 이상 → −1
-  const CholeA = ranges.chol * per;
-  const chol   = num('chol');
-  sub.chol = chol < CholeA ? -1 + ((chol - CholeA) / CholeA) ** 2 : -1.0;
-
-  // 당류·포화지방·트랜스지방·나트륨: 기준 대비 비율만큼 선형 감점
-  sub.sugar  = -num('sugar')  / Math.max(0.1, ranges.sugar  * per);
-  sub.satfat = -num('satfat') / Math.max(0.1, ranges.satfat * per);
-  sub.trans  = -num('trans')  / Math.max(0.1, ranges.trans  * per);
-  sub.sodium = -num('sodium') / Math.max(0.1, ranges.sodium * per);
-
-  const basic = Object.values(sub).reduce((s, v) => s + v, 0);
-
-  const weight = num('weight');
-  const energy = num('energy');
-  const ed = energy * 100 / (weight === 0 ? 1 : weight);
-  const si = (41.6 * num('fat')) + (23.3 * num('protein')) + (18.9 * num('carb'))
-           + (6.42 * num('fiber')) + (0.449 * weight) - (405 * energy / 239);
-
-  let total;
-  if (trend === 'loss')      total = basic + ed;
-  else if (trend === 'gain') total = basic + ed + si;
-  else                       total = basic;
-
-  return { sub, basic, ed, si, total };
-}
-
-// 체중 추세 — 최근 체중이 이전보다 낮으면 감량기, 높으면 증가, 같거나 기록 없으면 유지기
-function determineWeightTrend(currentWeight, previousWeight) {
-  if (!(currentWeight > 0) || !(previousWeight > 0)) return 'maintenance';
-  if (currentWeight < previousWeight) return 'loss';
-  if (currentWeight > previousWeight) return 'gain';
-  return 'maintenance';
-}
-
-// ──────────────────────────────────────────────
-// calculateDietPFS(meals, profile)
-//   meals   : 설문으로 만든 1일 식단 ([{ name, meal, analysis }])
-//   profile : { gender, age, height, weight, prevWeight, activity }
-// 반환: null(프로필 부족) | {
-//   eer, ranges, trend,
-//   daily: { nutrients, sub, basic, ed, si, total },   // 1일 식단 전체 (per 1.0)
-//   dishes: [{ name, meal, role, per, nutrients, sub, basic, ed, si, total }],
-// }
-// ──────────────────────────────────────────────
-function calculateDietPFS(meals, profile) {
-  const eer = calculateEER(profile);
-  if (!eer) return null;
-  const ranges = calculateNutrientStandards(eer);
-  const trend  = determineWeightTrend(profile.weight, profile.prevWeight);
-
-  const daily = emptyNutrients();
-  const dishes = meals.map(m => {
-    const nutrients = estimateDishNutrients(m.analysis);
-    for (const k of PFS_NUTRIENT_KEYS) daily[k] += nutrients[k];
-    const role = classifyMealRole(m);
-    const per  = PFS_MEAL_ROLES[role].per;
-    return { name: m.name, meal: m.meal, role, per, nutrients, ...pfsScore(nutrients, ranges, per, trend) };
-  });
-
-  return {
-    eer, ranges, trend,
-    daily: { nutrients: daily, ...pfsScore(daily, ranges, 1.0, trend) },
-    dishes,
-  };
-}

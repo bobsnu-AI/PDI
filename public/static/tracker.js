@@ -982,8 +982,12 @@ function renderDiary() {
     barsHtml = '<div class="bg-gray-50 rounded-2xl p-5 text-sm text-gray-500 text-center">'
       + '이 날 먹은 음식을 추가하면 목표치와 비교해 보여드려요</div>';
   } else {
-    const pfs  = calculateDietPFS(meals, tracker.profile);
-    const n    = pfs.daily.nutrients;
+    // 끼니별 영양소를 더합니다 (pfs.js 의 추정값)
+    const n = meals.reduce((sum, m) => {
+      const d = estimateDishNutrients(m.analysis);
+      for (const k of PFS_NUTRIENT_KEYS) sum[k] += d[k] || 0;
+      return sum;
+    }, emptyNutrients());
     const rg   = targets.ranges;
     const kcal = meals.reduce((s, m) => s + m.analysis.totalCal, 0);
     const ig   = foodGroupIntake(meals);
