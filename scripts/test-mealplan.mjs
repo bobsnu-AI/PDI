@@ -1367,9 +1367,14 @@ ok('상태 표기를 괄호에서 꺼내 이름 앞에 붙인다', () => {
   for (const n of ['블루베리(말린것)', '달걀(삶은것)', '땅콩(생것)'])
     assert.ok($('INGREDIENTS')[n], 'DB 에서 지워짐: ' + n)
 
-  // 혼자 먹지 않는 것은 기록하지 않는다 (2026-11-04 결정)
-  for (const n of ['미역', '말린 미역', '불린 미역', '김', '말린 김'])
-    assert.ok(!logSet.has(n), '혼자 먹지 않는 것이 검색에 뜸: ' + n)
+  // 혼자 먹지 않는 것·엉뚱한 이름은 기록하지 않는다 (2026-11-04 결정)
+  for (const n of ['미역', '말린 미역', '불린 미역', '김', '말린 김',
+                   '말린 실미역', '불린 쌀밥', '조리한 소불고기'])
+    assert.ok(!af(n) && !logSet.has(n), '뺀 이름이 남아 있음: ' + n)
+  // 「조리한 ○○」은 어색해서 쓰지 않는다 — 맨 이름이 비었을 때만 괄호를 뗀다
+  assert.equal(Object.keys($('RAW_ALIAS')).filter(n => n.startsWith('조리한')).length, 0)
+  for (const n of ['소불고기', '쌀밥', '삼겹살'])
+    assert.ok(af(n) && logSet.has(n), '기록할 수 없음: ' + n)
   // 되살린 것
   assert.ok(af('쇠고기') && logSet.has('쇠고기'), '쇠고기를 기록할 수 없음')
 })
