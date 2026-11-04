@@ -79,23 +79,26 @@ function keyOrDie() {
   return /%[0-9A-Fa-f]{2}/.test(raw) ? decodeURIComponent(raw) : raw;
 }
 
+// 포털이 키 문제를 400·403 두 가지로 돌려줍니다. 무슨 뜻인지 풀어 적습니다.
+function keyError(res, text) {
+  const msg = (text.match(/"returnAuthMsg"\s*:\s*"([^"]*)"/) || [])[1];
+  if (msg && /서비스키|SERVICE_KEY|인증/.test(msg)) {
+    const e = new Error('인증키가 아직 안 먹습니다: ' + msg
+      + '\n포털에서 키를 받은 직후라면 1~2시간 뒤에 다시 해보세요.'
+      + '\n키는 Encoding·Decoding 어느 쪽이든 됩니다.');
+    e.quiet = true;
+    return e;
+  }
+  return new Error('HTTP ' + res.status + ' — ' + text.slice(0, 300));
+}
+
 async function fetchPage(key, pageNo, numOfRows) {
   const url = API + '?' + new URLSearchParams({
     serviceKey: key, pageNo: String(pageNo), numOfRows: String(numOfRows), type: 'json',
   });
   const res = await fetch(url);
   const text = await res.text();
-  if (!res.ok) {
-    const msg = (text.match(/"returnAuthMsg"\s*:\s*"([^"]*)"/) || [])[1];
-    if (msg && msg.includes('서비스키')) {
-      const e = new Error('인증키가 아직 안 먹습니다: ' + msg
-        + '\n포털에서 키를 받은 직후라면 1~2시간 뒤에 다시 해보세요.'
-        + '\n키를 「일반 인증키(Encoding)」 쪽으로 넣었는지도 확인하세요.');
-      e.quiet = true;
-      throw e;
-    }
-    throw new Error('HTTP ' + res.status + ' — ' + text.slice(0, 300));
-  }
+  if (!res.ok) throw keyError(res, text);
   let json;
   try { json = JSON.parse(text); }
   catch { throw new Error('JSON 이 아닙니다 (키가 틀렸을 수 있습니다):\n' + text.slice(0, 400)); }
@@ -154,7 +157,7 @@ async function lookup(key, name, want) {
     serviceKey: key, pageNo: '1', numOfRows: '100', type: 'json', FOOD_NM_KR: name });
   const res = await fetch(url);
   const text = await res.text();
-  if (!res.ok) throw new Error('HTTP ' + res.status + ' — ' + text.slice(0, 300));
+  if (!res.ok) throw keyError(res, text);
   const body = JSON.parse(text).body || {};
   const items = body.items || [];
   const rows = (Array.isArray(items) ? items : (items.item || [])).map(r => r.item || r);
