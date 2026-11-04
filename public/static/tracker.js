@@ -746,6 +746,8 @@ let diaryDate = null;     // 선택한 날짜 (YYYY-MM-DD)
 let diaryMonth = null;    // 달력에 보이는 달 (YYYY-MM)
 let diaryMeal = 'breakfast';   // 다시 그려도 유지되도록 기억해 둔다
 let diaryPortion = 1;
+let diarySentenceNote = '';   // 문장으로 넣은 결과 안내 (다시 그려도 남도록)
+let diarySentencePicks = '';  // 못 찾은 말의 「비슷한 이름」 버튼
 
 const DIARY_MEALS = [
   { id: 'breakfast', name: '아침', icon: '🌅' },
@@ -793,12 +795,12 @@ function shiftDiaryMonth(n) {
   renderDiary();
 }
 
-function diaryAdd(nameOverride) {
+function diaryAdd(nameOverride, mealOverride) {
   diaryInit();
   const input = document.getElementById('diary-food');
   const err   = document.getElementById('diary-error');
   const name  = (nameOverride || (input ? input.value : '')).trim();
-  const meal  = (document.getElementById('diary-meal') || {}).value || diaryMeal;
+  const meal  = mealOverride || (document.getElementById('diary-meal') || {}).value || diaryMeal;
   const portion = Number((document.getElementById('diary-portion') || {}).value) || diaryPortion;
   diaryMeal = meal; diaryPortion = portion;
   if (!name) { if (err) err.textContent = '음식 이름을 입력해주세요.'; return; }
@@ -810,6 +812,72 @@ function diaryAdd(nameOverride) {
   (tracker.diary[diaryDate] || (tracker.diary[diaryDate] = [])).push({ name, meal, portion });
   trackerSave();
   if (input) input.value = '';
+  renderDiary();
+}
+
+// 문장 한 줄을 읽어 일지에 넣습니다. parseFoodText 가 모델을 쓸 수 있으면 쓰고,
+// 못 쓰면 이름 맞추기로 떨어집니다 (foodparse.js).
+// 들어간 항목은 화면에서 × 로 지울 수 있으니 바로 넣고 무엇을 넣었는지 알립니다.
+async function diaryAddSentence() {
+  diaryInit();
+  const input = document.getElementById('diary-sentence');
+  const btn   = document.getElementById('diary-sentence-btn');
+  const text  = input ? input.value.trim() : '';
+  if (!text) { diarySentenceNote = '먹은 것을 문장으로 적어주세요.'; renderDiary(); return; }
+
+  const meal = (document.getElementById('diary-meal') || {}).value || diaryMeal;
+  if (btn) { btn.disabled = true; btn.textContent = '읽고 있어요'; }
+  let r;
+  try {
+    r = await parseFoodText(text, meal);
+  } catch (e) {
+    diarySentenceNote = '문장을 읽지 못했어요. 아래에서 하나씩 넣어주세요.';
+    renderDiary();
+    return;
+  }
+
+  if (r.entries.length) {
+    const list = tracker.diary[diaryDate] || (tracker.diary[diaryDate] = []);
+    for (const e of r.entries) list.push(e);
+    trackerSave();
+    if (input) input.value = '';
+  }
+
+  const mealName = id => (DIARY_MEALS.find(m => m.id === id) || {}).name || id;
+  const added = r.entries
+    .map(e => e.name + (e.portion !== 1 ? ' ' + e.portion + '인분' : '') + ' (' + mealName(e.meal) + ')')
+    .join(', ');
+  let note = added
+    ? '이렇게 읽었어요 — ' + added
+    : '음식을 찾지 못했어요.';
+  if (r.warn) note += ' · ' + r.warn;
+
+  // 못 찾은 말은 DB 에서 비슷한 이름을 보여주고 누르면 들어가게 합니다.
+  // 「삼겹살」처럼 DB 이름이 더 긴 경우가 많아서, 버리지 않고 고르게 합니다.
+  let picks = '';
+  for (const u of r.unmatched) {
+    if (!u.suggestions.length) continue;
+    picks += '<div class="flex flex-wrap items-center gap-1.5 mt-1.5">'
+      + '<span class="text-xs text-gray-500">' + u.text + ' →</span>'
+      + u.suggestions.map(n => '<button type="button" onclick="diaryAdd(\'' + n.replace(/'/g, "\\'") + '\')" '
+          + 'class="inline-flex items-center h-9 px-3 text-xs rounded-full border border-gray-200 bg-white text-gray-700 hover:border-emerald-500">'
+          + n + '</button>').join('')
+      + '</div>';
+  }
+  const noSuggest = r.unmatched.filter(u => !u.suggestions.length).map(u => u.text);
+  if (noSuggest.length) note += ' · 못 찾은 말: ' + noSuggest.join(', ');
+
+  diarySentenceNote = note;
+  diarySentencePicks = picks;
+  renderDiary();
+}
+
+// 중계 서버 주소 — 비워 두면 이름 맞추기로만 동작합니다
+function saveFoodparseEndpoint() {
+  const el = document.getElementById('diary-endpoint');
+  fpSetEndpoint(el ? el.value : '');
+  diarySentencePicks = '';
+  diarySentenceNote = fpEndpoint() ? '문장 읽기 주소를 저장했어요.' : '주소를 비웠어요. 이름 맞추기로만 동작해요.';
   renderDiary();
 }
 
@@ -980,6 +1048,21 @@ function renderDiary() {
     + '<span id="diary-weight-error" class="text-xs text-red-600"></span>'
     + '</div>'
     + '<div class="bg-gray-50 rounded-2xl p-4 mb-4">'
+
+    // ── 문장으로 ──
+    + '<div class="flex gap-2 mb-2">'
+    + '<input id="diary-sentence" placeholder="예: 아침에 토스트 하나, 점심은 김치찌개랑 공깃밥" '
+    + 'autocomplete="off" onkeydown="if(event.key===\'Enter\'){event.preventDefault();diaryAddSentence()}" '
+    + 'class="flex-1 min-w-0 h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-emerald-500">'
+    + '<button type="button" id="diary-sentence-btn" onclick="diaryAddSentence()" '
+    + 'class="h-11 px-5 flex-shrink-0 bg-emerald-700 text-white text-sm font-bold rounded-xl">읽기</button>'
+    + '</div>'
+    + (diarySentenceNote
+        ? '<p class="text-xs text-gray-600 mb-2">' + diarySentenceNote + '</p>' : '')
+    + (diarySentencePicks ? '<div class="mb-2">' + diarySentencePicks + '</div>' : '')
+
+    // ── 하나씩 ──
+    + '<p class="text-xs text-gray-400 mb-1.5">하나씩 넣기</p>'
     + '<div class="flex flex-wrap gap-2 mb-2">'
     + '<select id="diary-meal" class="h-11 px-3 rounded-xl border border-gray-200 bg-white text-sm">'
     + DIARY_MEALS.map(m => '<option value="' + m.id + '"' + (m.id === diaryMeal ? ' selected' : '') + '>'
@@ -995,6 +1078,18 @@ function renderDiary() {
     + '<button type="button" onclick="diaryAdd()" class="h-11 px-5 bg-emerald-700 text-white text-sm font-bold">추가</button>'
     + '</div>'
     + '<span id="diary-error" class="text-xs text-red-600"></span>'
+    + '<details class="mt-3">'
+    + '<summary class="text-xs text-gray-400 cursor-pointer">문장 읽기 설정</summary>'
+    + '<div class="flex gap-2 mt-2">'
+    + '<input id="diary-endpoint" value="' + fpEndpoint().replace(/"/g, '&quot;') + '" '
+    + 'placeholder="문장 읽기 서버 주소" autocomplete="off" '
+    + 'class="flex-1 min-w-0 h-9 px-3 rounded-lg border border-gray-200 bg-white text-xs">'
+    + '<button type="button" onclick="saveFoodparseEndpoint()" '
+    + 'class="h-9 px-3 flex-shrink-0 border border-gray-200 text-xs text-gray-600 rounded-lg">저장</button>'
+    + '</div>'
+    + '<p class="text-xs text-gray-400 mt-2">비워 두면 이름 맞추기로만 동작해요. '
+    + '주소를 넣으면 문장을 그대로 읽어요.</p>'
+    + '</details>'
     + '</div>'
     + (foodHtml || '<p class="text-sm text-gray-400 mb-4">아직 기록한 음식이 없어요</p>')
     + '</div>'

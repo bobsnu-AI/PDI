@@ -592,7 +592,7 @@ function goToStep(n) {
 // 음식명 → 분석 (레시피 우선, 없으면 단품 식재료)
 function analyzeFood(name) {
   if (RECIPES[name]) return analyzeRecipe(name);
-  if (INGREDIENTS[name] && SINGLE_FOOD_CATS.has(INGREDIENTS[name].cat)) return analyzeIngredient(name);
+  if (isSingleFood(name)) return analyzeIngredient(name);
   return null;
 }
 
@@ -1381,10 +1381,11 @@ function updateFoodList(q) {
   const dl = document.getElementById('plan-food-list');
   if (!dl) return;
   q = (q || '').trim();
+  const pool = logFoodNames();
   const names = q
-    ? RECIPE_NAMES.concat(INGREDIENT_NAMES).filter(n => n.includes(q))
+    ? pool.filter(n => n.includes(q))
         .sort((a, b) => a.indexOf(q) - b.indexOf(q) || a.length - b.length).slice(0, 30)
-    : RECIPE_NAMES.slice(0, 200);
+    : pool.slice(0, 200);
   dl.innerHTML = names.map(n => '<option value="' + n.replace(/"/g, '&quot;') + '">').join('');
 }
 

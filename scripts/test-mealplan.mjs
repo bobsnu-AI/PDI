@@ -20,13 +20,14 @@ const sandbox = {
   clearTimeout: noop,
 }
 const ctx = vm.createContext(sandbox)
-for (const f of ['recipes', 'foodclass', 'pfs', 'patterns', 'products', 'mealplan', 'tracker', 'app']) {
+for (const f of ['recipes', 'foodclass', 'pfs', 'patterns', 'products', 'mealplan', 'foodparse', 'tracker', 'app']) {
   vm.runInContext(read(`public/static/${f}.js`), ctx, { filename: f + '.js' })
 }
 const $ = name => vm.runInContext(name, ctx)
 
 let pass = 0
 const ok = (label, fn) => { fn(); pass++; console.log('  ✓ ' + label) }
+const okAsync = async (label, fn) => { await fn(); pass++; console.log('  ✓ ' + label) }
 
 console.log('\n── 할인율 정책 (엑셀 Sheet3 20~27행) ──')
 const rate = $('subscriptionRate')
@@ -1123,6 +1124,38 @@ ok('달 이동이 동작', () => {
   vm.runInContext("setDiaryDate('2026-10-10');", ctx)
 })
 
+await okAsync('문장 입력칸이 그려지고 못 찾은 말은 눌러 넣을 수 있다', async () => {
+  const before = JSON.stringify($('tracker').diary['2026-10-10'] || [])
+  try {
+    const h = html('diary-section')
+    for (const t of ['id="diary-sentence"', 'diaryAddSentence', '하나씩 넣기', '문장 읽기 설정'])
+      assert.ok(h.includes(t), '누락: ' + t)
+
+    // 문장으로 바로 들어가는 경우
+    sandbox.document.getElementById('diary-sentence').value = '저녁에 비빔밥 한 그릇'
+    await vm.runInContext('diaryAddSentence()', ctx)
+    assert.ok(($('tracker').diary['2026-10-10'] || []).some(e => e.name === '비빔밥'),
+      '문장으로 넣은 음식이 일지에 없음')
+    assert.ok(html('diary-section').includes('이렇게 읽었어요'), '무엇을 넣었는지 알려주지 않음')
+
+    // DB 이름이 달라 못 찾는 경우 — 버리지 않고 눌러 넣게 한다
+    sandbox.document.getElementById('diary-sentence').value = '저녁에 삼겹살'
+    await vm.runInContext('diaryAddSentence()', ctx)
+    const h2 = html('diary-section')
+    const pick = h2.match(/onclick="diaryAdd\('([^']+)'\)"/)
+    assert.ok(pick, '제안 버튼이 없음')
+    assert.ok(pick[1].startsWith('삼겹살'), '엉뚱한 제안: ' + pick[1])
+    assert.ok($('analyzeFood')(pick[1]), '제안이 DB 에 없는 이름: ' + pick[1])
+    // 눌러서 실제로 들어가는지
+    vm.runInContext('diaryAdd(' + JSON.stringify(pick[1]) + ')', ctx)
+    assert.ok($('tracker').diary['2026-10-10'].some(e => e.name === pick[1]), '눌러도 안 들어감')
+  } finally {
+    // 뒤 검사를 오염시키지 않도록 되돌린다
+    vm.runInContext("tracker.diary['2026-10-10'] = " + before
+      + "; diarySentenceNote = ''; diarySentencePicks = ''; renderDiary();", ctx)
+  }
+})
+
 
 console.log('\n── 페이지 이동 ──')
 const pageOf = id => sandbox.document.getElementById('page-' + id)
@@ -1235,10 +1268,177 @@ ok('먹은 음식은 입력한 글자로 전체 DB에서 찾는다', () => {
     assert.ok(!opts(old).includes('value="' + old + '"'), '단종 제품이 보임: ' + old)
 })
 
+// vm 컨텍스트에서 온 배열·객체는 prototype 이 달라 deepEqual 이 안 먹는다 → 평범한 값으로
+const plain = v => JSON.parse(JSON.stringify(v))
+
+console.log('\n── 기록용 음식 목록 정제 (logFoodNames) ──')
+const logPool = $('logFoodNames')()
+const logSet = new Set(logPool)
+const af = $('analyzeFood')
+
+ok('기관 급식 표기·조리 재료는 기록 목록에서 빠진다', () => {
+  // 급식 식단 DB 라서 학교·산업체용 변형과 조리 재료가 섞여 있다
+  for (const n of ['찹쌀수수밥_중고등학교', '찰보리밥_초등학교', '찹쌀기장밥_산업체',
+                   '떡갈비+방울토마토,상추', '마늘(다진것)', '참깨(간것)', '차조(생것)'])
+    assert.ok(!logSet.has(n), '아직 목록에 있음: ' + n)
+  // 지운 것이 아니라 가린 것이다 — 영양 계산과 이미 한 기록이 깨지면 안 된다
+  for (const n of ['마늘(다진것)', '찹쌀수수밥_중고등학교'])
+    assert.ok(af(n), 'analyzeFood 가 깨짐: ' + n)
+  // 레시피들이 재료로 참조하므로 INGREDIENTS 에서 사라져서는 안 된다
+  assert.ok($('INGREDIENTS')['마늘(다진것)'], 'INGREDIENTS 에서 지워짐')
+})
+
+ok('요리 이름의 일부를 재료 표기로 오인하지 않는다', () => {
+  // 「양념장」이 이름에 든 실제 음식 — 종전 규칙이 이것들을 잘라냈다
+  for (const n of ['콩나물밥과양념장', '무밥과양념장', '냉이밥과달래양념장'])
+    assert.ok(logSet.has(n), '실제 음식이 잘림: ' + n)
+})
+
+ok('많이 먹는데 숨어 있던 것이 기록 목록에 나온다', () => {
+  // 이 DB 는 달걀·우유·식빵을 refined 로 분류해 둬서 기록 자체가 안 됐다.
+  // 레시피 사용량으로 골랐다 — 달걀 2,190개 레시피·50g, 소금 5,833개·0.5g
+  for (const n of ['달걀', '우유', '배추김치', '식빵', '라면', '떡볶이떡', '메추리알', '또띠아']) {
+    assert.ok(af(n), '기록할 수 없음: ' + n)
+    assert.ok(logSet.has(n), '목록에 없음: ' + n)
+  }
+  // 조미료는 여전히 안 나와야 한다
+  for (const n of ['소금', '후춧가루', '참기름', '진간장', '식용유', '고춧가루'])
+    assert.ok(!af(n), '조미료가 음식으로 나옴: ' + n)
+  // 단품으로 먹는 양이 카테고리 기본값(100g)이 아니라 품목별로 붙어야 한다
+  assert.equal($('SINGLE_FOOD_EXTRA')['우유'], 200)
+  assert.equal($('analyzeIngredient')('우유').ingredients[0].grams, 200)
+})
+
+ok('직접 고른 조리식품이 기록되고 검색에도 뜬다', () => {
+  // 기록 안 되던 조리식품 100개를 직접 보고 고른 64개 (2026-11-04).
+  // 「(시판)」이 붙은 이름은 조리 재료 규칙에 걸려 검색에서 사라졌던 적이 있어
+  // 기록 여부와 검색 여부를 함께 본다.
+  for (const n of ['교자만두', '갈비탕(시판)', '동그랑땡', '돈까스(시판)',
+                   '총각김치(묵은것)', '매실장아찌', '키리모찌', '불막창(냉동_시판)']) {
+    assert.ok(af(n), '기록할 수 없음: ' + n)
+    assert.ok(logSet.has(n), '검색에 안 뜸: ' + n)
+  }
+  // X 표시한 것은 열리지 않아야 한다
+  for (const n of ['햄버거패티', '양파후레이크', '모듬채소', '샐러드채소',
+                   '만두(냉동)', '돈까스(냉동)', '콘소메', '울외장아찌'])
+    assert.ok(!af(n), 'X 한 것이 기록됨: ' + n)
+  // 레시피에 이미 있는 이름을 단품으로도 적으면 검색창에 두 번 뜬다
+  const dup = Object.keys($('SINGLE_FOOD_EXTRA')).filter(n => $('RECIPES')[n])
+  assert.equal(dup.length, 0, '레시피와 겹치는 단품 이름: ' + dup.join(', '))
+})
+
+ok('흔한 음식은 기록 목록에 남는다', () => {
+  const MUST = ['김치찌개','된장찌개','비빔밥','제육볶음','떡볶이','라면','김밥','불고기','삼겹살구이',
+    '계란후라이','미역국','갈비탕','순두부찌개','짜장면','짬뽕','탕수육','햄버거','샌드위치','쌀밥',
+    '잡곡밥','현미밥','사과','바나나','두부','시금치나물','콩나물국','스파게티','김치볶음밥','볶음밥',
+    '계란볶음밥','닭고기','고구마','감자','토마토','부대찌개','잡채','칼국수','수제비','오므라이스']
+  const gone = MUST.filter(m => !logSet.has(m))
+  assert.equal(gone.length, 0, '목록에서 빠진 흔한 음식: ' + gone.join(', '))
+})
+
+ok('기록 목록이 전체보다 뚜렷하게 작다', () => {
+  const total = $('RECIPE_NAMES').length + $('INGREDIENT_NAMES').length
+  assert.ok(logPool.length < total * 0.75, logPool.length + ' / ' + total)
+  // 볶음밥 448가지 같은 기관 식단 변형이 줄어야 한다
+  const bb = logPool.filter(n => n.endsWith('볶음밥')).length
+  assert.ok(bb < 250, '볶음밥이 ' + bb + '가지나 남음')
+  console.log('    기록용 ' + logPool.length + '개 / 전체 ' + total + '개 · 볶음밥 ' + bb + '가지')
+})
+
+ok('검색·문장 읽기가 기록 목록만 본다', () => {
+  // 걸러낸 이름이 자동완성이나 제안으로 새어 나오면 정제가 무의미하다
+  const opts = q => vm.runInContext(
+    `updateFoodList(${JSON.stringify(q)}); document.getElementById('plan-food-list').innerHTML;`, ctx)
+  assert.ok(!opts('중고등').includes('중고등학교'), '자동완성에 기관 표기가 남음')
+  // 「다진것」이라는 글자로 보지 않는다 — 「배추김치(다진것)」은 직접 고른 음식이라 남아야 한다
+  assert.ok(!opts('다진것').includes('마늘(다진것)'), '자동완성에 조리 재료가 남음')
+  assert.ok(opts('달걀').includes('>'), '달걀이 자동완성에 안 나옴')
+  const cands = plain($('fpCandidates')('점심에 게맛살청양고추볶음밥', 60))
+  assert.ok(cands.every(n => logSet.has(n)), '후보에 걸러낸 이름이 섞임')
+})
+
+console.log('\n── 문장 한 줄로 기록 (foodparse.js) ──')
+const parseFood = $('parseFoodText')
+const names = r => plain(r.entries).map(e => e.name)
+
+await okAsync('문장에서 음식·끼니·인분을 읽는다', async () => {
+  const r = await parseFood('저녁에 비빔밥 한 그릇이랑 된장찌개', 'lunch')
+  assert.equal(r.via, 'rules')   // 주소도 기기 모델도 없으면 규칙으로 읽는다
+  assert.deepEqual(names(r), ['비빔밥', '된장찌개'])
+  assert.ok(plain(r.entries).every(e => e.meal === 'dinner'), '끼니가 저녁이 아님')
+
+  const r2 = await parseFood('간식으로 사과 두 개 먹음', 'lunch')
+  assert.deepEqual(plain(r2.entries), [{ name: '사과', meal: 'snack', portion: 2 }])
+})
+
+await okAsync('수량이 다음 음식으로 새지 않는다', async () => {
+  // "반 공기" 는 흰쌀밥의 것이다. 계란후라이까지 0.5인분이 되면 안 된다
+  const r = await parseFood('아침 흰쌀밥 반 공기, 계란후라이', 'lunch')
+  const by = Object.fromEntries(plain(r.entries).map(e => [e.name, e.portion]))
+  assert.equal(by['쌀밥'], 0.5, '흰쌀밥이 0.5인분이 아님')
+  assert.equal(by['계란후라이'], 1, '계란후라이에 앞 음식의 수량이 새어 들어감')
+})
+
+await okAsync('DB 이름이 더 긴 음식은 비슷한 이름을 제안한다', async () => {
+  // DB 에는 「삼겹살」이 없고 「삼겹살(조리된것)」·「삼겹살구이」로 들어 있다.
+  // 글자 포함 방향이 반대라 규칙으로는 못 찾으므로 골라 쓰게 보여준다
+  assert.equal($('analyzeFood')('삼겹살'), null)
+  const r = await parseFood('어제 저녁에 삼겹살에 소주 한 병', 'dinner')
+  assert.equal(r.entries.length, 0)
+  const sug = plain(r.unmatched).flatMap(u => u.suggestions)
+  assert.ok(sug.length, '제안이 하나도 없음')
+  assert.ok(sug.every(n => $('analyzeFood')(n)), '제안에 DB 에 없는 이름이 섞임')
+  assert.ok(sug.some(n => n.startsWith('삼겹살')), '삼겹살 제안이 없음: ' + sug.join(', '))
+  // 「소주」가 「채소주먹밥」을 물고 오면 안 된다 — 이름 가운데에 우연히 든 것
+  assert.ok(!sug.some(n => n.includes('주먹밥')), '엉뚱한 제안이 섞임: ' + sug.join(', '))
+})
+
+await okAsync('모델에게 주는 후보에 정답이 들어 있다', async () => {
+  // 후보에 없으면 모델도 고를 수 없다. 이 단계가 전체의 상한이다
+  const c = plain($('fpCandidates')('어제 저녁에 삼겹살 2인분', 60))
+  assert.ok(c.includes('삼겹살구이'), '후보에 삼겹살구이가 없음')
+  assert.ok(c.length <= 60)
+  assert.ok(c.every(n => $('analyzeFood')(n)), '후보에 DB 에 없는 이름이 섞임')
+})
+
+await okAsync('모델 답을 쓰되 DB 에 없는 이름은 버린다', async () => {
+  // 영양 계산이 전부 analyzeFood 를 거치므로, 모델이 지어낸 이름은 반드시 막아야 한다
+  // 주소는 이 검사 동안만 읽히게 합니다. localStorage 를 실제로 쓰게 하면
+  // tracker 가 저장된 상태를 다시 읽어들여 다른 검사가 깨집니다.
+  const realGet = sandbox.localStorage.getItem
+  sandbox.localStorage.getItem = k =>
+    (k === 'bobsnu-foodparse-endpoint' ? 'https://example.invalid/parse' : realGet(k))
+  let sent = null
+  sandbox.fetch = async (url, opt) => {
+    sent = JSON.parse(opt.body)
+    return { ok: true, json: async () => ({
+      text: '```json\n{"entries":[{"name":"삼겹살구이","meal":"dinner","portion":2},'
+          + '{"name":"없는음식이름","meal":"dinner","portion":1}]}\n```' }) }
+  }
+  try {
+    const r = await parseFood('어제 저녁에 삼겹살 2인분', 'lunch')
+    assert.equal(r.via, 'proxy')
+    assert.deepEqual(plain(r.entries), [{ name: '삼겹살구이', meal: 'dinner', portion: 2 }])
+    assert.deepEqual(plain(r.unmatched).map(u => u.text), ['없는음식이름'])
+    assert.ok(sent.candidates.length > 0 && sent.defaultMeal === 'lunch')
+
+    // 서버가 죽으면 규칙으로 떨어진다 — 기록이 멈추지는 않아야 한다
+    sandbox.fetch = async () => { throw new Error('연결 실패') }
+    const r2 = await parseFood('점심에 김치찌개', 'lunch')
+    assert.equal(r2.via, 'rules')
+    assert.deepEqual(names(r2), ['김치찌개'])
+    assert.equal(r2.warn, '연결 실패')
+  } finally {
+    // 뒤 검사를 오염시키지 않도록 되돌린다
+    sandbox.localStorage.getItem = realGet
+    delete sandbox.fetch
+  }
+})
+
 ok('먹은 음식·체중은 엔터로도 기록된다', () => {
   const t = read('public/static/tracker.js')
   for (const [id, fn] of [['diary-food', 'diaryAdd'], ['diary-weight', 'submitDiaryWeight'],
-                          ['sub-', 'submitSubstitute']]) {
+                          ['diary-sentence', 'diaryAddSentence'], ['sub-', 'submitSubstitute']]) {
     const i = t.indexOf("id=\"" + id)
     assert.ok(i > 0, '입력칸 없음: ' + id)
     assert.ok(t.slice(i, i + 600).includes("event.key===\\'Enter\\'") , '엔터 처리 없음: ' + id)
