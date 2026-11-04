@@ -83,13 +83,17 @@ function logFoodNames() {
   const recipes = new Set(RECIPE_NAMES);
   // 「차조(생것)」을 가리려면 「차조」가 DB 에 있는지만 보면 됩니다. 기록 목록으로 보면
   // 차조처럼 단품에서 막은 이름이 빠져서, 가려야 할 「(생것)」이 되살아납니다.
-  const known = new Set(RECIPE_NAMES.concat(Object.keys(INGREDIENTS)));
+  // 괄호를 떼어 새로 붙인 이름(RAW_ALIAS)은 빼고 셉니다 — 넣으면 「블루베리」가
+  // 생겼다는 이유로 「블루베리(말린것)」까지 가려집니다.
+  const known = new Set(RECIPE_NAMES.concat(Object.keys(INGREDIENTS).filter(n => !RAW_ALIAS[n])));
   FP_LOG_NAMES = [];
   for (const n of RECIPE_NAMES.concat(INGREDIENT_NAMES)) {
     // 직접 고른 단품은 꼬리말이 무엇이든 그대로 둡니다. 「갈비탕(시판)」·「돈까스(시판)」은
     // 아래 조리 재료 규칙이 「시판」을 보고 가려 버리는데, 사람이 고른 이름이 규칙보다 앞섭니다.
     if (Object.prototype.hasOwnProperty.call(SINGLE_FOOD_EXTRA, n)) { FP_LOG_NAMES.push(n); continue; }
     if (FP_INSTITUTION.test(n) || FP_COMBO.test(n)) continue;
+    // (생것) 은 괄호 뗀 이름을 따로 붙여 뒀으니 언제나 가립니다.
+    if (RAW_ALIASED.has(n)) continue;
     const annots = fpAnnots(n);
     if (!recipes.has(n) && annots.some(a => FP_COMPONENT.test(a))) continue;
     if (annots.some(a => FP_STATE.test(a)) && known.has(fpBaseName(n))) continue;

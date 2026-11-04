@@ -21366,6 +21366,23 @@ const SINGLE_FOOD_DENY = new Set([
   '북어채', '북어살', '디포리', '건새우', '명엽채', '진미채', '실치', '홍새우살', '밥새우',
 ]);
 
+// 「블루베리(생것)」·「참치(생것)」처럼 (생것) 하나만 붙은 이름은 괄호를 떼고 보여줍니다.
+// 이 DB 에는 맨 이름이 아예 없는 것이 많습니다 — 블루베리·체리·자두·참치·김·미역이
+// 전부 괄호와 함께만 들어 있어서, 가리면 음식 자체가 사라집니다.
+// 그래서 괄호 뗀 이름을 같은 자료에 하나 더 붙입니다. 괄호 붙은 쪽은 맨 이름이
+// 생겼으므로 기록 목록에서 저절로 가려집니다 (foodparse.js 의 FP_STATE 규칙).
+//
+// (말린것)·(냉동)·(불린것)은 그대로 둡니다 — 말린 블루베리는 생블루베리와 다릅니다.
+// 맨 이름이 이미 있으면 건너뜁니다. 90개가 새로 생깁니다.
+const RAW_ALIAS = {};   // 괄호 뗀 이름 → DB 의 실제 이름
+for (const name of Object.keys(INGREDIENTS)) {
+  const plain = name.endsWith('(생것)') ? name.slice(0, -'(생것)'.length) : '';
+  if (!plain || INGREDIENTS[plain] || RECIPES[plain]) continue;
+  RAW_ALIAS[plain] = name;
+}
+const RAW_ALIASED = new Set(Object.values(RAW_ALIAS));   // 가려야 할 (생것) 이름
+for (const [plain, name] of Object.entries(RAW_ALIAS)) INGREDIENTS[plain] = INGREDIENTS[name];
+
 function isSingleFood(name) {
   const ing = INGREDIENTS[name];
   if (!ing) return false;
