@@ -141,10 +141,10 @@ for r in rows:
     for i in (1, 3, 0):
         if r[i]:
             out.setdefault(str(r[i]).strip(), code)
-// ensure_ascii 를 끄면 안 됩니다. 윈도우 파이썬은 표준출력을 cp949 로 내보내서
-// 한글 이름이 깨집니다. \\uXXXX 로 내보내면 JSON.parse 가 그대로 되살립니다.
 sys.stdout.write(json.dumps(out))
 `;
+  // json.dumps 의 ensure_ascii 를 끄면 안 됩니다. 윈도우 파이썬은 표준출력을
+  // cp949 로 내보내서 한글 이름이 깨집니다. \uXXXX 로 받으면 JSON.parse 가 되살립니다.
   const raw = execFileSync('python', ['-I', '-c', py], { maxBuffer: 1 << 28 });
   return JSON.parse(raw.toString('utf8'));
 }
