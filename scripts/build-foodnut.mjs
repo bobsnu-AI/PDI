@@ -57,13 +57,17 @@ const NUT_FIELD = {
 };
 
 function keyOrDie() {
-  const k = process.env.FOOD_API_KEY;
-  if (!k) {
+  const raw = (process.env.FOOD_API_KEY || '').trim();
+  if (!raw) {
     console.error('FOOD_API_KEY 가 없습니다. 공공데이터포털에서 개발계정 키를 받아 넘기세요.');
     console.error('  https://www.data.go.kr/data/15127578/openapi.do');
+    console.error("  PowerShell:  $env:FOOD_API_KEY = '받은키'");
     process.exit(1);
   }
-  return k;
+  // 포털은 같은 키를 Encoding·Decoding 두 가지로 보여 줍니다. 어느 쪽을 붙여넣어도
+  // 되게 합니다 — 아래에서 URLSearchParams 가 한 번 더 인코딩하므로, 이미 인코딩된
+  // 키(%2F·%3D 가 든 것)는 여기서 풀어 둡니다. 안 풀면 %2F 가 %252F 가 됩니다.
+  return /%[0-9A-Fa-f]{2}/.test(raw) ? decodeURIComponent(raw) : raw;
 }
 
 async function fetchPage(key, pageNo, numOfRows) {
