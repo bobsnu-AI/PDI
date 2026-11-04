@@ -21362,26 +21362,63 @@ const SINGLE_FOOD_DENY = new Set([
   '통밀가루', '전립분', '옥수수가루', '폴렌타', '찹쌀', '퀴노아', '찹쌀흑미', '기장', '찰기장', '냉면사리', '잡곡쌀', '혼합잡곡', '오곡곡물',
   '엿기름', '보리엿기름', '현미', '흑미', '찰현미', '현미찹쌀', '찹쌀흑미가루', '홍국쌀가루', '보리', '베이비콘', '옥수수전분', '타피오카전분',
   '당면', '고구마가루', '고구마전분', '전분', '감자전분', '자색고구마가루', '돼지감자가루', '자색고구마', '밤콩', '대두', '메주콩', '흰콩',
-  '사워애플', '쇠고기', '솔치', '멸치', '가쓰오부시', '황태가루', '먹태', '황태껍질', '동태살', '동태포', '잔멸치', '갈치포', '북어',
+  '사워애플', '솔치', '멸치', '가쓰오부시', '황태가루', '먹태', '황태껍질', '동태살', '동태포', '잔멸치', '갈치포', '북어',
   '북어채', '북어살', '디포리', '건새우', '명엽채', '진미채', '실치', '홍새우살', '밥새우',
+
+  // 혼자 먹지 않는 것 — 소장님이 짚어 주셨습니다 (2026-11-04).
+  // 미역은 미역국·미역초무침으로만 먹습니다. 김은 구운 김만 남깁니다.
+  '미역(생것)', '미역(말린것)', '미역(불린것)', '김(말린것)',
 ]);
 
-// 「블루베리(생것)」·「참치(생것)」처럼 (생것) 하나만 붙은 이름은 괄호를 떼고 보여줍니다.
-// 이 DB 에는 맨 이름이 아예 없는 것이 많습니다 — 블루베리·체리·자두·참치·김·미역이
-// 전부 괄호와 함께만 들어 있어서, 가리면 음식 자체가 사라집니다.
-// 그래서 괄호 뗀 이름을 같은 자료에 하나 더 붙입니다. 괄호 붙은 쪽은 맨 이름이
-// 생겼으므로 기록 목록에서 저절로 가려집니다 (foodparse.js 의 FP_STATE 규칙).
+// 괄호 안의 상태 표기를 꺼내 이름 앞에 붙입니다.
+// 사람들은 「블루베리(말린것)」이라고 적지 않고 「말린 블루베리」라고 적습니다.
 //
-// (말린것)·(냉동)·(불린것)은 그대로 둡니다 — 말린 블루베리는 생블루베리와 다릅니다.
-// 맨 이름이 이미 있으면 건너뜁니다. 90개가 새로 생깁니다.
-const RAW_ALIAS = {};   // 괄호 뗀 이름 → DB 의 실제 이름
-for (const name of Object.keys(INGREDIENTS)) {
-  const plain = name.endsWith('(생것)') ? name.slice(0, -'(생것)'.length) : '';
-  if (!plain || INGREDIENTS[plain] || RECIPES[plain]) continue;
-  RAW_ALIAS[plain] = name;
-}
-const RAW_ALIASED = new Set(Object.values(RAW_ALIAS));   // 가려야 할 (생것) 이름
-for (const [plain, name] of Object.entries(RAW_ALIAS)) INGREDIENTS[plain] = INGREDIENTS[name];
+//   블루베리(말린것) → 말린 블루베리     김(구운것)   → 구운 김
+//   홍합(자숙)       → 익힌 홍합         삼겹살(조리된것) → 삼겹살
+//
+// 생것은 표기 자체를 없앱니다. 익힌 것이 따로 있으면 생것을 아예 빼 버립니다 —
+// 생김·생멸치를 먹는 사람은 없습니다. 익힌 것이 없으면 맨 이름으로 보여줍니다
+// (블루베리·체리·자두는 이 DB 에 「블루베리(생것)」 꼴로만 들어 있습니다).
+//
+// 원래 이름은 INGREDIENTS 에 그대로 둡니다 — 레시피가 쓰고, 지난 기록도 열려야
+// 합니다. 검색에서만 가립니다 (foodparse.js 가 RAW_HIDE 를 봅니다).
+const RAW_WORD = {
+  '말린것': '말린', '건조': '말린', '반건조': '반건조', '삶은것': '삶은', '데친것': '데친',
+  '볶은것': '볶은', '구운것': '구운', '찐것': '찐', '불린것': '불린', '냉동': '냉동',
+  '자숙': '익힌', '조리된것': '',   // 조리된것은 맨 이름으로, 자리가 찼으면 「조리한」
+};
+const RAW_COOKED = new Set(['삶은것', '데친것', '볶은것', '구운것', '찐것', '자숙', '조리된것']);
+const RAW_ALIAS = {};                 // 보여줄 이름 → DB 의 실제 이름
+const RAW_HIDE = new Set();           // 검색에서 가릴 원래 이름
+(function renameRawStates() {
+  const stated = [];
+  for (const name of Object.keys(INGREDIENTS)) {
+    const m = name.match(/^(.+)\((생것|생|말린것|건조|반건조|삶은것|데친것|볶은것|구운것|찐것|불린것|냉동|자숙|조리된것)\)$/);
+    if (m) stated.push({ name, base: m[1], state: m[2] });
+  }
+  const cooked = new Set();
+  for (const x of stated) if (RAW_COOKED.has(x.state)) cooked.add(x.base);
+  const free = n => !INGREDIENTS[n] && !RECIPES[n] && !RAW_ALIAS[n];
+  for (const { name, base, state } of stated) {
+    if (SINGLE_FOOD_DENY.has(name)) continue;          // 기록하지 않기로 한 것
+    if (state === '생것' || state === '생') {
+      if (cooked.has(base)) { RAW_HIDE.add(name); continue }   // 익힌 것이 있으면 생것은 뺀다
+      if (free(base)) RAW_ALIAS[base] = name;
+      RAW_HIDE.add(name);
+      continue;
+    }
+    const word = RAW_WORD[state];
+    const show = word ? word + ' ' + base : (free(base) ? base : '조리한 ' + base);
+    if (!free(show)) continue;                         // 이름이 부딪히면 원래 이름을 둔다
+    RAW_ALIAS[show] = name;
+    RAW_HIDE.add(name);
+  }
+  for (const [show, name] of Object.entries(RAW_ALIAS)) {
+    INGREDIENTS[show] = INGREDIENTS[name];
+    // 1인분 그램을 직접 적어 둔 것은 같이 옮깁니다 (「달걀(삶은것)」 50 g)
+    if (Object.prototype.hasOwnProperty.call(SINGLE_FOOD_EXTRA, name)) SINGLE_FOOD_EXTRA[show] = SINGLE_FOOD_EXTRA[name];
+  }
+})();
 
 function isSingleFood(name) {
   const ing = INGREDIENTS[name];

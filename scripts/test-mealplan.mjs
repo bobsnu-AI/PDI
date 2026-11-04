@@ -1139,12 +1139,12 @@ await okAsync('문장 입력칸이 그려지고 못 찾은 말은 눌러 넣을 
     assert.ok(html('diary-section').includes('이렇게 읽었어요'), '무엇을 넣었는지 알려주지 않음')
 
     // DB 이름이 달라 못 찾는 경우 — 버리지 않고 눌러 넣게 한다
-    sandbox.document.getElementById('diary-sentence').value = '저녁에 삼겹살'
+    sandbox.document.getElementById('diary-sentence').value = '저녁에 차돌박이'
     await vm.runInContext('diaryAddSentence()', ctx)
     const h2 = html('diary-section')
     const pick = h2.match(/onclick="diaryAdd\('([^']+)'\)"/)
     assert.ok(pick, '제안 버튼이 없음')
-    assert.ok(pick[1].startsWith('삼겹살'), '엉뚱한 제안: ' + pick[1])
+    assert.ok(pick[1].startsWith('차돌박이'), '엉뚱한 제안: ' + pick[1])
     assert.ok($('analyzeFood')(pick[1]), '제안이 DB 에 없는 이름: ' + pick[1])
     // 눌러서 실제로 들어가는지
     vm.runInContext('diaryAdd(' + JSON.stringify(pick[1]) + ')', ctx)
@@ -1340,29 +1340,47 @@ ok('직접 고른 원재료·가공식품이 기록되고 검색에도 뜬다', 
   assert.equal(noG.length, 0, '1인분 그램이 없는 단품: ' + noG.map(([n]) => n).join(', '))
 })
 
-ok('(생것) 은 괄호를 떼고 보여준다', () => {
-  // 이 DB 에는 맨 이름이 없고 「블루베리(생것)」로만 들어 있는 음식이 많다.
-  // 괄호 붙은 쪽을 가리기만 하면 블루베리·체리·참치·김이 통째로 사라진다.
-  assert.equal(logPool.filter(n => n.includes('(생것)')).length, 0, '(생것) 이 아직 목록에 있음')
-  for (const n of ['블루베리', '체리', '자두', '참치', '김', '미역', '대추', '강낭콩']) {
+ok('상태 표기를 괄호에서 꺼내 이름 앞에 붙인다', () => {
+  // 사람들은 「블루베리(말린것)」이라고 적지 않고 「말린 블루베리」라고 적는다.
+  const bracket = logPool.filter(n => /\((생것|생|말린것|건조|반건조|삶은것|데친것|볶은것|구운것|찐것|불린것|냉동|자숙|조리된것)\)$/.test(n))
+  assert.equal(bracket.length, 0, '괄호 표기가 아직 목록에 있음: ' + bracket.slice(0, 5).join(', '))
+
+  // 생것만 있는 것은 맨 이름으로 — 이 DB 에는 「블루베리(생것)」로만 들어 있다
+  for (const n of ['블루베리', '체리', '자두', '참치', '대추', '무화과']) {
     assert.ok(af(n), '기록할 수 없음: ' + n)
     assert.ok(logSet.has(n), '검색에 안 뜸: ' + n)
   }
-  // 같은 자료를 가리켜야 한다 — 베낀 것이 아니다
-  assert.equal($('INGREDIENTS')['블루베리'], $('INGREDIENTS')['블루베리(생것)'])
-  // (말린것)·(냉동)은 그대로 남는다 — 말린 블루베리는 생것과 칼로리가 다르다
-  for (const n of ['블루베리(말린것)', '블루베리(냉동)', '미역(말린것)', '김(구운것)'])
-    assert.ok(logSet.has(n), '다른 상태가 같이 사라짐: ' + n)
-  assert.notEqual($('INGREDIENTS')['블루베리'].kcal, $('INGREDIENTS')['블루베리(말린것)'].kcal)
-  // 맨 이름이 원래부터 있던 것은 괄호 쪽을 계속 가린다
-  assert.ok(!logSet.has('차조(생것)'), '차조(생것) 이 되살아남')
+  // 상태가 남는 것은 앞에 붙여서
+  for (const n of ['말린 블루베리', '냉동 블루베리', '구운 김', '볶은 땅콩', '익힌 해삼',
+                   '데친 열무', '삶은 우거지', '삶은 달걀']) {
+    assert.ok(af(n), '기록할 수 없음: ' + n)
+    assert.ok(logSet.has(n), '검색에 안 뜸: ' + n)
+  }
+  // 익힌 것이 따로 있으면 생것은 뺀다 — 생열무·생해삼을 먹는 사람은 없다
+  for (const n of ['열무', '해삼', '우거지', '목이버섯'])
+    assert.ok(!logSet.has(n), '생것이 맨 이름으로 남음: ' + n)
+  // 같은 자료를 가리켜야 한다. 1인분 그램도 같이 옮겨야 한다
+  assert.equal($('INGREDIENTS')['말린 블루베리'], $('INGREDIENTS')['블루베리(말린것)'])
+  assert.equal($('SINGLE_FOOD_EXTRA')['삶은 달걀'], 50)
+  assert.equal($('analyzeIngredient')('삶은 달걀').ingredients[0].grams, 50)
+  // 원래 이름은 지우지 않는다 — 레시피가 쓰고 지난 기록도 열려야 한다
+  for (const n of ['블루베리(말린것)', '달걀(삶은것)', '땅콩(생것)'])
+    assert.ok($('INGREDIENTS')[n], 'DB 에서 지워짐: ' + n)
+
+  // 혼자 먹지 않는 것은 기록하지 않는다 (2026-11-04 결정)
+  for (const n of ['미역', '말린 미역', '불린 미역', '김', '말린 김'])
+    assert.ok(!logSet.has(n), '혼자 먹지 않는 것이 검색에 뜸: ' + n)
+  // 되살린 것
+  assert.ok(af('쇠고기') && logSet.has('쇠고기'), '쇠고기를 기록할 수 없음')
 })
 
 ok('한 끼가 아닌 재료는 단품으로 열리지 않는다', () => {
   // 1인분이 한 끼로 잡혀 있던 207개 가운데 직접 고른 158개를 SINGLE_FOOD_DENY 로 막았다.
   // 버터가 200 g·1,522 kcal 로 기록되던 문제다.
+  // 쇠고기는 2026-11-04 에 되살렸다 — 돼지고기·닭고기는 그대로 기록되는데
+  // 쇠고기만 안 되면 쓰다가 걸린다
   for (const n of ['버터', '생크림', '밀가루', '백미', '전분', '멸치', '매실청', '레몬즙',
-                   '대두', '진미채', '쇠고기']) {
+                   '대두', '진미채']) {
     assert.ok(!af(n), '재료가 기록됨: ' + n)
     assert.ok(!logSet.has(n), '재료가 검색에 뜸: ' + n)
   }
@@ -1427,16 +1445,16 @@ await okAsync('수량이 다음 음식으로 새지 않는다', async () => {
 })
 
 await okAsync('DB 이름이 더 긴 음식은 비슷한 이름을 제안한다', async () => {
-  // DB 에는 「삼겹살」이 없고 「삼겹살(조리된것)」·「삼겹살구이」로 들어 있다.
+  // DB 에는 「차돌박이」가 없고 「차돌박이우동」·「차돌박이잡채」로 들어 있다.
   // 글자 포함 방향이 반대라 규칙으로는 못 찾으므로 골라 쓰게 보여준다
-  assert.equal($('analyzeFood')('삼겹살'), null)
-  const r = await parseFood('어제 저녁에 삼겹살에 소주 한 병', 'dinner')
-  // 소주는 직접 고른 단품이라 기록되고, 못 찾은 것은 삼겹살뿐이다
+  assert.equal($('analyzeFood')('차돌박이'), null)
+  const r = await parseFood('어제 저녁에 차돌박이에 소주 한 병', 'dinner')
+  // 소주는 직접 고른 단품이라 기록되고, 못 찾은 것은 차돌박이뿐이다
   assert.deepEqual(plain(r.entries).map(e => e.name), ['소주'])
   const sug = plain(r.unmatched).flatMap(u => u.suggestions)
   assert.ok(sug.length, '제안이 하나도 없음')
   assert.ok(sug.every(n => $('analyzeFood')(n)), '제안에 DB 에 없는 이름이 섞임')
-  assert.ok(sug.some(n => n.startsWith('삼겹살')), '삼겹살 제안이 없음: ' + sug.join(', '))
+  assert.ok(sug.some(n => n.startsWith('차돌박이')), '차돌박이 제안이 없음: ' + sug.join(', '))
   // 「소주」가 「채소주먹밥」을 물고 오면 안 된다 — 이름 가운데에 우연히 든 것
   assert.ok(!sug.some(n => n.includes('주먹밥')), '엉뚱한 제안이 섞임: ' + sug.join(', '))
 })
