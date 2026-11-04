@@ -392,11 +392,17 @@
             class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
         </div>
         <div>
+          <label for="profile-waist-cm" class="block text-sm font-medium text-gray-700 mb-2">허리둘레 <span class="text-gray-400 font-normal">(cm · 선택)</span></label>
+          <input id="profile-waist-cm" type="number" inputmode="decimal" min="40" max="200" step="0.5" placeholder="줄자로 쟀다면"
+                 class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
+          <p class="text-xs text-gray-400 mt-1">배꼽 높이에서 숨을 내쉬고 재요</p>
+        </div>
+        <div>
           <label for="profile-waist" class="block text-sm font-medium text-gray-700 mb-2">바지 사이즈 <span class="text-gray-400 font-normal">(인치 · 선택)</span></label>
           <select id="profile-waist" class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
             <option value="">모르겠어요</option>
           </select>
-          <p class="text-xs text-gray-400 mt-1">평소 입는 바지의 허리 사이즈를 골라주세요</p>
+          <p class="text-xs text-gray-400 mt-1">안 재셨으면 이걸로 갈음해요. 실제보다 작게 잡힙니다</p>
         </div>
         <div class="col-span-2">
           <label for="profile-activity" class="block text-sm font-medium text-gray-700 mb-2">활동량</label>

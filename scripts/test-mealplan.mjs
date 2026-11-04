@@ -1372,6 +1372,21 @@ ok('초가공식품에서 온 열량 비율을 낸다', () => {
   assert.equal($('PT_UPF').size, 51)
 })
 
+ok('허리둘레는 줄자로 잰 값을 먼저 쓴다', () => {
+  // 바지 사이즈는 실제 허리둘레보다 작게 잡혀서, 복부비만을 놓치고
+  // 암 예방 점수가 후하게 나옵니다. 잰 값이 있으면 그걸 씁니다.
+  for (const id of ['profile-waist-cm', 'profile-waist'])
+    assert.ok(htmlSrc.includes('id="' + id + '"'), '입력칸 없음: ' + id)
+  const el = id => sandbox.document.getElementById(id)
+  el('profile-waist-cm').value = '96'
+  el('profile-waist').value = '32'          // 81.3 cm — 잰 값이 이겨야 한다
+  assert.equal($('readProfile')().waist, 96)
+  el('profile-waist-cm').value = ''
+  assert.equal($('readProfile')().waist, 81.3)
+  el('profile-waist').value = ''
+  assert.equal($('readProfile')().waist, null, '둘 다 비면 묻지 않는다')
+})
+
 ok('주당 운동 시간을 받아 모자라면 알려준다', () => {
   // WCRF/AICR·WHO 권고는 중·고강도 운동 주 150분이다. 고강도 1분을 중강도 2분으로 센다
   const mv = $('weeklyMvpaMin')

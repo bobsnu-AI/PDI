@@ -329,7 +329,9 @@ function restoreProfileForm() {
   gender = p.gender || 'female';
   const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
   set('profile-age', p.age); set('profile-height', p.height); set('profile-weight', p.weight);
-  set('profile-waist', p.waist ? Math.round(p.waist / 2.54) : ''); set('profile-activity', p.activity);
+  set('profile-activity', p.activity);
+  if (p.waistMeasured) set('profile-waist-cm', p.waist);
+  else set('profile-waist', p.waist ? Math.round(p.waist / 2.54) : '');
   set('profile-mod-min', p.modMin); set('profile-vig-min', p.vigMin);
   selectedAllergies.clear();
   for (const a of (p.allergies || [])) selectedAllergies.add(a);
@@ -458,7 +460,10 @@ function readProfile() {
     age:        num('profile-age'),
     height:     num('profile-height'),
     weight:     num('profile-weight'),
-    waist:      waistCmFromInch(num('profile-waist')),
+    // 줄자로 잰 값이 있으면 그걸 씁니다. 바지 사이즈는 실제 허리둘레보다
+    // 작게 잡혀서, 복부비만을 놓치고 암 예방 점수가 후하게 나옵니다.
+    waist:      num('profile-waist-cm') || waistCmFromInch(num('profile-waist')),
+    waistMeasured: num('profile-waist-cm') != null,
     activity:   document.getElementById('profile-activity').value,
     modMin:     num('profile-mod-min'),
     vigMin:     num('profile-vig-min'),
