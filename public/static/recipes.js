@@ -21436,6 +21436,29 @@ const RAW_HIDE = new Set();           // 검색에서 가릴 원래 이름
     RAW_ALIAS[show] = name;
     RAW_HIDE.add(name);
   }
+  // 부위 이름을 괄호에서 꺼내 고기 이름과 붙입니다.
+  //   돼지고기(목살) → 돼지목살   쇠고기(차돌박이) → 소차돌박이   닭고기(가슴살) → 닭가슴살
+  // 부위만 꺼내지는 않습니다 — 안심·등심·갈비·살코기는 닭·돼지·소에 다 있어서
+  // 어느 고기인지 알 수 없게 됩니다. 검색창은 글자가 들어 있으면 찾아 주므로
+  // 「차돌박이」라고 쳐도 「소차돌박이」가 나옵니다.
+  const CUT = { '쇠고기': '소', '소고기': '소', '쇠고기부산물': '소', '돼지고기': '돼지',
+    '돼지부산물': '돼지', '돼지고기부산물': '돼지', '흑돼지고기': '흑돼지',
+    '닭고기': '닭', '닭부산물': '닭', '오리고기': '오리', '양고기': '양' };
+  for (const name of Object.keys(INGREDIENTS)) {
+    const m = name.match(/^(.+)\(([^()_]+)\)$/);
+    if (!m || !CUT[m[1]]) continue;
+    const cut = m[2];
+    // 「갈은것」·「뼈포함」은 부위가 아니고, 「구이용」·「찌개용」은 파는 용도입니다.
+    // 용도 이름은 괄호를 떼면 조리 재료 규칙에 걸리지 않아 검색에 쏟아집니다.
+    // 한 글자 부위는 내장만 꺼냅니다 — 소간·닭간·소양은 먹는 것이고,
+    // 「돼지고기(채)」의 「채」는 썰어 둔 모양입니다.
+    if (/것$|용$|포함/.test(cut)) continue;
+    if (cut.length < 2 && !m[1].endsWith('부산물')) continue;
+    const show = CUT[m[1]] + cut;
+    RAW_HIDE.add(name);                 // 이름이 이미 있으면(닭가슴살) 괄호 쪽만 가립니다
+    if (free(show)) RAW_ALIAS[show] = name;
+  }
+
   for (const [show, name] of Object.entries(RAW_ALIAS)) {
     INGREDIENTS[show] = INGREDIENTS[name];
     // 1인분 그램을 직접 적어 둔 것은 같이 옮깁니다 (「달걀(삶은것)」 50 g)
