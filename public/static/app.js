@@ -121,20 +121,6 @@ const HEALTH_GOALS = [
     tip: '아침 식사를 거르지 말고 단백질을 끼니마다 나눠 드세요. 충분한 수면이 기본이에요.' },
 ];
 
-// 팁에 드는 음식 — [이름, 알레르기 id]. 고른 알레르기 품목은 팁에서 빼고 보여줍니다
-const GOAL_FOODS = {
-  weight: [['통곡물'], ['채소'], ['콩', 'soy']],
-  gut:    [['잡곡'], ['채소'], ['해조류'], ['된장', 'soy'], ['김치']],
-  bone:   [['두부', 'soy'], ['두유', 'soy'], ['멸치'], ['우유', 'milk'], ['녹색 채소']],
-};
-
-function goalTipText(g, allergySet) {
-  if (!g.tip.includes('{foods}')) return g.tip;
-  const foods = (GOAL_FOODS[g.id] || [])
-    .filter(([, a]) => !a || !allergySet.has(a)).map(([n]) => n);
-  return g.tip.replace('{foods}', foods.join('·'));
-}
-
 // ── 식재료 식품군 보정 ──────────────────────────
 // recipes.js 는 자동 생성 DB라 차·코코아 원료가 「정제 곡물·당류」로 분류되어 있습니다.
 // PDI 원식(McCarty 2004)은 차류를 PRF 식품군으로 보므로 바로잡습니다.
@@ -186,77 +172,96 @@ const ALLERGENS = [
 //   serve   : 선택지의 두 번째 값 — 1일 회분. 곡류는 1회분 = 밥 한 공기(생곡 90g)
 //   foods   : 칼로리·제품 추천·30일 식단에 쓰는 대표 음식 (점수에는 쓰지 않음)
 //   slot    : 대표 음식을 놓을 끼니 — 'meal'(아침·점심·저녁) | 'snack'
-// 빈도 선택지 형식은 서울대학교병원 식생활문진표를 따릅니다.
+// 빈도는 모두 「일주일에 며칠」(0~7일)로 묻습니다. 「하루 2끼」·「주 3~6회」가 섞여 있으면
+// 「사흘은 두 끼, 나흘은 한 끼」 같은 사람이 어디를 골라야 할지 모릅니다 (1차 보완사항).
+// 하루에 여러 번 먹을 수 있는 식품은 「먹는 날엔 하루에」를 한 번 더 묻습니다.
+//   1일 회분 = 먹는 날 수 ÷ 7 × 먹는 날 하루 횟수
 // 문항 수는 점수가 요구하는 식품군 수로 정해집니다. 점수 5종이 문항을 서로 나눠
 // 쓰도록 맞춰서 17문항입니다 — 한 문항을 빼면 적어도 한 점수에 「뺀 항목」이 생깁니다.
 // 술 문항은 AHEI·AMED 의 음주 성분에 필요합니다. 논문 기준이 적정 음주를 만점으로
 // 보기 때문에, 계산에는 넣고 개선 제안에서는 뺍니다.
+//   days : true 면 0~7일 빈도 문항. per 가 있으면 먹는 날 하루 횟수를 한 번 더 묻습니다
+//   options : days 가 아닌 문항(유제품 종류·짠맛)의 선택지 [이름, 값]
 const SURVEY_QUESTIONS = [
   // ── 곡류 ──
-  { id: 'refinedGrain', comp: 'refinedGrain', slot: 'meal', foods: ['쌀밥', '식빵'],
-    q: '흰쌀밥·흰빵·국수·감자를 하루에 얼마나 드시나요?',
-    options: [['하루 3끼', 3], ['하루 2끼', 2], ['하루 1끼', 1], ['거의 안 먹음', 0.2]] },
-  { id: 'wholeGrain', comp: 'wholeGrain', slot: 'meal', foods: ['잡곡밥'],
-    q: '잡곡밥·현미밥·통밀빵·귀리를 하루에 얼마나 드시나요?',
-    options: [['하루 2끼 이상', 2], ['하루 1끼', 1], ['주 3~6회', 0.6], ['거의 안 먹음', 0]] },
+  { id: 'refinedGrain', comp: 'refinedGrain', slot: 'meal', foods: ['쌀밥', '식빵'], days: true,
+    q: '일주일에 <b>흰쌀밥·흰빵·국수·감자</b>를 먹는 날은 며칠인가요?',
+    per: [['1끼', 1], ['2끼', 2], ['3끼', 3]], perUnit: '끼' },
+  { id: 'wholeGrain', comp: 'wholeGrain', slot: 'meal', foods: ['잡곡밥'], days: true,
+    q: '일주일에 <b>잡곡밥·현미밥·통밀빵·귀리</b>를 먹는 날은 며칠인가요?',
+    per: [['1끼', 1], ['2끼', 2], ['3끼', 3]], perUnit: '끼' },
 
   // ── 채소·과일 ──
-  { id: 'veg', comp: 'veg', slot: 'meal', foods: ['시금치나물', '콩나물무침', '무생채'],
-    q: '김치를 뺀 채소 반찬을 하루에 몇 접시 드시나요? (나물·샐러드·생채소)',
-    options: [['5접시 이상', 5], ['3~4접시', 3.5], ['1~2접시', 1.5], ['거의 안 먹음', 0.3]] },
-  { id: 'fruit', comp: 'fruit', slot: 'snack', foods: ['사과', '귤'],
-    q: '과일을 얼마나 드시나요? (1회 = 사과 1개 정도)',
-    options: [['하루 3회 이상', 3], ['하루 1~2회', 1.5], ['주 3~6회', 0.6], ['거의 안 먹음', 0.1]] },
+  { id: 'veg', comp: 'veg', slot: 'meal', foods: ['시금치나물', '콩나물무침', '무생채'], days: true,
+    q: '일주일에 <b>김치를 뺀 채소 반찬</b>(나물·샐러드·생채소)을 먹는 날은 며칠인가요?',
+    per: [['1~2접시', 1.5], ['3~4접시', 3.5], ['5접시 이상', 5]] },
+  { id: 'fruit', comp: 'fruit', slot: 'snack', foods: ['사과', '귤'], days: true,
+    q: '일주일에 <b>과일</b>을 먹는 날은 며칠인가요?', note: '1회 = 사과 1개 정도',
+    per: [['1회', 1], ['2회', 2], ['3회 이상', 3]] },
 
   // ── 고기·생선·달걀·콩 ──
-  { id: 'redMeat', comp: 'redMeat', slot: 'meal', foods: ['제육볶음', '삼겹살구이'],
-    q: '소고기·돼지고기를 얼마나 드시나요?',
-    options: [['하루 2회 이상', 2], ['하루 1회', 1], ['주 3~6회', 0.6], ['주 2회 이하', 0.2]] },
-  { id: 'processedMeat', comp: 'processedMeat', slot: 'meal', foods: ['소시지야채볶음', '라면'],
-    q: '햄·소시지·베이컨·어묵·라면을 얼마나 드시나요?',
-    options: [['하루 1회 이상', 1], ['주 3~6회', 0.6], ['주 1~2회', 0.2], ['거의 안 먹음', 0]] },
-  { id: 'fish', comp: 'fish', slot: 'meal', foods: ['고등어구이'],
-    q: '생선·해산물을 얼마나 드시나요?',
-    options: [['거의 매일', 1], ['주 3~6회', 0.6], ['주 1~2회', 0.2], ['거의 안 먹음', 0]] },
-  { id: 'egg', comp: 'egg', slot: 'meal', foods: ['계란말이'],
-    q: '달걀을 얼마나 드시나요?',
-    options: [['하루 2개 이상', 2], ['하루 1개', 1], ['주 3~6회', 0.6], ['거의 안 먹음', 0]] },
-  { id: 'legumes', comp: 'legumes', slot: 'meal', foods: ['두부조림'],
-    q: '두부·콩·콩자반을 얼마나 드시나요?',
-    options: [['하루 2회 이상', 2], ['하루 1회', 1], ['주 3~6회', 0.6], ['거의 안 먹음', 0]] },
-  { id: 'nuts', comp: 'nuts', slot: 'snack', foods: ['견과 한 줌'],
-    q: '견과류를 얼마나 드시나요? (1회 = 한 줌, 약 28g)',
-    options: [['매일 한 줌 이상', 1], ['주 3~6회', 0.6], ['주 1~2회', 0.2], ['거의 안 먹음', 0]] },
+  { id: 'redMeat', comp: 'redMeat', slot: 'meal', foods: ['제육볶음', '삼겹살구이'], days: true,
+    q: '일주일에 <b>소고기·돼지고기</b>를 먹는 날은 며칠인가요?',
+    per: [['1회', 1], ['2회 이상', 2]] },
+  { id: 'processedMeat', comp: 'processedMeat', slot: 'meal', foods: ['소시지야채볶음', '라면'], days: true,
+    q: '일주일에 <b>햄·소시지·베이컨·어묵·라면</b>을 먹는 날은 며칠인가요?' },
+  { id: 'fish', comp: 'fish', slot: 'meal', foods: ['고등어구이'], days: true,
+    q: '일주일에 <b>생선·해산물</b>을 먹는 날은 며칠인가요?' },
+  { id: 'egg', comp: 'egg', slot: 'meal', foods: ['계란말이'], days: true,
+    q: '일주일에 <b>달걀</b>을 먹는 날은 며칠인가요?',
+    per: [['1개', 1], ['2개 이상', 2]] },
+  { id: 'legumes', comp: 'legumes', slot: 'meal', foods: ['두부조림'], days: true,
+    q: '일주일에 <b>두부·콩·콩자반</b>을 먹는 날은 며칠인가요?',
+    per: [['1회', 1], ['2회 이상', 2]] },
+  { id: 'nuts', comp: 'nuts', slot: 'snack', foods: ['견과 한 줌'], days: true,
+    q: '일주일에 <b>견과류</b>를 한 줌 먹는 날은 며칠인가요?', note: '한 줌 = 약 28g' },
 
   // ── 유제품 ──
-  { id: 'dairy', comp: 'dairy', slot: 'snack', foods: ['우유 한 컵'],
-    q: '우유·요구르트·치즈를 얼마나 드시나요? (한 컵 200 mL)',
-    options: [['하루 2회 이상', 2], ['하루 1회', 1], ['주 3~6회', 0.6], ['거의 안 먹음', 0]] },
+  { id: 'dairy', comp: 'dairy', slot: 'snack', foods: ['우유 한 컵'], days: true,
+    q: '일주일에 <b>우유·요구르트·치즈</b>를 먹는 날은 며칠인가요?', note: '1회 = 우유 한 컵(200 mL)',
+    per: [['1회', 1], ['2회 이상', 2]] },
   { id: 'dairyLow', comp: 'dairyLowRatio', slot: null, foods: null,
-    q: '유제품은 주로 어떤 것을 고르시나요?',
+    q: '유제품은 주로 <b>어떤 것</b>을 고르시나요?',
     options: [['대부분 저지방·무지방', 1], ['절반쯤 저지방', 0.5], ['대부분 일반 제품', 0]] },
 
   // ── 간식·음료 ──
-  { id: 'sweets', comp: 'sweets', slot: 'snack', foods: ['단 음식'],
-    q: '과자·케이크·아이스크림을 얼마나 드시나요?',
-    options: [['하루 1회 이상', 1], ['주 3~6회', 0.6], ['주 1~2회', 0.2], ['거의 안 먹음', 0]] },
-  { id: 'coffeeTea', comp: 'coffeeTea', slot: 'snack', foods: ['커피 한 잔'],
-    q: '커피·차를 하루에 몇 잔 드시나요? (설탕·시럽 없이)',
-    options: [['3잔 이상', 3], ['1~2잔', 1.5], ['주 3~6잔', 0.6], ['거의 안 마심', 0]] },
-  { id: 'ssb', comp: 'ssb', slot: 'snack', foods: ['단 음료'],
-    q: '탄산음료·가당음료·주스를 하루에 몇 잔 드시나요? (한 잔 200 mL)',
-    options: [['2잔 이상', 2], ['1잔 정도', 1], ['주 3~6잔', 0.6], ['거의 안 마심', 0.1]] },
+  { id: 'sweets', comp: 'sweets', slot: 'snack', foods: ['단 음식'], days: true,
+    q: '일주일에 <b>과자·케이크·아이스크림</b>을 먹는 날은 며칠인가요?' },
+  { id: 'coffeeTea', comp: 'coffeeTea', slot: 'snack', foods: ['커피 한 잔'], days: true,
+    q: '일주일에 <b>커피·차</b>를 마시는 날은 며칠인가요?', note: '설탕·시럽 없이 마시는 것만',
+    per: [['1~2잔', 1.5], ['3잔 이상', 3]] },
+  { id: 'ssb', comp: 'ssb', slot: 'snack', foods: ['단 음료'], days: true,
+    q: '일주일에 <b>탄산음료·가당음료·주스</b>를 마시는 날은 며칠인가요?', note: '한 잔 = 200 mL',
+    per: [['1잔', 1], ['2잔 이상', 2]] },
 
   // ── 술 (AHEI·AMED 는 총 잔 수로 봅니다) ──
-  { id: 'alcohol', comp: 'alcohol', slot: 'snack', foods: ['소주 한 잔'],
-    q: '술을 하루 평균 몇 잔 드시나요? (한 잔 = 소주 1잔·맥주 200 mL·와인 1잔)',
-    options: [['2잔 이상', 2], ['1잔 정도', 1], ['주 2~4잔', 0.45], ['안 마심', 0]] },
+  { id: 'alcohol', comp: 'alcohol', slot: 'snack', foods: ['소주 한 잔'], days: true,
+    q: '일주일에 <b>술</b>을 마시는 날은 며칠인가요?', note: '한 잔 = 소주 1잔·맥주 200 mL·와인 1잔',
+    per: [['1~2잔', 1.5], ['3~4잔', 3.5], ['5잔 이상', 5.5]] },
 
   // ── 짠맛 ──
   { id: 'salty', comp: null, slot: 'meal', foods: ['된장국'],
-    q: '국물·젓갈·장아찌처럼 짜게 드시는 편인가요?',
+    q: '국물·젓갈·장아찌처럼 <b>짜게</b> 드시는 편인가요?',
     options: [['그렇지 않다', 0], ['보통이다', 1], ['그렇다', 2]] },
 ];
+
+// 응답 한 칸이 다 채워졌는지 — 빈도 문항은 { d: 먹는 날 수, n: 하루 횟수 선택 } 로 저장합니다
+function surveyAnswered(q, a) {
+  if (q.days) {
+    if (!a || typeof a !== 'object' || !(a.d >= 0 && a.d <= 7)) return false;
+    return a.d === 0 || !q.per || (a.n >= 0 && a.n < q.per.length);
+  }
+  return typeof a === 'number' && a >= 0 && a < q.options.length;
+}
+
+// 응답 → 1일 회분 (빈도 문항) 또는 선택지 값
+function surveyServe(q, a) {
+  if (!surveyAnswered(q, a)) return 0;
+  if (!q.days) return q.options[a][1];
+  if (a.d === 0) return 0;
+  const perDay = q.per ? q.per[a.n][1] : 1;
+  return Math.round(a.d / 7 * perDay * 1000) / 1000;
+}
 
 // 레시피 DB에 없는 대표 음식은 식재료 조합으로 정의 (칼로리·나트륨·식이섬유 계산용)
 const SURVEY_CUSTOM_FOODS = {
@@ -272,10 +277,7 @@ const SURVEY_CUSTOM_FOODS = {
 //   patterns.js 가 이 값을 그대로 점수에 씁니다.
 function surveyServings(ans) {
   const serve = {};
-  for (const q of SURVEY_QUESTIONS) {
-    const opt = q.options[ans[q.id]];
-    serve[q.id] = opt ? opt[1] : 0;
-  }
+  for (const q of SURVEY_QUESTIONS) serve[q.id] = surveyServe(q, ans[q.id]);
   const out = {};
   for (const q of SURVEY_QUESTIONS) if (q.comp) out[q.comp] = serve[q.id];
   // 통곡물·정제곡물은 점수가 그램으로 기준을 정합니다 (밥 한 공기 = 생곡 90g)
@@ -313,8 +315,8 @@ function restoreProfileForm() {
   const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
   set('profile-age', p.age); set('profile-height', p.height); set('profile-weight', p.weight);
   set('profile-activity', p.activity);
-  if (p.waistMeasured) set('profile-waist-cm', p.waist);
-  else set('profile-waist', p.waist ? Math.round(p.waist / 2.54) : '');
+  set('profile-goal', goalTypeOf(p));
+  set('profile-target-weight', p.targetWeight);
   set('profile-mod-min', p.modMin); set('profile-vig-min', p.vigMin);
   selectedAllergies.clear();
   for (const a of (p.allergies || [])) selectedAllergies.add(a);
@@ -329,16 +331,22 @@ document.addEventListener('DOMContentLoaded', () => {
   renderActivityOptions();
   renderWaistOptions();
   restoreProfileForm();
+  onGoalTypeChange();
   renderAllergyChips();
   setGender(gender);
   renderSurvey();
   renderHealthGoals();
   initPlanFoodList();
   rotateHomePhoto();
+  renderHomeExample();
 
   // 저장된 설문 응답을 복원해 결과를 미리 계산한다 (두 번째 방문)
   if (tracker.survey) {
-    for (const [k, v] of Object.entries(tracker.survey)) surveyAnswers[k] = v;
+    // 예전 형식(선택지 번호)의 빈도 응답은 버립니다 — 「며칠」 형식으로 다시 답해야 합니다
+    for (const q of SURVEY_QUESTIONS) {
+      const v = tracker.survey[q.id];
+      if (surveyAnswered(q, v)) surveyAnswers[q.id] = v;
+    }
     renderSurvey();
   }
   if (tracker.profile && isSurveyComplete()) calculateAndShow(true);
@@ -351,29 +359,26 @@ document.addEventListener('DOMContentLoaded', () => {
   // 첫 진입 — 기록이 있으면 결과 페이지부터, 처음이면 서비스 소개부터
   showPage((location.hash || '').slice(1) || (pdiResult ? 'result' : 'home'));
 
-  // 서비스 흐름 패널 자동 넘김 (직접 넘기면 멈춘다)
-  setInterval(() => {
-    if (flowAuto && currentPage === 'home') setFlow(flowIndex + 1, true);
-  }, 4500);
 });
 
-// ── 서비스 흐름 패널 — 네 단계를 돌아가며 보여준다 ──
-const FLOW_STEPS = 4;
-let flowIndex = 0;
-let flowAuto = true;          // 직접 넘기면 자동 넘김을 멈춘다
-
-function setFlow(i, auto) {
-  if (!auto) flowAuto = false;
-  flowIndex = (i + FLOW_STEPS) % FLOW_STEPS;
-  for (let n = 0; n < FLOW_STEPS; n++) {
-    const panel = document.getElementById('flow-' + n);
-    if (panel) panel.classList.toggle('hidden', n !== flowIndex);
-    const dot = document.getElementById('flowdot-' + n);
-    if (dot) dot.classList.toggle('active', n === flowIndex);
-  }
+// ── 첫 화면 예시 카드 — 맞춤 리포트에 실제로 나오는 세 점수를 같은 띠로 보여준다 ──
+const HOME_EXAMPLE_SCORES = [['건강 식생활 지수', 61], ['혈압 관리 식단 점수', 47], ['당뇨 위험 감소 식단', 57]];
+function renderHomeExample() {
+  const el = document.getElementById('home-example-scores');
+  if (!el) return;
+  el.innerHTML = HOME_EXAMPLE_SCORES.map(([name, score]) => {
+    const t = ptTier(score / 100);
+    return '<div><div class="flex items-baseline justify-between mb-2">'
+      + '<span class="text-sm font-semibold text-gray-800">' + name + '</span>'
+      + '<span class="text-2xl font-bold" style="color:' + t.color + '">' + score + '</span></div>'
+      + '<div class="flex h-2.5 rounded-full overflow-hidden relative">'
+      + PT_TIER.map((z, i) => '<div style="width:' + [40, 20, 40][i] + '%;background:' + z.tint + '"></div>').join('')
+      + '<div class="absolute top-0 bottom-0" style="left:' + score + '%;transform:translateX(-50%);width:4px;border-radius:2px;background:'
+      + t.color + ';box-shadow:0 0 0 2px #fff"></div></div></div>';
+  }).join('');
+  const qc = document.getElementById('home-q-count');
+  if (qc) qc.textContent = SURVEY_QUESTIONS.length;
 }
-
-function shiftFlow(n) { setFlow(flowIndex + n); }
 
 // ══════════════════════════════════════════════
 // NAVIGATION
@@ -434,10 +439,13 @@ function toggleAllergy(id) {
 
 // 입력값 읽기 — 빈 칸은 null
 function readProfile() {
+  // 화면에 없는 칸(예전 허리둘레 칸 등)은 빈 칸으로 봅니다
   const num = id => {
-    const v = document.getElementById(id).value.trim();
+    const el = document.getElementById(id);
+    const v = el ? String(el.value).trim() : '';
     return v === '' ? null : Number(v);
   };
+  const goalEl = document.getElementById('profile-goal');
   return {
     gender,
     age:        num('profile-age'),
@@ -447,6 +455,8 @@ function readProfile() {
     // 작게 잡혀서, 복부비만을 놓치고 암 예방 점수가 후하게 나옵니다.
     waist:      num('profile-waist-cm') || waistCmFromInch(num('profile-waist')),
     waistMeasured: num('profile-waist-cm') != null,
+    goalType:   goalEl && GOAL_TYPES[goalEl.value] ? goalEl.value : null,
+    targetWeight: num('profile-target-weight'),
     activity:   document.getElementById('profile-activity').value,
     modMin:     num('profile-mod-min'),
     vigMin:     num('profile-vig-min'),
@@ -472,11 +482,35 @@ function validateProfile(p) {
   const missing = fields.filter(f => f[4] && p[f[0]] === null).map(f => f[1]);
   if (missing.length) return '필수 항목(' + missing.join('·') + ')을 입력해주세요. 기준 칼로리 계산에 필요해요.';
   for (const [k, label, min, max] of fields) {
-    if (p[k] !== null && !(p[k] >= min && p[k] <= max)) {
+    if (p[k] != null && !(p[k] >= min && p[k] <= max)) {
       return label + '은(는) ' + min + '–' + max + ' 범위로 입력해주세요.';
     }
   }
+  return validateTargetWeight(p);
+}
+
+// 목표 체중이 목표와 맞는지 — 감량인데 더 무겁게, 증량인데 더 가볍게 적은 경우를 막습니다
+function validateTargetWeight(p) {
+  const tw = p.targetWeight;
+  if (tw == null) return null;
+  if (!(tw >= 30 && tw <= 300)) return '목표 체중은 30–300 kg 범위로 입력해주세요.';
+  if (!(p.height > 0 && p.weight > 0)) return null;
+  const bmi = tw / ((p.height / 100) ** 2);
+  if (bmi < 18.5) {
+    const min = Math.ceil(18.5 * (p.height / 100) ** 2 * 10) / 10;
+    return '목표 체중이 너무 낮아요. 키 ' + p.height + 'cm 에서는 ' + min + ' kg 이상(BMI 18.5)으로 잡아주세요.';
+  }
+  if (p.goalType === 'lose' && tw >= p.weight) return '체중 감량이 목표라면 목표 체중을 지금 체중(' + p.weight + ' kg)보다 낮게 적어주세요.';
+  if (p.goalType === 'muscle' && tw < p.weight) return '근육량 증가가 목표라면 목표 체중을 지금 체중 이상으로 적거나 비워 두세요.';
   return null;
+}
+
+// 목표를 바꾸면 목표 체중 칸의 안내를 맞춥니다
+function onGoalTypeChange() {
+  const g = (document.getElementById('profile-goal') || {}).value;
+  const hint = document.getElementById('profile-target-hint');
+  if (hint) hint.textContent = g === 'lose' ? '비워 두면 표준 체중(BMI 22)으로 잡아요'
+    : (g === 'muscle' ? '근육을 늘리면 체중이 조금 늘 수 있어요 · 비워 둬도 돼요' : '지금 체중을 유지해요 · 비워 둬도 돼요');
 }
 
 // BMI 체중 유형 (products.js BODY_TYPES · 엑셀 Sheet3 기준) · 복부비만 (남 90cm, 여 85cm 이상)
@@ -499,7 +533,16 @@ function currentTargets() {
   if (tracker && tracker.targetKcalOverride) {
     t.targetKcal = tracker.targetKcalOverride;
     t.weeklyDelta = Math.round((t.targetKcal - t.eer) * 7 / 7700 * 100) / 100;
-    t.ranges = calculateNutrientStandards(t.targetKcal);
+    t.ranges = nutrientRangesFor(t.targetKcal, p, t.goalType);
+  }
+  // 사용자가 고친 탄단지 목표 — 기록 화면의 막대도 이 값(±10%)을 기준으로 봅니다
+  if (tracker && tracker.customMacros) {
+    t.custom = { ...tracker.customMacros };
+    t.recommended = { carb: t.ranges.carb, protein: t.ranges.protein, fat: t.ranges.fat };
+    for (const k of ['carb', 'protein', 'fat']) {
+      const v = t.custom[k];
+      if (v > 0) t.ranges = { ...t.ranges, [k]: [v * 0.9, v * 1.1] };
+    }
   }
   return t;
 }
@@ -638,8 +681,10 @@ function findAllergens(name, analysis, allergySet) {
 function submitDietInput() {
   const el = document.getElementById('step2-error');
   if (!isSurveyComplete()) {
-    const left = SURVEY_QUESTIONS.length - Object.keys(surveyAnswers).length;
+    const left = SURVEY_QUESTIONS.length - surveyAnsweredCount();
     el.querySelector('span').textContent = '설문 ' + left + '개 문항이 남았어요.';
+    const first = SURVEY_QUESTIONS.findIndex(q => !surveyAnswered(q, surveyAnswers[q.id]));
+    if (first >= 0) gotoSurvey(first);
     el.classList.remove('hidden');
     return;
   }
@@ -659,37 +704,127 @@ const SURVEY_SECTIONS = {
   salty:        '짠맛',
 };
 
+let surveyIndex = 0;          // 지금 보여주는 문항 — 한 화면에 한 문항씩 (1차 보완사항: 가독성)
+
+function surveySectionOf(qi) {
+  let sec = '';
+  for (let i = 0; i <= qi; i++) if (SURVEY_SECTIONS[SURVEY_QUESTIONS[i].id]) sec = SURVEY_SECTIONS[SURVEY_QUESTIONS[i].id];
+  return sec;
+}
+
+function surveyAnsweredCount() {
+  return SURVEY_QUESTIONS.filter(q => surveyAnswered(q, surveyAnswers[q.id])).length;
+}
+
 function renderSurvey() {
   const el = document.getElementById('survey-questions');
   if (!el) return;
-  el.innerHTML = SURVEY_QUESTIONS.map((q, qi) => {
-    const answered = q.id in surveyAnswers;
-    const head = SURVEY_SECTIONS[q.id]
-      ? '<div class="text-xs font-bold tracking-wide mt-2" style="color:var(--deep)">' + SURVEY_SECTIONS[q.id] + '</div>'
-      : '';
-    return head + '<div class="rounded-2xl border ' + (answered ? 'border-emerald-200 bg-emerald-50/40' : 'border-gray-100 bg-gray-50') + ' p-4">'
-      + '<div class="text-sm font-bold text-gray-800 mb-2.5"><span class="text-emerald-700 mr-1">Q' + (qi + 1) + '.</span>' + q.q + '</div>'
-      + '<div class="flex flex-wrap gap-2">'
-      + q.options.map(([label], oi) => {
-          const on = answered && surveyAnswers[q.id] === oi;
-          return '<button type="button" onclick="answerSurvey(\'' + q.id + '\',' + oi + ')" aria-pressed="' + on + '"'
-            + ' class="px-4 py-2 rounded-xl text-sm border-2 transition '
-            + (on ? 'border-emerald-600 bg-emerald-600 text-white font-bold' : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-300') + '">'
-            + label + '</button>';
-        }).join('')
-      + '</div></div>';
-  }).join('')
-  + '<div class="text-right text-xs text-gray-500">응답 ' + Object.keys(surveyAnswers).length + ' / ' + SURVEY_QUESTIONS.length + '</div>';
+  const total = SURVEY_QUESTIONS.length;
+  surveyIndex = Math.max(0, Math.min(total - 1, surveyIndex));
+  const q = SURVEY_QUESTIONS[surveyIndex];
+  const a = surveyAnswers[q.id];
+  const done = surveyAnsweredCount();
+
+  const chip = (label, on, onclick, extra) =>
+    '<button type="button" onclick="' + onclick + '" aria-pressed="' + on + '" class="' + (extra || '')
+    + ' py-3 rounded-xl text-sm border-2 transition '
+    + (on ? 'border-emerald-700 bg-emerald-700 text-white font-bold' : 'border-gray-200 bg-white text-gray-700 hover:border-emerald-400') + '">'
+    + label + '</button>';
+
+  let body = '';
+  if (q.days) {
+    const d = a && typeof a === 'object' ? a.d : null;
+    body += '<div class="grid grid-cols-4 sm:grid-cols-8 gap-2">'
+      + [0, 1, 2, 3, 4, 5, 6, 7].map(n => chip(n + '일', d === n, 'answerSurveyDays(\'' + q.id + '\',' + n + ')', 'w-full')).join('')
+      + '</div>';
+    if (q.per && d > 0) {
+      body += '<div class="mt-5 pt-5" style="border-top:1px dashed var(--line)">'
+        + '<div class="text-sm font-semibold text-gray-800 mb-2.5">먹는 날엔 하루에 어느 정도인가요?</div>'
+        + '<div class="flex flex-wrap gap-2">'
+        + q.per.map(([label], i) => chip(label, a.n === i, 'answerSurveyPer(\'' + q.id + '\',' + i + ')', 'px-5')).join('')
+        + '</div></div>';
+    }
+  } else {
+    body += '<div class="flex flex-wrap gap-2">'
+      + q.options.map(([label], i) => chip(label, a === i, 'answerSurvey(\'' + q.id + '\',' + i + ')', 'px-5')).join('')
+      + '</div>';
+  }
+
+  // 번호 줄 — 답한 문항은 채워 보여주고, 눌러서 바로 고칠 수 있습니다
+  const dots = SURVEY_QUESTIONS.map((qq, i) => {
+    const ok = surveyAnswered(qq, surveyAnswers[qq.id]);
+    const cur = i === surveyIndex;
+    return '<button type="button" onclick="gotoSurvey(' + i + ')" aria-label="' + (i + 1) + '번 문항"'
+      + ' class="w-7 h-7 text-[11px] font-bold rounded-full transition '
+      + (cur ? 'ring-2 ring-emerald-700 ring-offset-1 ' : '')
+      + (ok ? 'bg-emerald-700 text-white' : 'bg-gray-100 text-gray-400 hover:bg-gray-200') + '">' + (i + 1) + '</button>';
+  }).join('');
+
+  el.innerHTML =
+    '<div class="flex items-center justify-between gap-3 mb-2">'
+    + '<span class="text-xs font-bold px-3 py-1 rounded-full text-white" style="background:var(--sage)">' + surveySectionOf(surveyIndex) + '</span>'
+    + '<span class="text-xs text-gray-500">응답 <b class="text-gray-800">' + done + '</b> / ' + total + '</span></div>'
+    + '<div class="h-1.5 rounded-full bg-gray-100 overflow-hidden mb-6"><div class="h-full rounded-full transition-all" style="width:'
+    + Math.round(done / total * 100) + '%;background:var(--sage)"></div></div>'
+
+    + '<div class="rounded-2xl p-5 sm:p-7" style="border:1.5px solid var(--sage)">'
+    + '<div class="text-xs font-bold text-emerald-700 mb-2">Q' + (surveyIndex + 1) + '</div>'
+    + '<div class="text-lg sm:text-xl text-gray-900 leading-snug mb-1">' + q.q + '</div>'
+    + '<div class="text-sm text-gray-400 mb-5">' + (q.note || (q.days ? '조금이라도 먹은 날을 세어 주세요' : '&nbsp;')) + '</div>'
+    + body
+    + '</div>'
+
+    + '<div class="flex items-center justify-between mt-4">'
+    + '<button type="button" onclick="gotoSurvey(' + (surveyIndex - 1) + ')" class="text-sm text-gray-500 px-2 py-2 '
+    + (surveyIndex === 0 ? 'invisible' : '') + '">‹ 이전 문항</button>'
+    + '<button type="button" onclick="gotoSurvey(' + (surveyIndex + 1) + ')" class="text-sm font-semibold px-2 py-2 '
+    + (surveyIndex === total - 1 ? 'invisible ' : '') + (surveyAnswered(q, a) ? 'text-emerald-700' : 'text-gray-300') + '">다음 문항 ›</button>'
+    + '</div>'
+    + '<div class="flex flex-wrap gap-1.5 mt-3">' + dots + '</div>';
+}
+
+function gotoSurvey(i) {
+  surveyIndex = i;
+  renderSurvey();
+}
+
+// 다 답한 문항이면 아직 안 답한 다음 문항으로 넘어갑니다
+function afterSurveyAnswer(qid) {
+  const q = SURVEY_QUESTIONS.find(x => x.id === qid);
+  if (isSurveyComplete()) document.getElementById('step2-error').classList.add('hidden');
+  if (q && surveyAnswered(q, surveyAnswers[qid])) {
+    const total = SURVEY_QUESTIONS.length;
+    let next = -1;
+    for (let k = 1; k <= total; k++) {
+      const i = (surveyIndex + k) % total;
+      if (!surveyAnswered(SURVEY_QUESTIONS[i], surveyAnswers[SURVEY_QUESTIONS[i].id])) { next = i; break; }
+    }
+    renderSurvey();
+    if (next >= 0) setTimeout(() => gotoSurvey(next), 250);
+    return;
+  }
+  renderSurvey();
 }
 
 function answerSurvey(qid, optIdx) {
   surveyAnswers[qid] = optIdx;
-  renderSurvey();
-  if (isSurveyComplete()) document.getElementById('step2-error').classList.add('hidden');
+  afterSurveyAnswer(qid);
+}
+
+function answerSurveyDays(qid, d) {
+  const prev = surveyAnswers[qid];
+  surveyAnswers[qid] = { d, n: prev && typeof prev === 'object' ? prev.n : undefined };
+  afterSurveyAnswer(qid);
+}
+
+function answerSurveyPer(qid, n) {
+  const prev = surveyAnswers[qid] || {};
+  surveyAnswers[qid] = { d: prev.d, n };
+  afterSurveyAnswer(qid);
 }
 
 function isSurveyComplete() {
-  return SURVEY_QUESTIONS.every(q => q.id in surveyAnswers);
+  return SURVEY_QUESTIONS.every(q => surveyAnswered(q, surveyAnswers[q.id]));
 }
 
 // 1일 섭취량을 1인분 단위로 나눔 (예: 1.5 → [1, 0.5])
@@ -703,10 +838,7 @@ function splitPortions(total) {
 //   점수에는 쓰지 않습니다. 칼로리·나트륨·식이섬유 추정과 제품 추천·30일 식단에 씁니다.
 function buildSurveyDiet(ans) {
   const diet = [];
-  const serveOf = q => {
-    const o = q.options[ans[q.id]];
-    return o ? o[1] : 0;
-  };
+  const serveOf = q => surveyServe(q, ans[q.id]);
   const push = (name, meal, portion, qid) => {
     const base = SURVEY_CUSTOM_FOODS[name]
       ? buildCustomAnalysis(name, SURVEY_CUSTOM_FOODS[name])
@@ -829,6 +961,7 @@ function calculateAndShow(silent) {
   tracker.survey = isSurveyComplete() ? { ...surveyAnswers } : null;
   if (!tracker.weights.length) tracker.weights.push({ date: isoToday(), kg: profile.weight });
   tracker.targetKcalOverride = null;
+  tracker.customMacros = null;
   trackerSave();
   pdiResult.targets = currentTargets();
 
@@ -892,7 +1025,6 @@ function requestMealPlan() {
 }
 
 // 명시적 재생성만 이행 기록을 초기화한다
-// (applyRetarget 은 목표만 바꾸고 지금까지의 기록·체중 추이를 유지)
 function regenerateMealPlan() {
   tracker.startDate = isoToday();
   tracker.log = {};
@@ -909,15 +1041,6 @@ function planStale() {
   if (!tracker.plan || !pdiResult || !subCart) return false;
   const key = JSON.stringify(subCartToQuoteInput()) + '|' + pdiResult.targets.targetKcal;
   return tracker.planKey !== key;
-}
-
-// 모니터링에서 제안한 목표 칼로리를 적용하고 식단을 다시 생성
-function applyRetarget(newTargetKcal) {
-  tracker.targetKcalOverride = newTargetKcal;
-  trackerSave();
-  if (pdiResult) pdiResult.targets = currentTargets();
-  renderGuide(pdiResult);
-  buildMealPlan(true);
 }
 
 // 통곡물 kcal 비율, 채소·과일 섭취량(g) — 주의사항 판단용
@@ -947,86 +1070,208 @@ function foodGroupIntake(meals) {
 function displayResults() {
   const r = pdiResult;
 
-  renderTargets(r);        // ① 기준·목표 칼로리 · BMI · 복부비만 · 영양소 목표치
-  renderDietScore(r.meals, r.servings, r.profile.gender, r.profile); // ② 식단 점수 · 질환 위험도 · 개선 제안
-  renderTips(r);           // ③ 목표 관리 팁
-  renderGuide(r);          // ④ 주의사항
+  renderDietScore(r.meals, r.servings, r.profile.gender, r.profile); // ① 식단 점수 · 개선 제안
+  renderTargets(r);        // ② 일일 영양섭취 목표 (수정 가능)
 
   renderSubscription(r);
   renderSidePick(r);
+  renderProductDetail(r);
   renderMealPlan();
   renderDiary();
   renderMonitor();
 }
 
-// ── ① 하루 목표치 ────────────────────────────
+// ── ② 일일 영양섭취 목표 ─────────────────────
+//  목표 칼로리와 탄단지는 사용자가 고칠 수 있습니다. 권장 범위를 벗어나면 경고를 보여주되
+//  저장은 막지 않습니다 (의사·영양사가 정해 준 값이 따로 있는 사람도 있습니다).
+let targetEditing = false;
+
+const MACRO_DEFS = [
+  ['carb',    '탄수화물', '열량의 55–65%', 4],
+  ['protein', '단백질',   '열량의 7–20%',  4],
+  ['fat',     '지방',     '열량의 15–30%', 9],
+];
+
+// 권장 범위 — 사용자가 고치기 전의 값
+function recommendedTargets() {
+  const p = tracker.profile;
+  const base = nutritionTargets(p);
+  const kcal = tracker.targetKcalOverride || base.targetKcal;
+  const ranges = nutrientRangesFor(kcal, p, base.goalType);
+  return { base, kcal, ranges, floor: Math.max(1200, Math.round(base.eer * 0.7)), ceil: Math.round(base.eer * 1.3) };
+}
+
+// 입력값 → 경고 목록 (빈 배열이면 문제 없음)
+function targetWarnings(v) {
+  const rec = recommendedTargets();
+  const w = [];
+  const kcalNow = v.kcal;
+  if (kcalNow < rec.floor) w.push('목표 칼로리가 너무 낮아요. 하루 ' + rec.floor.toLocaleString() + ' kcal 아래로 내리면 근육이 빠지고 영양이 모자랄 수 있어요.');
+  if (kcalNow > rec.ceil) w.push('목표 칼로리가 기준(' + rec.base.eer.toLocaleString() + ' kcal)보다 많이 높아요. 체중이 늘 수 있어요.');
+  const ranges = calculateNutrientStandards(kcalNow);
+  const pr = nutrientRangesFor(kcalNow, tracker.profile, rec.base.goalType);
+  const bounds = { carb: ranges.carb, protein: pr.protein, fat: ranges.fat };
+  for (const [k, name] of MACRO_DEFS) {
+    const val = v[k], [lo, hi] = bounds[k];
+    if (val < lo * 0.95) w.push(name + ' ' + val + ' g 은 권장(' + Math.round(lo) + '–' + Math.round(hi) + ' g)보다 적어요.');
+    if (val > hi * 1.05) w.push(name + ' ' + val + ' g 은 권장(' + Math.round(lo) + '–' + Math.round(hi) + ' g)보다 많아요.');
+  }
+  const sum = v.carb * 4 + v.protein * 4 + v.fat * 9;
+  if (Math.abs(sum - kcalNow) > kcalNow * 0.1) {
+    w.push('탄수화물·단백질·지방을 합하면 ' + Math.round(sum).toLocaleString() + ' kcal 예요. 목표 칼로리(' + kcalNow.toLocaleString() + ' kcal)와 10% 넘게 차이 나요.');
+  }
+  return w;
+}
+
+// 화면에 보여줄 값 — 고친 값이 있으면 그 값, 없으면 권장 범위의 가운데
+function shownTargets(t) {
+  const out = { kcal: t.targetKcal };
+  for (const [k] of MACRO_DEFS) {
+    out[k] = t.custom && t.custom[k] > 0 ? t.custom[k] : Math.round((t.ranges[k][0] + t.ranges[k][1]) / 2);
+  }
+  return out;
+}
+
 function renderTargets(r) {
   const el = document.getElementById('target-section');
   if (!el) return;
-  const t = r.targets, bt = t.bodyType, rg = t.ranges;
-  const diff = t.targetKcal - t.eer;
-  const dir = diff < 0 ? '감량' : (diff > 0 ? '증량' : '유지');
-  const abd = r.body.abdominal;
-
-  const big = (label, value, unit, sub) =>
-    '<div class="bg-emerald-50 rounded-2xl p-4 min-w-0">'
-    + '<div class="text-xs font-bold text-emerald-700 mb-1">' + label + '</div>'
-    + '<div class="text-2xl font-black text-emerald-900 leading-tight">' + value
-    + '<span class="text-sm font-medium"> ' + unit + '</span></div>'
-    + '<div class="text-xs text-emerald-700 mt-1">' + sub + '</div></div>';
-  const macro = (name, value, note) =>
-    '<div class="bg-gray-50 rounded-2xl p-4"><div class="text-xs font-bold text-gray-500 mb-1">' + name + '</div>'
-    + '<div class="text-lg font-bold text-gray-900">' + value + '</div>'
-    + '<div class="text-xs text-gray-400 mt-0.5">' + note + '</div></div>';
+  const t = r.targets, rg = t.ranges, rec = t.recommended || t.ranges;
+  const goalName = (GOAL_TYPES[t.goalType] || GOAL_TYPES.maintain).name;
+  const v = shownTargets(t);
+  const edited = !!(tracker.targetKcalOverride || tracker.customMacros);
+  const warns = edited ? targetWarnings(v) : [];
   const limit = (name, value) =>
     '<div class="bg-gray-50 rounded-xl px-3 py-2"><div class="text-xs text-gray-500">' + name + '</div>'
     + '<div class="text-sm font-bold text-gray-800">' + value + '</div></div>';
+  const goalLine = goalName + ' · 목표 체중 ' + t.targetWeight + ' kg'
+    + (t.weeksToGoal ? ' · 약 ' + t.weeksToGoal + '주' : '');
 
-  el.innerHTML =
-    '<h3 class="text-xl font-bold text-gray-900 mb-5">하루 목표치</h3>'
+  const head = '<div class="flex items-start justify-between gap-3 mb-5">'
+    + '<div><h3 class="text-xl font-bold text-gray-900">일일 영양섭취 목표</h3>'
+    + '<p class="text-sm text-gray-500 mt-1">' + goalLine + '</p></div>'
+    + (targetEditing ? '' : '<button type="button" onclick="startTargetEdit()" class="flex-shrink-0 text-sm font-semibold px-4 py-2 border-2 border-emerald-700 text-emerald-700">목표치 수정</button>')
+    + '</div>';
 
-    + '<div class="grid sm:grid-cols-3 gap-3 mb-3">'
-    + big('목표 칼로리', t.targetKcal.toLocaleString(), 'kcal/일',
-          '기준 ' + t.eer.toLocaleString() + ' kcal에서 ' + (diff >= 0 ? '+' : '') + diff)
-    + big('예상 ' + dir + ' 속도', Math.abs(t.weeklyDelta), 'kg/주', '표준 체중 ' + t.targetWeight + ' kg까지')
-    + big('BMI', t.bmi.toFixed(1), bt.name, bt.desc)
-    + '</div>'
+  if (targetEditing) {
+    const field = (id, label, val, unit, note) =>
+      '<label class="block"><span class="block text-sm font-bold text-gray-700 mb-1">' + label + '</span>'
+      + '<div class="flex items-center gap-2"><input id="tgt-' + id + '" type="number" inputmode="numeric" value="' + val + '"'
+      + ' oninput="' + (id === 'kcal' ? 'onTargetKcalInput()' : 'this.dataset.touched=1;previewTargetEdit()') + '"'
+      + ' class="w-full py-2.5 px-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-900 font-bold">'
+      + '<span class="text-sm text-gray-500 flex-shrink-0">' + unit + '</span></div>'
+      + '<span class="block text-xs text-gray-400 mt-1">' + note + '</span></label>';
+    el.innerHTML = head
+      + '<div class="grid sm:grid-cols-2 gap-4">'
+      + field('kcal', '목표 칼로리', v.kcal, 'kcal', '기준 ' + t.eer.toLocaleString() + ' kcal')
+      + MACRO_DEFS.map(([k, name, note]) => field(k, name, v[k], 'g',
+          '권장 ' + Math.round(rec[k][0]) + '–' + Math.round(rec[k][1]) + ' g · ' + note)).join('')
+      + '</div>'
+      + '<div id="tgt-warn" class="mt-4"></div>'
+      + '<div class="flex flex-wrap gap-2 justify-end mt-5">'
+      + '<button type="button" onclick="resetTargetEdit()" class="text-sm text-gray-500 underline px-2">권장값으로 되돌리기</button>'
+      + '<button type="button" onclick="cancelTargetEdit()" class="text-sm font-semibold px-5 py-2.5 border-2 border-gray-300 text-gray-700">취소</button>'
+      + '<button type="button" onclick="saveTargetEdit()" class="text-sm font-bold px-6 py-2.5 bg-emerald-700 text-white">저장</button>'
+      + '</div>';
+    previewTargetEdit();
+    return;
+  }
 
-    + '<div class="flex items-center justify-between gap-3 bg-gray-50 rounded-2xl px-4 py-3 mb-6">'
-    + '<div><div class="text-sm font-bold text-gray-700">복부비만</div>'
-    + '<div class="text-xs text-gray-400">허리둘레 남 90cm · 여 85cm 이상</div></div>'
-    + (abd === undefined
-        ? '<span class="text-sm text-gray-400 flex-shrink-0">바지 사이즈 미입력</span>'
-        : '<span class="text-base font-bold flex-shrink-0" style="color:' + (abd ? '#DC2626' : '#2C5530') + '">'
-          + (abd ? '해당' : '해당 없음') + '</span>')
-    + '</div>'
+  el.innerHTML = head
+    + '<div class="bg-emerald-50 rounded-2xl p-5 mb-4 flex flex-wrap items-baseline justify-between gap-2">'
+    + '<div><div class="text-xs font-bold text-emerald-700 mb-1">목표 칼로리' + (tracker.targetKcalOverride ? ' · 직접 정함' : '') + '</div>'
+    + '<div class="text-3xl font-black text-emerald-900 leading-tight">' + v.kcal.toLocaleString()
+    + '<span class="text-base font-medium"> kcal/일</span></div></div>'
+    + '<div class="text-xs text-emerald-700">기준 ' + t.eer.toLocaleString() + ' kcal에서 '
+    + (v.kcal - t.eer >= 0 ? '+' : '') + (v.kcal - t.eer).toLocaleString() + '</div></div>'
 
-    + '<div class="text-sm font-bold text-gray-800 mb-2">영양소 목표치</div>'
+    + '<div class="text-sm font-bold text-gray-800 mb-2">영양소 목표치' + (tracker.customMacros ? ' <span class="text-xs font-normal text-gray-400">· 직접 정함</span>' : '') + '</div>'
     + '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">'
-    + macro('탄수화물', Math.round(rg.carb[0]) + '–' + Math.round(rg.carb[1]) + ' g', '열량의 55–65%')
-    + macro('단백질',   Math.round(rg.protein[0]) + '–' + Math.round(rg.protein[1]) + ' g', '열량의 7–20%')
-    + macro('지방',     Math.round(rg.fat[0]) + '–' + Math.round(rg.fat[1]) + ' g', '열량의 15–30%')
+    + MACRO_DEFS.map(([k, name, note]) =>
+        '<div class="bg-gray-50 rounded-2xl p-4"><div class="text-xs font-bold text-gray-500 mb-1">' + name + '</div>'
+        + '<div class="text-lg font-bold text-gray-900">' + v[k] + ' g</div>'
+        + '<div class="text-xs text-gray-400 mt-0.5">권장 ' + Math.round(rec[k][0]) + '–' + Math.round(rec[k][1]) + ' g · ' + note + '</div></div>').join('')
     + '</div>'
     + '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">'
     + limit('식이섬유', Math.round(rg.fiber) + ' g 이상')
     + limit('당류', Math.round(rg.sugar) + ' g 미만')
     + limit('포화지방', Math.round(rg.satfat) + ' g 미만')
     + limit('나트륨', rg.sodium.toLocaleString() + ' mg 미만')
-    + '</div>';
+    + '</div>'
+    + (warns.length ? '<div class="mt-4">' + targetWarnHtml(warns) + '</div>' : '');
 }
 
-// ── ② 목표 관리 팁 ───────────────────────────
-function renderTips(r) {
-  const el = document.getElementById('tips-section');
-  if (!el) return;
-  const tips = HEALTH_GOALS.filter(g => selectedGoals.has(g.id));
-  const allergySet = r.profile.allergies;
-  el.innerHTML =
-    '<h3 class="text-xl font-bold text-gray-900 mb-4">목표 관리 팁</h3>'
-    + '<ul class="space-y-3">' + tips.map(g =>
-        '<li class="text-sm"><b class="text-gray-800">' + g.name + '</b> '
-        + '<span class="text-gray-600">' + goalTipText(g, allergySet) + '</span></li>').join('')
-    + '</ul>';
+function targetWarnHtml(warns) {
+  return '<div class="rounded-xl p-4 text-sm" style="background:#FEF3E2;color:#8A4B08">'
+    + '<div class="font-bold mb-1">⚠ 확인해 주세요</div>'
+    + '<ul class="space-y-1">' + warns.map(x => '<li>· ' + x + '</li>').join('') + '</ul></div>';
+}
+
+function readTargetEdit() {
+  const n = id => Math.round(Number((document.getElementById('tgt-' + id) || {}).value));
+  return { kcal: n('kcal'), carb: n('carb'), protein: n('protein'), fat: n('fat') };
+}
+
+function previewTargetEdit() {
+  const box = document.getElementById('tgt-warn');
+  if (!box) return;
+  const v = readTargetEdit();
+  if (![v.kcal, v.carb, v.protein, v.fat].every(x => x > 0)) {
+    box.innerHTML = targetWarnHtml(['모든 칸에 0보다 큰 숫자를 넣어주세요.']);
+    return;
+  }
+  const w = targetWarnings(v);
+  box.innerHTML = w.length ? targetWarnHtml(w)
+    : '<div class="rounded-xl p-3 text-sm" style="background:var(--tint);color:var(--deep)">권장 범위 안이에요.</div>';
+}
+
+// 칼로리를 바꾸면, 아직 손대지 않은 탄단지 칸을 새 칼로리의 권장 가운데 값으로 맞춥니다
+function onTargetKcalInput() {
+  const kcal = Number((document.getElementById('tgt-kcal') || {}).value);
+  if (kcal >= 800 && kcal <= 5000) {
+    const r = nutrientRangesFor(kcal, tracker.profile, goalTypeOf(tracker.profile));
+    for (const [k] of MACRO_DEFS) {
+      const inp = document.getElementById('tgt-' + k);
+      if (inp && !inp.dataset.touched) inp.value = Math.round((r[k][0] + r[k][1]) / 2);
+    }
+  }
+  previewTargetEdit();
+}
+
+function startTargetEdit() { targetEditing = true; renderTargets(pdiResult); }
+function cancelTargetEdit() { targetEditing = false; renderTargets(pdiResult); }
+
+function resetTargetEdit() {
+  tracker.targetKcalOverride = null;
+  tracker.customMacros = null;
+  trackerSave();
+  targetEditing = false;
+  onTargetsChanged();
+}
+
+function saveTargetEdit() {
+  const v = readTargetEdit();
+  if (!(v.kcal >= 800 && v.kcal <= 5000) || ![v.carb, v.protein, v.fat].every(x => x > 0 && x < 1000)) {
+    previewTargetEdit();
+    const box = document.getElementById('tgt-warn');
+    if (box) box.innerHTML = targetWarnHtml(['목표 칼로리는 800–5,000 kcal, 영양소는 1–999 g 사이로 넣어주세요.']);
+    return;
+  }
+  const base = nutritionTargets(tracker.profile);
+  tracker.targetKcalOverride = v.kcal === base.targetKcal ? null : v.kcal;
+  tracker.customMacros = { carb: v.carb, protein: v.protein, fat: v.fat };
+  trackerSave();
+  targetEditing = false;
+  onTargetsChanged();
+}
+
+// 목표가 바뀌면 목표를 쓰는 화면을 모두 다시 그립니다
+function onTargetsChanged() {
+  if (!pdiResult) return;
+  pdiResult.targets = currentTargets();
+  renderTargets(pdiResult);
+  renderMealPlan();
+  renderDiary();
+  renderMonitor();
 }
 
 // ── 사이드의 「제품 추천 받기」 요약 ───────────
@@ -1035,10 +1280,13 @@ function renderSidePick(r) {
   if (!el) return;
   if (!subCart) initSubCart(r);
   const q = subscriptionQuote(subCartToQuoteInput());
+  // 제품마다 왜 추천했는지 한 줄씩 붙입니다
   el.innerHTML = q.lines.map(l =>
-    '<div class="flex items-center justify-between gap-2 text-sm">'
-    + '<span class="text-emerald-100 truncate">' + l.product.name + '</span>'
-    + '<span class="text-white font-bold flex-shrink-0">' + l.qty + '개</span></div>').join('')
+    '<div class="text-sm">'
+    + '<div class="flex items-center justify-between gap-2">'
+    + '<span class="text-white font-semibold truncate">' + l.product.name + '</span>'
+    + '<span class="text-white font-bold flex-shrink-0">' + l.qty + '개</span></div>'
+    + '<div class="text-xs text-emerald-200 mt-0.5">' + productWhy(l.product) + '</div></div>').join('')
     + '<div class="flex items-center justify-between gap-2 pt-3 mt-3 border-t border-emerald-600">'
     + '<span class="text-emerald-100 text-xs">한 달 예상 금액</span>'
     + '<span class="text-white font-bold">' + won(q.finalPrice) + '</span></div>';
@@ -1104,6 +1352,8 @@ function initSubCart(r) {
 //   (식단 섹션은 「구성이 바뀌었습니다 → 다시 추천받기」 안내로 바뀜)
 function onSubCartChanged() {
   renderSubscription(pdiResult);
+  renderSidePick(pdiResult);
+  renderProductDetail(pdiResult);
   renderPay();
   renderMealPlan();
 }
@@ -1141,6 +1391,90 @@ function resetSubCart() {
 
 function won(v) { return v.toLocaleString('ko-KR') + '원'; }
 
+// ── 매월 배송일 (1~28일 — 달마다 날짜 수가 달라 29~31일은 받지 않습니다) ──
+function deliveryDay() {
+  const d = Number(tracker && tracker.deliveryDay);
+  return d >= 1 && d <= 28 ? d : 5;
+}
+
+function setDeliveryDay(v) {
+  const d = Number(v);
+  if (!(d >= 1 && d <= 28)) return;
+  tracker.deliveryDay = d;
+  trackerSave();
+  onSubCartChanged();
+}
+
+// 제품을 왜 추천했는지 — 추천 룰의 사유가 있으면 그것을, 없으면 제품 특징을 씁니다
+function productWhy(p) {
+  const rec = subRecommendation;
+  const hit = rec && rec.reasons.find(x => String(x.code).split('·').includes(p.code));
+  if (hit) return hit.why + ' 때문에 추천해요';
+  return { soymilk: '나이·체중에 맞춘 기본 두유예요', phyto: '채소·통곡물을 한 포로 채워요',
+           bar: '간식을 단백질·식이섬유 간식으로 바꿔요', addon: '함께 고른 건강 목표에 맞춘 제품이에요' }[p.kind] || p.note || '';
+}
+
+// ── 추천 구독 제품 상세 ───────────────────────
+//  담은 제품마다 사진·특징·드시는 법·영양정보·알레르기를 한 장에 보여줍니다
+const PRODUCT_PHOTO = { A: 'static/img/soymilk.jpg', '가': 'static/img/phyto100.jpg' };
+
+function renderProductDetail(r) {
+  const el = document.getElementById('product-detail-section');
+  if (!el || !r || !subCart) return;
+  const q = subscriptionQuote(subCartToQuoteInput());
+  const g = typeof guidePlacement === 'function' ? guidePlacement() : null;
+  const allergyName = id => (ALLERGENS.find(a => a.id === id) || {}).name || id;
+  const kindKey = { soymilk: 'soymilk', phyto: 'phyto', bar: 'bar' };
+
+  const nutRow = (label, v, unit) => v == null ? '' :
+    '<div class="flex justify-between py-1.5" style="border-bottom:1px solid var(--line)"><span class="text-gray-500">' + label + '</span>'
+    + '<span class="font-semibold text-gray-800">' + v + ' ' + unit + '</span></div>';
+
+  const cards = q.lines.map(l => {
+    const p = l.product, n = p.nut || {};
+    const key = kindKey[p.kind];
+    let how = '';
+    if (g && key && g.cov.stock[key] > 0) {
+      const slots = g.where[key] || [];
+      how = timesPhrase(g.cov.stock[key], g.days) + (slots.length ? ' · ' + slots.join('·') + '에' : '');
+    } else if (p.kind === 'addon') {
+      how = '하루 1회';
+    }
+    const url = productUrl(p);
+    const photo = PRODUCT_PHOTO[p.code];
+    return '<article class="bg-white rounded-3xl p-5 sm:p-6 md:p-8">'
+      + '<div class="grid md:grid-cols-5 gap-6">'
+      + '<div class="md:col-span-2">'
+      + (photo
+          ? '<div class="rounded-2xl overflow-hidden mb-4" style="border:1px solid var(--line)"><img src="' + photo + '" alt="' + p.name + '" class="w-full h-48 object-contain bg-white" loading="lazy"></div>'
+          : '<div class="rounded-2xl mb-4 h-48 flex items-center justify-center text-5xl" style="background:var(--tint)">' + (p.icon || '') + '</div>')
+      + '<div class="text-xs font-bold mb-1" style="color:var(--sage)">' + (CATALOG_KIND_LABEL[p.kind] || '') + ' · ' + p.pack + '</div>'
+      + '<h4 class="text-xl font-bold text-gray-900 mb-1">' + p.name + '</h4>'
+      + '<div class="text-sm text-gray-600 mb-3">' + (p.note || '') + '</div>'
+      + '<div class="text-lg font-bold text-gray-900">' + won(p.price) + ' <span class="text-sm font-normal text-gray-400">× ' + l.qty + '</span></div>'
+      + '</div>'
+      + '<div class="md:col-span-3 space-y-4">'
+      + '<div class="rounded-2xl p-4" style="background:var(--tint)"><div class="text-xs font-bold mb-1" style="color:var(--deep)">이런 분께 추천해요</div>'
+      + '<div class="text-sm text-gray-800">' + productWhy(p) + '</div>'
+      + (how ? '<div class="text-xs font-bold mt-3 mb-1" style="color:var(--deep)">이렇게 드세요</div><div class="text-sm text-gray-800">' + how + '</div>' : '')
+      + '</div>'
+      + '<div><div class="text-sm font-bold text-gray-800 mb-1">영양정보 <span class="text-xs font-normal text-gray-400">1회 제공량 ' + (n.weight || '') + (p.kind === 'soymilk' ? ' mL' : ' g') + ' 기준</span></div>'
+      + '<div class="text-sm">'
+      + nutRow('열량', n.energy, 'kcal') + nutRow('탄수화물', n.carb, 'g') + nutRow('단백질', n.protein, 'g')
+      + nutRow('지방', n.fat, 'g') + nutRow('식이섬유', n.fiber, 'g') + nutRow('당류', n.sugar, 'g') + nutRow('나트륨', n.sodium, 'mg')
+      + (n.calcium ? nutRow('칼슘', n.calcium, 'mg') : '')
+      + '</div></div>'
+      + '<div class="text-xs text-gray-500">알레르기 유발물질: '
+      + ((p.allergens || []).length ? p.allergens.map(allergyName).join(', ') + ' 함유' : '표시 대상 없음') + '</div>'
+      + (url ? '<a href="' + url + '" target="_blank" rel="noopener" class="inline-block text-sm font-semibold underline" style="color:var(--sage)">공식몰에서 자세히 보기 ›</a>' : '')
+      + '</div></div></article>';
+  }).join('');
+
+  el.innerHTML = cards
+    ? '<h3 class="text-xl font-bold text-gray-900 px-1">추천 구독 제품 자세히 보기</h3>' + cards
+    : '';
+}
+
 // ── 구독 구성 한 줄 ──────────────────────────
 // 제품명 · 수량 · 그 줄의 금액을 한 줄에 둡니다.
 // 종전에는 왼쪽 카드에 제품, 오른쪽 카드에 같은 제품의 금액을 또 적어 두 번 읽어야 했습니다.
@@ -1168,7 +1502,6 @@ function renderSubscription(r) {
   if (!el) return;
   if (!subCart) initSubCart(r);
 
-  const rec = subRecommendation;
   const allergySet = r.profile.allergies;
   const blocked = p => catalogAllergyHits(p || {}, allergySet).length > 0;
   const soymilks = BOBSNU_CATALOG.filter(p => p.kind === 'soymilk' && !blocked(p));
@@ -1232,19 +1565,24 @@ function renderSubscription(r) {
   // 「이거 더 담으면 얼마 더 깎인다」 — 다른 구독 서비스의 장바구니 안내와 같은 자리
   const hints = discountHints(quote.counts, avail);
 
+  const dd = deliveryDay();
   el.innerHTML =
-    (rec.excluded.length
-      ? '<p class="text-xs text-gray-500">알레르기로 뺀 제품: ' + rec.excluded.map(p => p.name).join(', ') + '</p>'
-      : '')
+    '<div class="grid lg:grid-cols-2 gap-5 lg:gap-8 items-start">'
 
-    + '<div class="grid lg:grid-cols-2 gap-5 lg:gap-8 items-start">'
-
-    // 왼쪽: 무엇을 받는지
+    // 왼쪽: 언제·무엇을 받는지
     + '<div class="min-w-0">'
+    + '<div class="rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3" style="background:var(--tint)">'
+    + '<div><div class="text-sm font-bold text-gray-900">배송일 선택</div>'
+    + '<div class="text-xs text-gray-500 mt-0.5">매월 배송일자를 지정할 수 있어요</div></div>'
+    + '<label class="flex items-center gap-2 text-sm font-semibold text-gray-800">매월 '
+    + '<select onchange="setDeliveryDay(this.value)" aria-label="매월 배송일" class="py-2 px-3 rounded-xl border-2 border-gray-200 bg-white focus:border-emerald-500 outline-none">'
+    + Array.from({ length: 28 }, (_, i) => i + 1).map(d => '<option value="' + d + '"' + (d === dd ? ' selected' : '') + '>' + d + '</option>').join('')
+    + '</select>일</label></div>'
     + '<div class="text-sm font-bold text-gray-900">구독 구성</div>'
     + '<div class="text-xs text-gray-500 mt-0.5 mb-1">한 달에 받을 수량이에요</div>'
     + rows
-    + '<div class="text-sm font-bold text-gray-900 mt-6 mb-1">추가 구성품</div>'
+    + '<div class="text-sm font-bold text-gray-900 mt-6">더 담고 싶은 제품</div>'
+    + '<div class="text-xs text-gray-500 mt-0.5 mb-1">함께 받으면 5% 더 할인돼요</div>'
     + addonRows
     + '<div class="flex flex-wrap gap-1.5 mt-5">' + presetBtns
     + '<button type="button" onclick="resetSubCart()" class="pick-chip">처음 추천으로</button></div>'
@@ -1268,6 +1606,7 @@ function renderSubscription(r) {
               ? '<div class="text-xs text-gray-500 text-right">한 끼 ' + won(quote.perServing)
                 + ' · 한 달 ' + quote.servings + '회분</div>'
               : '')
+          + '<div class="text-xs text-gray-600 text-right mt-1">매월 <b>' + dd + '일</b> 배송</div>'
           + '<button type="button" onclick="goPage(\'pay\')" class="w-full mt-5 py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-bold transition">'
           + (isPaid() ? '구독 정보 보기' : '이 구성으로 구독 시작하기') + '</button>'
         : '<p class="text-sm text-gray-400 py-6 text-center">담긴 제품이 없어요</p>')
@@ -1297,44 +1636,6 @@ function renderSubscription(r) {
 
     + '';
 }
-// ── 기록 요약 — 식사를 기록했을 때만 보여준다 ──
-function renderGuide(r) {
-  const el = document.getElementById('guide-section');
-  if (!el) return;
-  const warn = [];
-  const ratio = r.targets.eer > 0 ? r.totalCalories / r.targets.eer : 0;
-  const ps = r.phytoScore;
-
-  if (r.allergyHits.length) {
-    warn.push(['알레르기 주의', r.allergyHits.map(h => h.name + '(' + h.allergens.join('·') + ')').join(', ')]);
-  }
-  if (ps.coveredCount < 6) warn.push(['채소·과일 종류 부족', '색이 다른 채소·과일·콩을 번갈아 드시면 영양소 종류가 늘어나요.']);
-  if (r.intake.wholeGrainPct < 5) warn.push(['통곡물 섭취 부족', '흰쌀밥을 잡곡밥·현미밥으로 바꿔보세요.']);
-  if (r.intake.vegG < 200) warn.push(['채소 섭취 부족', '끼니마다 채소 반찬 1–2접시(하루 350g 이상)를 권해요.']);
-  if (r.intake.fruitG < 100) warn.push(['과일 섭취 부족', '하루 1–2회(주먹 1개 크기) 과일을 드세요.']);
-  if (!r.categoryMap.legumes) warn.push(['콩 식품 미섭취', '두부·된장·콩밥 같은 콩 식품을 끼니에 넣어보세요.']);
-  if (r.intake.refinedPct > 40) {
-    warn.push(['정제 식품 비율 높음', '흰 곡물·당류 비율 ' + r.intake.refinedPct.toFixed(0) + '% — 흰쌀밥·밀가루·단 간식을 줄여보세요.']);
-  }
-  // 운동은 식단과 함께 암 예방 권고에 들어가는 항목입니다 (WCRF/AICR·WHO 기준 주 150분)
-  const mvpa = weeklyMvpaMin(tracker.profile);
-  if (mvpa != null && mvpa < 150) {
-    warn.push(['운동 부족', '중·고강도 운동이 주 ' + mvpa + '분이에요. 주 150분을 권해요 — '
-      + (mvpa < 75 ? '하루 20분 빠르게 걷기부터 시작해보세요.' : '지금보다 ' + (150 - mvpa) + '분만 더 늘려보세요.')]);
-  }
-  if (r.body.abdominal) warn.push(['복부비만', '허리둘레가 기준(남 90cm·여 85cm) 이상이에요. 체중 관리 루틴을 꾸준히 실천하세요.']);
-
-  el.innerHTML =
-    '<h3 class="text-xl font-bold text-gray-900 mb-4">주의할 점</h3>'
-    + (warn.length
-        ? '<div class="grid md:grid-cols-2 gap-3">' + warn.map(([title, body]) =>
-            '<div class="rounded-xl p-4" style="border:1px solid var(--line)">'
-            + '<div class="text-sm font-bold text-gray-900">' + title + '</div>'
-            + '<div class="text-sm text-gray-600 mt-1">' + body + '</div></div>'
-          ).join('') + '</div>'
-        : '<div class="rounded-xl p-4 text-sm" style="background:var(--tint);color:var(--deep)">큰 문제 없이 균형 잡힌 식단이에요.</div>');
-}
-
 // ── 관리 목표 렌더링 ─────────────────────────
 function renderHealthGoals() {
   const grid = document.getElementById('health-goals-grid');
@@ -1407,6 +1708,7 @@ function restartAssessment() {
   tracker.survey = null;
   trackerSave();
   for (const k of Object.keys(surveyAnswers)) delete surveyAnswers[k];
+  surveyIndex = 0;
   selectedGoals.clear();
   for (const g of HEALTH_GOALS) if (g.base) selectedGoals.add(g.id);
   pdiResult = null;

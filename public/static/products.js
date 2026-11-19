@@ -446,22 +446,59 @@ function recommendSubscription({ grade, bmi, age, lacks, goals, allergies }) {
 }
 
 // ──────────────────────────────────────────────
-// 권장 영양 섭취량 — EER + 체중 유형별 목표 칼로리 조정
-//   nutritionTargets(profile) → { eer, bmi, bodyType, targetKcal, targetWeight, ranges, weeklyDelta }
+// 관리 목표 — 프로필에서 고른 목표가 목표 칼로리와 단백질 목표를 정합니다
+//   lose     체중 감량   — BMI 체중 유형별 감량 폭(엑셀 Sheet3). 정상·저체중이면 −300 kcal
+//   maintain 체중 유지   — 기준 칼로리(EER) 그대로
+//   muscle   근육량 증가 — +250 kcal, 단백질 체중 1kg당 1.2–1.6 g
+// ──────────────────────────────────────────────
+const GOAL_TYPES = {
+  lose:     { name: '체중 감량' },
+  maintain: { name: '체중 유지' },
+  muscle:   { name: '근육량 증가' },
+};
+
+// 목표를 안 고른 예전 기록은 체중 유형으로 정합니다 (종전 동작과 같게)
+function goalTypeOf(profile) {
+  if (profile && GOAL_TYPES[profile.goalType]) return profile.goalType;
+  const bmi = profile.weight / ((profile.height / 100) ** 2);
+  return classifyBodyType(bmi).kcalAdj < 0 ? 'lose' : 'maintain';
+}
+
+// 목표 칼로리 → 영양소 목표 범위. 근육량 증가는 단백질 하한·상한을 체중 기준으로 올립니다
+function nutrientRangesFor(kcal, profile, goalType) {
+  const r = calculateNutrientStandards(kcal);
+  if (goalType === 'muscle' && profile && profile.weight > 0) {
+    r.protein = [Math.max(r.protein[0], profile.weight * 1.2), Math.max(r.protein[1], profile.weight * 1.6)];
+  }
+  return r;
+}
+
+// ──────────────────────────────────────────────
+// 권장 영양 섭취량 — EER + 관리 목표별 목표 칼로리 조정
+//   nutritionTargets(profile) → { eer, bmi, bodyType, goalType, targetKcal, targetWeight,
+//                                 standardWeight, ranges, weeklyDelta, weeksToGoal }
 // ──────────────────────────────────────────────
 function nutritionTargets(profile) {
   const eer = calculateEER(profile);
   if (!eer) return null;
   const bmi = profile.weight / ((profile.height / 100) ** 2);
   const bodyType = classifyBodyType(bmi);
-  // 감량 폭은 EER 의 25% 이내로 제한 (과도한 제한 식단 방지)
-  const adj = Math.sign(bodyType.kcalAdj) * Math.min(Math.abs(bodyType.kcalAdj), eer * 0.25);
+  const goalType = goalTypeOf(profile);
+  let raw = 0;
+  if (goalType === 'lose')   raw = bodyType.kcalAdj < 0 ? bodyType.kcalAdj : -300;
+  if (goalType === 'muscle') raw = 250;
+  // 조정 폭은 EER 의 25% 이내로 제한 (과도한 제한 식단 방지)
+  const adj = Math.sign(raw) * Math.min(Math.abs(raw), eer * 0.25);
   const targetKcal = Math.round(eer + adj);
+  const standardWeight = Math.round(22 * ((profile.height / 100) ** 2) * 10) / 10;  // BMI 22 기준 표준 체중
+  const targetWeight = profile.targetWeight > 0 ? profile.targetWeight : standardWeight;
+  const weeklyDelta = Math.round(adj * 7 / 7700 * 100) / 100;                       // 체지방 1kg ≈ 7,700kcal
+  const gap = targetWeight - profile.weight;
+  const weeksToGoal = (weeklyDelta !== 0 && Math.sign(gap) === Math.sign(weeklyDelta))
+    ? Math.ceil(gap / weeklyDelta) : null;
   return {
-    eer, bmi, bodyType,
-    targetKcal,
-    targetWeight: Math.round(22 * ((profile.height / 100) ** 2) * 10) / 10,  // BMI 22 기준 표준 체중
-    weeklyDelta: Math.round(adj * 7 / 7700 * 100) / 100,                    // 체지방 1kg ≈ 7,700kcal
-    ranges: calculateNutrientStandards(targetKcal),
+    eer, bmi, bodyType, goalType,
+    targetKcal, targetWeight, standardWeight, weeklyDelta, weeksToGoal,
+    ranges: nutrientRangesFor(targetKcal, profile, goalType),
   };
 }

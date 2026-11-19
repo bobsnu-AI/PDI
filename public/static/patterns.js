@@ -647,39 +647,34 @@ function renderDietScore(meals, servings, gender, profile) {
     return;
   }
 
-  const s = ptScored;
+  // 화면에는 건강·혈압·당뇨 세 점수만 보여줍니다 (1차 보완사항 — 지수가 많으면 뜻을 알기 어렵다).
+  // 나머지 점수는 계산은 그대로 하고 제품 추천의 등급 축(ptOverall)에만 씁니다.
+  const s = { ...ptScored, patterns: ptScored.patterns.filter(p => PT_DISPLAY_KEYS.includes(p.key)) };
   const tips = dietAdvice(s, 3);
-  const diseases = diseaseGrades(s);
 
-  // ① 점수 카드
-  const cards = s.patterns.map(p =>
-    '<div class="rounded-2xl border p-4" style="border-color:var(--line)">'
-    + '<div class="flex items-baseline justify-between mb-1">'
-    + '<span class="text-sm font-bold text-gray-800">' + p.name + '</span>'
-    + '<span class="text-2xl font-black" style="color:' + p.tier.color + '">' + p.score + '</span></div>'
-    + '<div class="text-xs text-gray-400 mb-2">' + p.tier.label + '</div>'
-    + ptScoreBar(p.score, p.tier.color)
-    + (p.missing.length
-        ? '<div class="text-xs text-gray-400 mt-2">기록으로 알 수 없어 뺀 항목: ' + p.missing.join(', ') + '</div>'
-        : '')
-    + '</div>').join('');
+  // ① 점수 카드 — 점수마다 무엇을 보는지와 내 점수에서 아쉬운 항목을 함께 적습니다
+  const cards = s.patterns.map(p => {
+    const info = PT_SCORE_INFO[p.key] || {};
+    const weak = p.comps.filter(c => c.sub < 0.5).sort((x, y) => x.sub - y.sub).slice(0, 3)
+      .map(c => c.label.replace(/\(.*\)/, ''));
+    return '<div class="rounded-2xl border p-5 sm:grid sm:grid-cols-5 sm:gap-6" style="border-color:var(--line)">'
+      + '<div class="sm:col-span-2">'
+      + '<div class="flex items-baseline justify-between gap-2 mb-1">'
+      + '<span class="text-base font-bold text-gray-800">' + p.name + '</span>'
+      + '<span class="text-3xl font-black flex-shrink-0" style="color:' + p.tier.color + '">' + p.score + '</span></div>'
+      + '<div class="text-xs font-bold mb-3" style="color:' + p.tier.color + '">' + p.tier.label + '</div>'
+      + ptScoreBar(p.score, p.tier.color)
+      + '</div>'
+      + '<div class="sm:col-span-3 mt-4 sm:mt-0">'
+      + '<p class="text-sm text-gray-600 leading-relaxed">' + (info.what || '') + '</p>'
+      + (weak.length
+          ? '<div class="text-xs mt-3"><span class="text-gray-400">내 점수에서 아쉬운 항목 </span>'
+            + '<b class="text-gray-800">' + weak.join(' · ') + '</b></div>'
+          : '<div class="text-xs mt-3 text-gray-500">크게 아쉬운 항목이 없어요</div>')
+      + '</div></div>';
+  }).join('');
 
-  // ② 질환별 등급 카드
-  const diseaseCards = diseases.map(d =>
-    '<div class="rounded-2xl border p-4" style="border-color:var(--line)">'
-    + '<div class="flex items-baseline justify-between mb-1">'
-    + '<span class="text-sm font-bold text-gray-800">' + d.name + '</span>'
-    + '<span class="text-xl font-black" style="color:' + d.tier.color + '">' + d.tier.label + '</span></div>'
-    + '<div class="text-xs text-gray-400 mb-2">' + (d.note || '&nbsp;') + '</div>'
-    + ptScoreBar(d.score, d.tier.color)
-    + '<div class="text-xs mt-3" style="color:' + d.tier.color + '">'
-    + (d.pct > 0
-        ? '같은 점수대 사람들은 식습관이 가장 나쁜 쪽보다 <b>' + d.pct + '% 적었어요</b>'
-        : '식습관이 가장 나쁜 쪽과 차이가 없어요')
-    + '</div>'
-    + '</div>').join('');
-
-  // ③ 개선 제안
+  // ② 개선 제안
   const tipCards = tips.map(t =>
     '<div class="rounded-2xl p-4" style="background:var(--tint)">'
     + '<div class="flex items-center justify-between gap-2 mb-1">'
@@ -696,37 +691,25 @@ function renderDietScore(meals, servings, gender, profile) {
     + '</div>').join('');
 
   el.innerHTML =
-    // ① 먼저 할 일 — 사용자가 결과에서 가장 알고 싶은 것입니다
-    '<h3 class="text-xl font-bold text-gray-900 mb-1">먼저 이것부터 바꿔보세요</h3>'
-    + '<p class="text-gray-500 text-sm mb-4">지금 식습관에서 가장 아쉬운 세 가지예요. '
-    + '이렇게 바꾸면 아래 점수가 올라가요</p>'
-    + '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">' + tipCards + '</div>'
-    + '<button type="button" onclick="goPage(\'plan\')" class="w-full mt-4 py-3.5 bg-emerald-700 '
-    + 'text-white text-sm font-bold">이걸 채우는 제품 구성 보기</button>'
+    '<h3 class="text-xl font-bold text-gray-900 mb-1">식단 점수</h3>'
+    + '<p class="text-gray-500 text-sm mb-5">여러 연구에서 쓰는 식단 평가 방법으로 채점했어요. 띠에서 내 위치가 왼쪽이면 위험, 오른쪽이면 안전이에요</p>'
+    + '<div class="grid grid-cols-1 gap-3">' + cards + '</div>'
+    + '<p class="text-xs text-gray-500 mt-4 px-4 py-3 rounded-xl" style="background:var(--cream)">'
+    + '본 서비스의 분석 결과는 의학적 진단이나 질병의 치료를 목적으로 하지 않으며, 맞춤 영양 섭취 참고용입니다.</p>'
 
-    // ② 점수
-    + '<h3 class="text-xl font-bold text-gray-900 mt-10 mb-1">식단 점수</h3>'
-    + '<p class="text-gray-500 text-sm mb-5">여러 연구에서 쓰이는 식단 평가 방법으로 채점했어요. 띠에서 내 위치가 왼쪽이면 위험, 오른쪽이면 안전이에요</p>'
-    + '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-10">' + cards + '</div>'
-
-    // ③ 질환별 등급 — 등급은 보여주고, 계산 설명은 접어둡니다
-    + '<h3 class="text-xl font-bold text-gray-900 mb-1">질환별 등급</h3>'
-    + '<p class="text-gray-500 text-sm mb-3">식습관이 비슷한 사람들에게서 그 질환이 얼마나 적었는지예요</p>'
-    + '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">' + diseaseCards + '</div>'
-    + '<details class="rounded-2xl p-4 text-xs" style="background:var(--tint);color:var(--deep)">'
-    + '<summary class="cursor-pointer font-bold">이 등급은 어떻게 계산했나요</summary>'
-    + '<div class="mt-3">'
-    + '<b>등급은 위 식단 점수에서 바로 냈어요.</b> 질환마다 관련이 깊은 점수에 더 큰 몫을 '
-    + '줘서 평균을 냈고, 그 위치가 위 띠의 위험·보통·안전 구역 중 어디인지가 등급이에요.'
-    + '<br><br><b>아래 % 는 기준 집단이 한국인이 아닙니다.</b> 내 점수가 논문 집단'
-    + '(미국 간호사·의료인 20만 5천여 명) 안에서 어디쯤인지로 계산했어요. '
-    + '한국인 분포로 보면 달라질 수 있어요.'
-    + '<br><br><b>가정 하나가 들어갑니다.</b> 근거 논문(Wang P 외. Nat Med. 2023;29:719–728)은 '
-    + '점수 상위 10%가 하위 10%보다 그 질환이 얼마나 적었는지만 보고했고 그 사이는 보고하지 '
-    + '않았어요. 그래서 그 구간에서 점수와 위험이 로그 직선 관계라고 보고 「내 위험비 = '
-    + '상위 10% 위험비 ^ 내 위치」로 채웠어요. 발병 확률이나 진단이 아니에요.'
-    + '<br><br>' + diseases.map(d => d.name + ' — 내 위험비 ' + d.myHr.toFixed(2)
-        + ' (하위 10% 집단 1.00, 상위 10% 집단 ' + d.groupHr.toFixed(2)
-        + ' · 가장 크게 반영한 점수 ' + d.strongest.name + ')').join('<br>')
-    + '</div></details>';
+    + (tipCards
+        ? '<h3 class="text-xl font-bold text-gray-900 mt-10 mb-1">먼저 이것부터 바꿔보세요</h3>'
+          + '<p class="text-gray-500 text-sm mb-4">위 점수를 가장 많이 깎은 세 가지예요. 이렇게 바꾸면 점수가 올라가요</p>'
+          + '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">' + tipCards + '</div>'
+          + '<button type="button" onclick="goPage(\'plan\')" class="w-full mt-4 py-3.5 bg-emerald-700 '
+          + 'text-white text-sm font-bold">이걸 채우는 제품 구성 보기</button>'
+        : '');
 }
+
+// 화면에 보여주는 점수 — 건강·혈압·당뇨
+const PT_DISPLAY_KEYS = ['AHEI-2010', 'DASH', 'DRRD'];
+const PT_SCORE_INFO = {
+  'AHEI-2010': { what: '전반적인 식사의 질을 봐요. 채소·과일·통곡물·견과·생선을 충분히 먹고, 단 음료·붉은 고기·짠 음식을 줄였는지로 채점해요.' },
+  'DASH':      { what: '혈압 관리를 위해 만든 식사법(DASH) 기준이에요. 과일·채소·저지방 유제품·통곡물을 늘리고 나트륨·붉은 고기·단 음료를 줄였는지 봐요.' },
+  'DRRD':      { what: '2형 당뇨 위험을 낮추는 식사 습관 기준이에요. 식이섬유·커피·견과·과일을 챙기고 단 음료·붉은 고기·트랜스지방을 줄였는지 봐요.' },
+};
