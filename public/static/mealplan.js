@@ -267,7 +267,7 @@ function classifySlot(name, cal) {
 //   레시피명으로 구성 항목 분류 → 열량대·다이어트 필터 → 균등 추출 → 영양 분석
 //   반환: { rice:[cand,...], soup:[...], main:[...], kimchi:[...], side:[...] }
 // ──────────────────────────────────────────────
-function buildSlotPools({ allergies, rng, cap, dishMax }) {
+function buildSlotPools({ allergies, rng, cap, dishMax, riceMax }) {
   cap = cap || 150;
   // dishMax: { sodium: mg } — 한 접시(1인분)가 넘으면 후보에서 뺀다. 걸러질 것을 감안해 더 많이 뽑는다
   const dishKeys = dishMax ? Object.keys(dishMax).map(k => [PLAN_NUT_KEYS.indexOf(k), dishMax[k]]).filter(([i]) => i >= 0) : [];
@@ -309,16 +309,18 @@ function buildSlotPools({ allergies, rng, cap, dishMax }) {
     // 밥은 양만 다른 변형을 여러 개 만들므로, 양이 달라도 같은 메뉴로 봅니다
     out.forEach((c, i) => { c.portion = 1; c.divKey = i; });
     pools[slot] = (slot === 'rice')
-      ? out.flatMap((c, i) => RICE_PORTIONS.map(f => scaleCandidate(c, f, i)))
+      ? out.flatMap((c, i) => RICE_PORTIONS.filter(f => f <= (riceMax || 1)).map(f => scaleCandidate(c, f, i)))
       : out;
   }
   return pools;
 }
 
 // ── 밥 양 ────────────────────────────────────
-// 목표 칼로리를 맞추려면 밥 양을 줄이는 것이 가장 효과가 큽니다 (한 공기 ≈ 300 kcal).
+// 목표 칼로리를 맞추려면 밥 양을 조절하는 것이 가장 효과가 큽니다 (한 공기 ≈ 300 kcal).
 // 밥 후보를 공기 수별로 만들어 두고 최적화가 직접 고르게 합니다
-const RICE_PORTIONS = [0.6, 0.8, 1.0];
+// 1공기를 넘는 양은 목표 칼로리가 높을 때만 후보에 넣습니다 (낮은 목표에서는 열량이 넘칩니다)
+const RICE_LARGE_KCAL = 1800;
+const RICE_PORTIONS = [0.6, 0.8, 1.0, 1.2, 1.5];
 
 function scaleCandidate(c, factor, divKey) {
   if (factor === 1) return { ...c, portion: 1, divKey };
@@ -891,8 +893,9 @@ function generateMealPlan({ profile, targets, cart, days, allergies, seed, onPro
   days = noProducts ? maxDays : subscriptionDays(cart, maxDays);
   if (days < 1) return { error: '제품을 1개 이상 담으면 식단을 설계할 수 있어요.' };
   const rng = makeRng(seed != null ? seed : hashSeed(JSON.stringify([profile.gender, profile.age, profile.height, profile.weight, targets.targetKcal])));
+  const riceMax = targets.targetKcal > RICE_LARGE_KCAL ? Infinity : 1;
 
-  let pools = buildSlotPools({ allergies, rng, cap: 150 });
+  let pools = buildSlotPools({ allergies, rng, cap: 150, riceMax });
   const thin = SLOT_IDS.filter(s => pools[s].length < 5);
   if (thin.length) return { error: '후보 메뉴가 부족한 항목: ' + thin.map(s => DISH_SLOTS.find(x => x.id === s).name).join('·') };
 
@@ -942,7 +945,7 @@ function generateMealPlan({ profile, targets, cart, days, allergies, seed, onPro
       const sh = PLAN_DISH_SHARE[k] || [1];
       dishMax[k] = constraints.max[k] * PLAN_HARD_LIMITS[k] * sh[Math.min(st, sh.length - 1)];
     }
-    const p2 = hardKeys.length ? buildSlotPools({ allergies, rng, cap: 150, dishMax }) : pools;
+    const p2 = hardKeys.length ? buildSlotPools({ allergies, rng, cap: 150, dishMax, riceMax }) : pools;
     if (SLOT_IDS.some(sid => p2[sid].length < 5)) continue;
     pools = p2; tries++;
     opt = new SPEA2DietOptimizer(pools, constraints, fixed, { days, rng, gender, dietWeights });

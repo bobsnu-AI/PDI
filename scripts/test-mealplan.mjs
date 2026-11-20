@@ -403,12 +403,12 @@ ok('아침은 3품(밥·국·메인반찬), 점심·저녁은 5품', () => {
   assert.ok(lCount >= 30)
   console.log('    아침 3품 ' + bCount + '일 · 점심·저녁 5품 ' + lCount + '끼')
 })
-ok('밥 양을 0.6~1공기에서 골라 조절', () => {
+ok('밥 양을 0.6~1.5공기에서 골라 조절', () => {
   const seen = new Set()
   for (const d of plan.days) for (const m of d.meals) {
     if (m.kind !== 'food') continue
     const rice = m.dishes.find(x => x.slot === 'rice')
-    assert.ok([0.6, 0.8, 1].includes(rice.portion), '밥 양 ' + rice.portion)
+    assert.ok([0.6, 0.8, 1, 1.2, 1.5].includes(rice.portion), '밥 양 ' + rice.portion)
     seen.add(rice.portion)
   }
   console.log('    쓰인 밥 양: ' + [...seen].sort().join(', ') + '공기')
