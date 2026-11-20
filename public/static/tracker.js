@@ -372,16 +372,27 @@ function guidePlanHtml() {
   const g = guidePlacement();
   const total = targets.targetKcal;
 
-  // 제품이 저녁을 대신하면 그만큼 남는 칼로리를 아침·점심에 나눠 준다
+  // 제품이 저녁을 대신하면 그만큼 남는 칼로리를 아침·점심에 나눠 준다.
+  //   모든 날 대신할 때만 끼니 칼로리를 옮깁니다. 일부 날만 대신하는데 늘 옮기면
+  //   제품을 안 먹는 날의 하루 합계가 목표보다 커집니다 (1차 보완사항에서 찾은 오류).
   const share = { ...GUIDE_MEAL_SHARE };
   const kcal = {};
   for (const t of Object.keys(share)) kcal[t] = total * share[t];
-  if (g && g.replaceDays && g.replacedKcal) {
-    const freed = kcal[g.replaceType] - g.replacedKcal;
+  const rest = g && g.replaceDays ? Object.keys(share).filter(t => t !== g.replaceType) : [];
+  const restSum = rest.reduce((s, t) => s + share[t], 0);
+  const freed = g && g.replaceDays && g.replacedKcal ? kcal[g.replaceType] - g.replacedKcal : 0;
+  const allDays = g && g.replaceDays >= g.days;
+  const bonus = {};      // 제품으로 대신하는 날에만 더 먹는 칼로리
+  for (const t of rest) bonus[t] = Math.round(freed * (share[t] / restSum));
+  if (allDays && freed) {
     kcal[g.replaceType] = g.replacedKcal;
-    const rest = Object.keys(share).filter(t => t !== g.replaceType);
-    const sum = rest.reduce((s, t) => s + share[t], 0);
-    for (const t of rest) kcal[t] += freed * (share[t] / sum);
+    for (const t of rest) kcal[t] += bonus[t];
+  }
+  // 간식으로 먹는 제품도 하루 목표 안에 들어가야 합니다 — 그만큼 끼니에서 덜어냅니다
+  const snackKcal = g && g.extra.snack ? g.extra.snack.kcal : 0;
+  if (snackKcal) for (const t of Object.keys(share)) {
+    if (allDays && g.replaceType === t) continue;
+    kcal[t] -= snackKcal * share[t] / (allDays ? restSum : 1);
   }
   // 막대 길이는 가장 큰 끼니를 기준으로 (칼로리 차이를 눈으로 보게)
   const maxKcal = Math.max(...Object.values(kcal), g && g.extra.snack ? g.extra.snack.kcal : 0);
@@ -392,6 +403,10 @@ function guidePlanHtml() {
     const isReplaced = g && g.replaceDays && g.replaceType === mt.id;
     const ex = g ? g.extra[mt.id] : null;
     const plain = Math.max(0, Math.round(kcal[mt.id] - (ex ? ex.kcal : 0)));
+    const partial = !allDays && freed > 0 && bonus[mt.id] > 0
+      ? '<div class="text-xs text-emerald-700 mt-1">' + (MEAL_TYPES.find(x => x.id === g.replaceType) || { name: '' }).name
+        + '을 제품으로 대신하는 날엔 +' + bonus[mt.id] + ' kcal 더 드세요</div>' : '';
+
     return '<div class="flex gap-3 sm:gap-4 py-4 border-b border-gray-100 last:border-0">'
       + '<div class="flex-shrink-0 w-14 text-center">'
       + '<div class="text-sm font-bold text-gray-700">' + mt.name + '</div></div>'
@@ -403,11 +418,13 @@ function guidePlanHtml() {
           ? '<div class="text-sm text-emerald-800 font-bold mb-1.5">밥스누 제품으로 대신</div>'
             + '<div class="flex flex-wrap gap-1.5">' + g.replacedItems.map(productChip).join('') + '</div>'
             + (g.replaceDays < g.days
-                ? '<div class="text-xs text-gray-400 mt-1.5">' + g.days + '일 중 ' + g.replaceDays + '일 · 나머지 날은 일반식 '
+                ? '<div class="text-xs text-gray-500 mt-1.5">' + g.days + '일 중 ' + g.replaceDays + '일은 제품 '
+                  + g.replacedKcal + ' kcal · 나머지 날은 일반식 '
                   + Math.round(total * GUIDE_MEAL_SHARE[mt.id]).toLocaleString() + ' kcal</div>' : '')
           : '<div class="text-sm text-gray-800"><b>일반식</b> ' + plain.toLocaleString() + ' kcal</div>'
             + '<div class="text-xs text-gray-500 mt-0.5">' + plainMealHint(plain) + '</div>'
-            + (ex ? '<div class="flex flex-wrap gap-1.5 mt-1.5">' + ex.names.map(productChip).join('') + '</div>' : ''))
+            + (ex ? '<div class="flex flex-wrap gap-1.5 mt-1.5">' + ex.names.map(productChip).join('') + '</div>' : '')
+            + partial)
       + '</div></div>';
   };
 
@@ -526,7 +543,7 @@ function renderPay() {
       + '<div class="text-lg font-bold text-emerald-900 mb-1">구독이 시작됐어요</div>'
       + '<div class="text-sm text-gray-600 mb-5">날마다 먹은 것과 체중을 기록해 보세요</div>'
       + '<div class="flex flex-wrap gap-2 justify-center">'
-      + '<button type="button" onclick="goPage(\'plan\')" class="px-5 py-3 bg-emerald-700 text-white text-sm font-bold">가이드 보기</button>'
+      + '<button type="button" onclick="goPage(\'result\', \'guide30-section\')" class="px-5 py-3 bg-emerald-700 text-white text-sm font-bold">가이드 보기</button>'
       + '<button type="button" onclick="goPage(\'log\')" class="px-5 py-3 border-2 border-emerald-700 text-emerald-700 text-sm font-bold">기록 페이지로</button>'
       + '<button type="button" onclick="stopDemoSubscription()" class="px-5 py-3 border border-gray-200 text-gray-500 text-sm">시연 상태 되돌리기</button>'
       + '</div></div>';
@@ -541,7 +558,7 @@ function renderPay() {
     + '<ul class="space-y-1.5 text-sm text-gray-600">'
     + ['고른 구성에 맞춰 끼니별 칼로리와 제품 배분을 알려드려요',
        '날마다 먹은 것과 체중을 기록하면 목표 체중까지의 변화를 그래프로 보여드려요',
-       '제품은 한 달에 한 번 배송되고, 언제든 수량을 바꾸실 수 있어요']
+       '제품은 매월 ' + deliveryDay() + '일에 배송되고, 언제든 수량과 배송일을 바꾸실 수 있어요']
       .map(t => '<li class="flex gap-2"><span class="text-emerald-600">·</span><span>' + t + '</span></li>').join('')
     + '</ul></div>';
 }
@@ -584,7 +601,15 @@ function renderMealPlan() {
   if (!el) return;
   syncPlanModeButtons();
   // 「칼로리 가이드」 버전은 메뉴를 짜지 않는다
-  if (planMode() === 'guide') { el.innerHTML = guidePlanHtml(); return; }
+  // 30일 관리 가이드는 맞춤 리포트(메인)에서 보여줍니다 (1차 보완사항)
+  const g30 = document.getElementById('guide30-section');
+  if (g30) g30.innerHTML = guidePlanHtml();
+  if (planMode() === 'guide') {
+    el.innerHTML = '<div class="flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">'
+      + '<span>끼니별 칼로리와 제품 드시는 법은 맞춤 리포트의 「30일 관리 가이드」에 있어요</span>'
+      + '<button type="button" onclick="goPage(\'result\', \'guide30-section\')" class="px-4 py-2 border-2 border-emerald-700 text-emerald-700 text-sm font-bold">가이드 보기</button></div>';
+    return;
+  }
   if (!tracker.plan) { el.innerHTML = mealPlanPromptHtml(null); return; }
   if (typeof planStale === 'function' && planStale()) {
     el.innerHTML = mealPlanPromptHtml('구독 구성이 바뀌었어요. 새 구성으로 식단을 다시 추천받으세요. (지금까지의 실천 기록은 초기화돼요)');
@@ -1158,7 +1183,7 @@ function renderMonitor() {
     + tile('식단 실천율', ad.pct + '%', ad.logged + '/' + ad.total + '끼 기록', '#2C5530')
     + '</div>'
 
-    + '<div class="rounded-2xl border border-gray-100 p-4 mb-4"><canvas id="weight-chart" height="140"></canvas></div>'
+    + '<div class="rounded-2xl border border-gray-100 p-4 mb-4"><div class="relative h-64"><canvas id="weight-chart"></canvas></div></div>'
     + retargetHtml
     + '<div class="flex flex-wrap gap-3 mt-4 text-xs text-gray-500">'
     + '<span>✓ 추천대로 ' + ad.eaten + '끼</span><span>✎ 다른 음식 ' + ad.other + '끼</span><span>– 안 먹음 ' + ad.skipped + '끼</span>'
