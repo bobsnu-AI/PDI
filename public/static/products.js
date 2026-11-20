@@ -82,9 +82,9 @@ const BOBSNU_CATALOG = [
     phytoBase: '파이토블랙',
     nut: { weight: 190, energy: 70,  carb: 5,  protein: 6, fat: 3.3, fiber: 4,   sugar: 0.9, satfat: 0.2, trans: 0, chol: 0, calcium: 150, sodium: 55 } },
   // 파이토 (분말 30 g/포) — 엑셀 「가」 / 제품소개서 slide 28
-  // 원재료에 유기농 약콩이 있으나 대두 알레르기 환자도 섭취 가능
+  // 원재료에 유기농 약콩(검정콩)이 있어 대두 알레르기 대상에서 제외한다 (2026-11-17 결정: 대두 알레르기 사용자에게 권하지 않음)
   { code: '가', kind: 'phyto',  name: '밥스누 파이토100',            pack: '14포', price: 42000, pdiKcal: 110, icon: '💊',
-    allergens: ['tomato'], funcs: ['종합균형', '항산화', '혈당'], ages: ['40', '50', '60'], note: '국산 유기농 생식 21종 · 동결건조 · 식이섬유 4 g',
+    allergens: ['soy', 'tomato'], funcs: ['종합균형', '항산화', '혈당'], ages: ['40', '50', '60'], note: '국산 유기농 생식 21종 · 동결건조 · 식이섬유 4 g',
     // 유기농 생식 21종 · 원물 대비 농축율 888% → 1포 30 g = 원물 약 266 g (19종 매칭, 균등 분배)
     phytoFrom: { '현미': 14, '귀리': 14, '검정콩': 14, '케일': 14, '시금치': 14, '양배추': 14,
                  '비트': 14, '참깨': 14, '보리': 14, '당근': 14, '브로콜리': 14, '유자': 14,
@@ -117,7 +117,7 @@ const BOBSNU_CATALOG = [
 
 // ── 제품을 식재료 DB에 등록 ──────────────────
 // recipes.js(INGREDIENTS)·pfs.js(PFS_BOBSNU_NUTRITION)에 제품소개서 실측값으로 등록해
-// PDI·PFS·30일 식단이 모두 같은 숫자를 쓰게 합니다. 파이토케미컬은 phytoBase 기준값을 사용
+// 식단 지수·PFS·30일 식단이 모두 같은 숫자를 쓰게 합니다. 파이토케미컬은 phytoBase 기준값을 사용
 // 제품의 파이토케미컬 추정
 //   기준 제품(phytoBase)의 약콩 파이토케미컬 값에, phytoFrom 에 적은 원재료의 값을 더합니다.
 //   phytoFrom 은 제품소개서 「원재료명 및 함량」 기준이며, 함량이 공개되지 않은 원료는
@@ -431,12 +431,11 @@ function recommendSubscription({ grade, bmi, age, lacks, goals, allergies }) {
     addon,
   };
 
-  // 6) 대두 알레르기 — 두유 A~I 와 프로틴바가 모두 약콩(대두) 제품이라 전부 제외됩니다.
-  //    이 경우 파이토100 만 추천합니다.
-  //    ※ 파이토100 원재료에도 유기농 약콩이 들어 있어(제품소개서) 섭취 전 확인이 필요합니다.
-  if (!cart.soymilk.length && !cart.bar.length) {
+  // 6) 두유·프로틴바가 알레르기로 모두 빠지면 파이토100 을 2상자로 늘립니다.
+  //    파이토100 도 약콩(대두)이 들어 있어, 대두 알레르기면 이것도 빠지고 구성이 비게 됩니다.
+  if (!cart.soymilk.length && !cart.bar.length && keep('가')) {
     cart.phyto = ['가', '가'];
-    reasons.push({ code: '가', why: '대두 알레르기' });
+    reasons.push({ code: '가', why: '두유·프로틴바 제외' });
   }
 
   return {
@@ -446,59 +445,35 @@ function recommendSubscription({ grade, bmi, age, lacks, goals, allergies }) {
 }
 
 // ──────────────────────────────────────────────
-// 관리 목표 — 프로필에서 고른 목표가 목표 칼로리와 단백질 목표를 정합니다
-//   lose     체중 감량   — BMI 체중 유형별 감량 폭(엑셀 Sheet3). 정상·저체중이면 −300 kcal
-//   maintain 체중 유지   — 기준 칼로리(EER) 그대로
-//   muscle   근육량 증가 — +250 kcal, 단백질 체중 1kg당 1.2–1.6 g
+// 권장 영양 섭취량 — EER + 체중 유형별 목표 칼로리 조정
+//   nutritionTargets(profile, overrideKcal) → { eer, bmi, bodyType, goal, targetKcal, targetWeight, ranges, weeklyDelta }
+//   profile.goal: loss(체중 감량) · maintain(유지) · gain(증량·근육량 증가) · 그 밖(auto) = 체중 유형에 맞춤
+//   overrideKcal: 사용자가 직접 고친 목표 칼로리 (없으면 계산값)
 // ──────────────────────────────────────────────
-const GOAL_TYPES = {
-  lose:     { name: '체중 감량' },
-  maintain: { name: '체중 유지' },
-  muscle:   { name: '근육량 증가' },
-};
-
-// 목표를 안 고른 예전 기록은 체중 유형으로 정합니다 (종전 동작과 같게)
-function goalTypeOf(profile) {
-  if (profile && GOAL_TYPES[profile.goalType]) return profile.goalType;
-  const bmi = profile.weight / ((profile.height / 100) ** 2);
-  return classifyBodyType(bmi).kcalAdj < 0 ? 'lose' : 'maintain';
-}
-
-// 목표 칼로리 → 영양소 목표 범위. 근육량 증가는 단백질 하한·상한을 체중 기준으로 올립니다
-function nutrientRangesFor(kcal, profile, goalType) {
-  const r = calculateNutrientStandards(kcal);
-  if (goalType === 'muscle' && profile && profile.weight > 0) {
-    r.protein = [Math.max(r.protein[0], profile.weight * 1.2), Math.max(r.protein[1], profile.weight * 1.6)];
-  }
-  return r;
-}
-
-// ──────────────────────────────────────────────
-// 권장 영양 섭취량 — EER + 관리 목표별 목표 칼로리 조정
-//   nutritionTargets(profile) → { eer, bmi, bodyType, goalType, targetKcal, targetWeight,
-//                                 standardWeight, ranges, weeklyDelta, weeksToGoal }
-// ──────────────────────────────────────────────
-function nutritionTargets(profile) {
+const GOAL_KCAL_ADJ = { loss: -500, maintain: 0, gain: 300 };
+function nutritionTargets(profile, overrideKcal) {
   const eer = calculateEER(profile);
   if (!eer) return null;
   const bmi = profile.weight / ((profile.height / 100) ** 2);
   const bodyType = classifyBodyType(bmi);
-  const goalType = goalTypeOf(profile);
-  let raw = 0;
-  if (goalType === 'lose')   raw = bodyType.kcalAdj < 0 ? bodyType.kcalAdj : -300;
-  if (goalType === 'muscle') raw = 250;
-  // 조정 폭은 EER 의 25% 이내로 제한 (과도한 제한 식단 방지)
+  const tw = profile.targetWeight > 0 ? profile.targetWeight : null;
+  // 목표를 안 골랐어도 목표 체중을 적었으면 그 방향을 따릅니다
+  const goal = GOAL_KCAL_ADJ[profile.goal] != null ? profile.goal
+    : tw == null ? 'auto'
+    : tw < profile.weight - 0.5 ? 'loss' : tw > profile.weight + 0.5 ? 'gain' : 'maintain';
+  const raw = goal === 'auto' ? bodyType.kcalAdj : GOAL_KCAL_ADJ[goal];
+  // 감량 폭은 EER 의 25% 이내로 제한 (과도한 제한 식단 방지)
   const adj = Math.sign(raw) * Math.min(Math.abs(raw), eer * 0.25);
-  const targetKcal = Math.round(eer + adj);
-  const standardWeight = Math.round(22 * ((profile.height / 100) ** 2) * 10) / 10;  // BMI 22 기준 표준 체중
-  const targetWeight = profile.targetWeight > 0 ? profile.targetWeight : standardWeight;
-  const weeklyDelta = Math.round(adj * 7 / 7700 * 100) / 100;                       // 체지방 1kg ≈ 7,700kcal
-  const gap = targetWeight - profile.weight;
-  const weeksToGoal = (weeklyDelta !== 0 && Math.sign(gap) === Math.sign(weeklyDelta))
-    ? Math.ceil(gap / weeklyDelta) : null;
+  const targetKcal = overrideKcal || Math.round(eer + adj);
+  const ranges = calculateNutrientStandards(targetKcal, profile);
+  // 근육량 증가가 목표면 단백질 하한을 체중 1 kg 당 1.2 g 으로 올립니다 (상한 20 %E 는 그대로)
+  if (goal === 'gain') ranges.protein[0] = Math.min(ranges.protein[1], Math.max(ranges.protein[0], profile.weight * 1.2));
   return {
-    eer, bmi, bodyType, goalType,
-    targetKcal, targetWeight, standardWeight, weeklyDelta, weeksToGoal,
-    ranges: nutrientRangesFor(targetKcal, profile, goalType),
+    eer, bmi, bodyType, goal,
+    targetKcal,
+    // 적은 목표 체중이 없으면 BMI 22 기준 표준 체중
+    targetWeight: tw || Math.round(22 * ((profile.height / 100) ** 2) * 10) / 10,
+    weeklyDelta: Math.round((targetKcal - eer) * 7 / 7700 * 100) / 100,     // 체지방 1kg ≈ 7,700kcal
+    ranges,
   };
 }

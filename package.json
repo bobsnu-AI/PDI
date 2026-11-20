@@ -4,8 +4,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:kg-standards": "python scripts/build-kg-standards.py",
     "build:static": "node scripts/build-static.mjs",
-    "test": "node scripts/test-mealplan.mjs",
+    "test": "node scripts/test-mealplan.mjs && node scripts/test-pipeline.mjs",
     "preview": "wrangler pages dev",
     "deploy": "npm run build && wrangler pages deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"

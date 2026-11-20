@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>밥스누 — 서울대학교 식의학유전체실</title>
+  <title>밥스누 — 서울대학교 정밀 식의약 연구실</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // ── 디자인 토큰 — NutriWell 레퍼런스(세이지 그린·따뜻한 오프화이트) ──
@@ -149,8 +149,9 @@
 <nav class="bg-white border-b" style="border-color:var(--line)">
   <div class="max-w-6xl mx-auto px-4">
     <div class="flex justify-between h-16 items-center gap-2">
-      <button onclick="goPage('home')" class="flex items-center flex-shrink-0" aria-label="밥스누 처음 화면">
+      <button onclick="goPage('home')" class="flex items-center gap-3 flex-shrink-0" aria-label="밥스누 처음 화면">
         <img src="static/img/bobsnu-logo.png" alt="BOBSNU 밥스누" class="h-8 sm:h-9 w-auto">
+        <span class="hidden md:block text-[11px] text-gray-400 leading-tight text-left">서울대학교<br>정밀 식의약 연구실</span>
       </button>
       <div class="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-sm">
         <button id="nav-home"   onclick="goPage('home')"   class="nav-btn">서비스 소개</button>
@@ -368,19 +369,20 @@
             class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
         </div>
         <div>
-          <label for="profile-goal" class="block text-sm font-medium text-gray-700 mb-2">목표 <span class="text-red-400">*</span></label>
-          <select id="profile-goal" onchange="onGoalTypeChange()" class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
-            <option value="lose">체중 감량</option>
+          <label for="profile-goal" class="block text-sm font-medium text-gray-700 mb-2">목표</label>
+          <select id="profile-goal" class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
+            <option value="auto">알아서 맞춰주세요</option>
+            <option value="loss">체중 감량</option>
             <option value="maintain">체중 유지</option>
-            <option value="muscle">근육량 증가</option>
+            <option value="gain">증량·근육량 증가</option>
           </select>
-          <p class="text-xs text-gray-400 mt-1">목표에 맞춰 하루 칼로리·단백질 목표가 달라져요</p>
+          <p class="text-xs text-gray-400 mt-1">목표에 따라 하루 칼로리가 달라져요</p>
         </div>
         <div>
-          <label for="profile-target-weight" class="block text-sm font-medium text-gray-700 mb-2">목표 체중 <span class="text-gray-400 font-normal">(kg)</span></label>
-          <input id="profile-target-weight" type="number" inputmode="decimal" min="30" max="300" step="0.1" placeholder="예: 58"
+          <label for="profile-target-weight" class="block text-sm font-medium text-gray-700 mb-2">목표 체중 <span class="text-gray-400 font-normal">(kg · 선택)</span></label>
+          <input id="profile-target-weight" type="number" inputmode="decimal" min="20" max="300" step="0.1" placeholder="예: 55"
                  class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
-          <p id="profile-target-hint" class="text-xs text-gray-400 mt-1">비워 두면 표준 체중(BMI 22)으로 잡아요</p>
+          <p class="text-xs text-gray-400 mt-1">비워두면 표준 체중을 기준으로 해요</p>
         </div>
         <div class="col-span-2">
           <label for="profile-activity" class="block text-sm font-medium text-gray-700 mb-2">활동량</label>
@@ -396,7 +398,7 @@
           <label for="profile-vig-min" class="block text-sm font-medium text-gray-700 mb-2">주당 고강도 운동</label>
           <input id="profile-vig-min" type="number" inputmode="numeric" min="0" max="2000" placeholder="분"
                  class="w-full py-3 px-4 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-800">
-          <p class="text-xs text-gray-400 mt-1">달리기·수영처럼 숨이 많이 찬 운동. 효과가 커서 운동량을 계산할 때 중강도의 2배로 쳐요 (30분 → 60분)</p>
+          <p class="text-xs text-gray-400 mt-1">달리기·수영처럼 숨이 많이 차는 운동</p>
         </div>
       </div>
 
@@ -459,7 +461,7 @@
 </section>
 </div>
 
-<!-- ══ 페이지: 나의 분석 ══ -->
+<!-- ══ 페이지: 맞춤 리포트 ══ -->
 <div id="page-result" class="page hidden">
 <section class="py-12 md:py-16 bg-gray-50">
   <div class="max-w-6xl mx-auto px-4">
@@ -467,10 +469,10 @@
       <h2 class="text-3xl mb-2">맞춤 리포트</h2>
     </div>
     <div class="grid lg:grid-cols-3 gap-5 md:gap-6 items-start">
-      <!-- 본문: ① 식단 점수·개선 제안 ② 일일 영양섭취 목표 ③ 30일 체중 관리 가이드 -->
+      <!-- 본문: ① 일일 영양섭취 목표 ② 개선 제안·식단 점수 -->
       <div class="lg:col-span-2 space-y-5">
-        <div id="diet-score-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
         <div id="target-section"     class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
+        <div id="diet-score-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
         <div id="guide30-section"    class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
       </div>
       <!-- 사이드: 제품 추천 받기 -->
@@ -508,7 +510,21 @@
     </div>
     <!-- 추천 구독 제품 상세 -->
     <div id="product-detail-section" class="space-y-5 mb-5"></div>
-    <div id="mealplan-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8 hidden"></div>
+    <div class="bg-white rounded-3xl p-5 sm:p-6 md:p-8 mb-5">
+      <h3 class="text-xl font-bold text-gray-900 mb-1">어디까지 받으시겠어요?</h3>
+      <p class="text-gray-500 text-sm mb-4">언제든 바꿀 수 있어요</p>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <button id="planmode-guide" onclick="setPlanMode('guide')" class="planmode text-left p-4 sm:p-5">
+          <div class="font-bold text-gray-900 text-sm mb-1">칼로리 가이드</div>
+          <div class="text-xs text-gray-500 leading-relaxed">하루 목표 칼로리를 끼니로 나누고, 제품을 어느 끼니에 드실지 알려드려요. 메뉴는 직접 고르세요</div>
+        </button>
+        <button id="planmode-plan" onclick="setPlanMode('plan')" class="planmode text-left p-4 sm:p-5">
+          <div class="font-bold text-gray-900 text-sm mb-1">30일 식단까지</div>
+          <div class="text-xs text-gray-500 leading-relaxed">위에 더해 30일 치 끼니 메뉴를 짜 드리고, 먹었는지 날마다 기록할 수 있어요</div>
+        </button>
+      </div>
+    </div>
+    <div id="mealplan-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
   </div>
 </section>
 </div>
@@ -534,7 +550,7 @@
   <div class="max-w-5xl mx-auto px-4">
     <div class="mb-8">
       <h2 class="text-3xl mb-2">기록</h2>
-      <p class="text-gray-500 text-sm">체중을 기록하면 목표 체중선과 비교해 보여드려요</p>
+      <p class="text-gray-500 text-sm">체중을 기록하면 목표 체중까지의 변화를 그래프로 보여드려요</p>
     </div>
     <div id="diary-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8 mb-5"></div>
     <div id="monitor-section" class="bg-white rounded-3xl p-5 sm:p-6 md:p-8"></div>
@@ -553,7 +569,7 @@
           </div>
           <span class="text-xl font-bold">밥스누</span>
         </div>
-        <p class="text-emerald-300 text-sm leading-relaxed">서울대학교 식의학유전체실 연구를 바탕으로 하루 목표 칼로리와 끼니 가이드를 알려드려요.</p>
+        <p class="text-emerald-300 text-sm leading-relaxed">서울대학교 정밀 식의약 연구실 연구를 바탕으로 하루 목표 칼로리와 끼니 가이드를 알려드려요.</p>
       </div>
       <div>
         <h4 class="font-bold mb-4">서비스</h4>
@@ -565,7 +581,7 @@
       </div>
     </div>
     <div class="border-t border-emerald-700 mt-8 pt-6 text-center text-emerald-400 text-xs">
-      <p>© 2026 밥스누 · 서울대학교 식의학유전체실. 본 서비스는 건강 정보 제공 목적이며 의학적 진단을 대체하지 않습니다.</p>
+      <p>© 2026 밥스누 · 서울대학교 정밀 식의약 연구실. 본 서비스는 건강 정보 제공 목적이며 의학적 진단을 대체하지 않습니다.</p>
       <p class="mt-1">건강기능식품 표시·광고 기준에 따라 일부 표현이 제한될 수 있습니다.</p>
     </div>
   </div>
@@ -582,5 +598,7 @@
 <script src="/static/foodparse.js"></script>
 <script src="/static/tracker.js"></script>
 <script src="/static/app.js"></script>
+<script src="/static/wellness-data.js"></script>
+<script src="/static/pipeline.js"></script>
 </body>
 </html>

@@ -107,12 +107,14 @@ function calculatePhytoScore(phytoMap, selectedGoals) {
 }
 
 // ── 관리 목표 ────────────────────────────────
-// 체중 관리가 핵심(항상 포함), 추가 건강 관리는 4가지만 선택 제공
+// 체중 관리가 핵심(항상 포함), 추가 건강 관리는 5가지만 선택 제공
 const HEALTH_GOALS = [
   { id: 'weight',      name: '체중 관리', icon: '⚖️', base: true, phytos: ['glucosinolates', 'catechins', 'phenolicAcids'],
     tip: '식사량보다 먹는 구성이 중요해요. 포만감은 {foods}에서 오니 이쪽을 늘리고 가공식품·단 음료를 줄이세요.' },
   { id: 'gut',         name: '장 건강',   icon: '🌿', phytos: ['phenolicAcids', 'saponins', 'gingerols'],
     tip: '식이섬유와 발효식품이 장에 좋아요. {foods} 중에서 매일 하나는 챙기세요.' },
+  { id: 'cvd',         name: '심혈관 건강', icon: '❤️', phytos: ['catechins', 'anthocyanins'],
+    tip: '짠 국물과 가공육을 줄이고 {foods}을 늘리세요. 나트륨은 하루 2,000 mg 아래가 좋아요.' },
   { id: 'blood_sugar', name: '혈당 관리', icon: '🩸', phytos: ['phenolicAcids', 'isoflavones', 'lignans'],
     tip: '흰쌀 대신 잡곡밥, 채소·단백질 반찬을 먼저 먹고 밥은 나중에 드세요.' },
   { id: 'bone',        name: '뼈 건강',   icon: '🦴', phytos: ['isoflavones', 'lignans', 'flavonols'],
@@ -315,8 +317,7 @@ function restoreProfileForm() {
   const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
   set('profile-age', p.age); set('profile-height', p.height); set('profile-weight', p.weight);
   set('profile-activity', p.activity);
-  set('profile-goal', goalTypeOf(p));
-  set('profile-target-weight', p.targetWeight);
+  set('profile-goal', p.goal); set('profile-target-weight', p.targetWeight);
   set('profile-mod-min', p.modMin); set('profile-vig-min', p.vigMin);
   selectedAllergies.clear();
   for (const a of (p.allergies || [])) selectedAllergies.add(a);
@@ -329,9 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
   trackerLoad();
   // 선택지를 먼저 만들어야 저장된 값이 복원된다
   renderActivityOptions();
-  renderWaistOptions();
   restoreProfileForm();
-  onGoalTypeChange();
   renderAllergyChips();
   setGender(gender);
   renderSurvey();
@@ -394,23 +393,7 @@ function setGender(g) {
 }
 
 // ══════════════════════════════════════════════
-// PROFILE  (성별·나이·키·체중·허리둘레·활동량·알레르기 → 기준 칼로리)
-// 허리둘레는 평소 입는 바지 사이즈(인치)로 받아 cm 로 환산한다 — 줄자가 없어도 답할 수 있게
-//   1 인치 = 2.54 cm. 복부비만 기준(남 90 cm·여 85 cm)은 약 35.4 인치·33.5 인치에 해당
-function waistCmFromInch(inch) {
-  // 안 고른 경우는 반드시 null — undefined 면 validateProfile 의 범위 검사에 걸립니다
-  return inch > 0 ? Math.round(inch * 2.54 * 10) / 10 : null;
-}
-// ══════════════════════════════════════════════
-function renderWaistOptions() {
-  const sel = document.getElementById('profile-waist');
-  if (!sel) return;
-  // 국내 바지 사이즈 범위. 복부비만 기준은 남 35인치·여 34인치 부근
-  let html = '<option value="">모르겠어요</option>';
-  for (let inch = 24; inch <= 44; inch++) html += '<option value="' + inch + '">' + inch + '인치</option>';
-  sel.innerHTML = html;
-}
-
+// PROFILE  (성별·나이·키·체중·목표·활동량·알레르기 → 기준 칼로리)
 function renderActivityOptions() {
   const sel = document.getElementById('profile-activity');
   if (!sel) return;
@@ -439,23 +422,16 @@ function toggleAllergy(id) {
 
 // 입력값 읽기 — 빈 칸은 null
 function readProfile() {
-  // 화면에 없는 칸(예전 허리둘레 칸 등)은 빈 칸으로 봅니다
   const num = id => {
-    const el = document.getElementById(id);
-    const v = el ? String(el.value).trim() : '';
+    const v = document.getElementById(id).value.trim();
     return v === '' ? null : Number(v);
   };
-  const goalEl = document.getElementById('profile-goal');
   return {
     gender,
     age:        num('profile-age'),
     height:     num('profile-height'),
     weight:     num('profile-weight'),
-    // 줄자로 잰 값이 있으면 그걸 씁니다. 바지 사이즈는 실제 허리둘레보다
-    // 작게 잡혀서, 복부비만을 놓치고 암 예방 점수가 후하게 나옵니다.
-    waist:      num('profile-waist-cm') || waistCmFromInch(num('profile-waist')),
-    waistMeasured: num('profile-waist-cm') != null,
-    goalType:   goalEl && GOAL_TYPES[goalEl.value] ? goalEl.value : null,
+    goal:       document.getElementById('profile-goal').value || 'auto',
     targetWeight: num('profile-target-weight'),
     activity:   document.getElementById('profile-activity').value,
     modMin:     num('profile-mod-min'),
@@ -477,43 +453,27 @@ function weeklyMvpaMin(p) {
 function validateProfile(p) {
   const fields = [
     ['age', '나이', 3, 120, true], ['height', '키', 80, 230, true], ['weight', '체중', 10, 300, true],
-    ['waist', '허리둘레', 40, 200, false],
   ];
   const missing = fields.filter(f => f[4] && p[f[0]] === null).map(f => f[1]);
   if (missing.length) return '필수 항목(' + missing.join('·') + ')을 입력해주세요. 기준 칼로리 계산에 필요해요.';
   for (const [k, label, min, max] of fields) {
-    if (p[k] != null && !(p[k] >= min && p[k] <= max)) {
+    if (p[k] !== null && !(p[k] >= min && p[k] <= max)) {
       return label + '은(는) ' + min + '–' + max + ' 범위로 입력해주세요.';
     }
   }
-  return validateTargetWeight(p);
-}
-
-// 목표 체중이 목표와 맞는지 — 감량인데 더 무겁게, 증량인데 더 가볍게 적은 경우를 막습니다
-function validateTargetWeight(p) {
-  const tw = p.targetWeight;
-  if (tw == null) return null;
-  if (!(tw >= 30 && tw <= 300)) return '목표 체중은 30–300 kg 범위로 입력해주세요.';
-  if (!(p.height > 0 && p.weight > 0)) return null;
-  const bmi = tw / ((p.height / 100) ** 2);
-  if (bmi < 18.5) {
-    const min = Math.ceil(18.5 * (p.height / 100) ** 2 * 10) / 10;
-    return '목표 체중이 너무 낮아요. 키 ' + p.height + 'cm 에서는 ' + min + ' kg 이상(BMI 18.5)으로 잡아주세요.';
+  // 목표와 목표 체중이 서로 맞는지 (성인만 — BMI 18.5 기준은 19세 이상에 씁니다)
+  const h2 = (p.height / 100) ** 2, tw = p.targetWeight;
+  if (tw != null && !(tw >= 20 && tw <= 300)) return '목표 체중은 20–300 범위로 입력해주세요.';
+  if (p.goal === 'loss' && tw != null && tw >= p.weight) return '감량이 목표인데 목표 체중이 지금 체중보다 낮지 않아요. 목표 체중을 다시 확인해주세요.';
+  if (p.goal === 'gain' && tw != null && tw <= p.weight) return '증량이 목표인데 목표 체중이 지금 체중보다 높지 않아요. 목표 체중을 다시 확인해주세요.';
+  if (p.age >= 19) {
+    if (tw != null && tw / h2 < 18.5) return '목표 체중이 저체중 범위예요. ' + Math.ceil(18.5 * h2) + ' kg 이상으로 입력해주세요.';
+    if (p.goal === 'loss' && p.weight / h2 < 18.5) return '지금 체중이 저체중 범위라 감량 목표는 권하지 않아요. 유지나 증량을 골라주세요.';
   }
-  if (p.goalType === 'lose' && tw >= p.weight) return '체중 감량이 목표라면 목표 체중을 지금 체중(' + p.weight + ' kg)보다 낮게 적어주세요.';
-  if (p.goalType === 'muscle' && tw < p.weight) return '근육량 증가가 목표라면 목표 체중을 지금 체중 이상으로 적거나 비워 두세요.';
   return null;
 }
 
-// 목표를 바꾸면 목표 체중 칸의 안내를 맞춥니다
-function onGoalTypeChange() {
-  const g = (document.getElementById('profile-goal') || {}).value;
-  const hint = document.getElementById('profile-target-hint');
-  if (hint) hint.textContent = g === 'lose' ? '비워 두면 표준 체중(BMI 22)으로 잡아요'
-    : (g === 'muscle' ? '근육을 늘리면 체중이 조금 늘 수 있어요 · 비워 둬도 돼요' : '지금 체중을 유지해요 · 비워 둬도 돼요');
-}
-
-// BMI 체중 유형 (products.js BODY_TYPES · 엑셀 Sheet3 기준) · 복부비만 (남 90cm, 여 85cm 이상)
+// BMI 체중 유형 (products.js BODY_TYPES · 엑셀 Sheet3 기준)
 function bodyIndices(p) {
   const out = {};
   if (p.height > 0 && p.weight > 0) {
@@ -521,30 +481,16 @@ function bodyIndices(p) {
     out.bodyType = classifyBodyType(out.bmi);
     out.bmiLabel = out.bodyType.name;
   }
-  if (p.waist > 0) out.abdominal = p.waist >= (p.gender === 'male' ? 90 : 85);
   return out;
 }
 
 // ── 목표 칼로리·영양 기준 (체중 유형 반영 + 모니터링 재조정 반영) ──
 function currentTargets() {
   const p = (tracker && tracker.profile) ? tracker.profile : readProfile();
-  const t = nutritionTargets(p);
+  const t = nutritionTargets(p, tracker && tracker.targetKcalOverride);
   if (!t) return null;
-  if (tracker && tracker.targetKcalOverride) {
-    t.targetKcal = tracker.targetKcalOverride;
-    t.weeklyDelta = Math.round((t.targetKcal - t.eer) * 7 / 7700 * 100) / 100;
-    t.ranges = nutrientRangesFor(t.targetKcal, p, t.goalType);
-  }
-  // 사용자가 고친 탄단지 목표 — 기록 화면의 막대도 이 값(±10%)을 기준으로 봅니다
-  if (tracker && tracker.customMacros) {
-    t.custom = { ...tracker.customMacros };
-    t.recommended = { carb: t.ranges.carb, protein: t.ranges.protein, fat: t.ranges.fat };
-    for (const k of ['carb', 'protein', 'fat']) {
-      const v = t.custom[k];
-      if (v > 0) t.ranges = { ...t.ranges, [k]: [v * 0.9, v * 1.1] };
-    }
-  }
-  return t;
+  // 질환 위험도 조정 (deficit_based 모드 + 조정 규칙이 있을 때만)
+  return typeof wellnessAdjustTargets === 'function' ? wellnessAdjustTargets(t) : t;
 }
 
 function submitProfile() {
@@ -861,21 +807,11 @@ function buildSurveyDiet(ans) {
 }
 
 // ══════════════════════════════════════════════
-// PDI ENGINE  (McCarty 2004 방법론 준수)
-// ──────────────────────────────────────────────
-// PDI = PRF 식품군에서 온 kcal / 총 kcal × 100
-//
-// PRF(Phytochemical-Rich Foods) 판정 기준:
-//   통곡물 / 두류·콩가공품 / 채소·해조 / 과일 /
-//   견과·종실 / 식물성 오일 / 차·커피·코코아
-//   → INGREDIENTS[x].prf === true 로 코드화
-//
-// ※ 차류(tea)는 실제 kcal이 거의 0이므로
-//   McCarty 원 공식 그대로 실제 kcal만 산입
-//   (별도 보정값 없음)
-//
+// 식단 분해 (식재료·식품군 kcal·파이토케미컬 합계)
+//   PDI 점수는 더 이상 계산하지 않습니다 — 식단 평가는 식단 지수(patterns.js)로 합니다.
+//   함수 이름은 호출부가 많아 그대로 둡니다
 function calculatePDI(meals) {
-  let totalCalories = 0, prfCalories = 0;
+  let totalCalories = 0;
   const categoryMap = {};
   const phytoMap    = {};
   const allIngredients = [];
@@ -898,13 +834,6 @@ function calculatePDI(meals) {
       categoryMap[ing.cat].calories += ing.kcal;
       categoryMap[ing.cat].ingredients.push(ing.name);
 
-      // ── McCarty PDI: PRF 식품군 kcal 그대로 산입 ──
-      // tea(차류)는 실제 kcal(≈0)을 그대로 사용
-      // — 별도 보정 없음, 공식 그대로
-      if (ing.prf) {
-        prfCalories += ing.kcal;
-      }
-
       // ── 파이토케미컬 계열별 mg 합산 ──
       // phytos는 { key: mg_per_100g } 오브젝트
       const phytoObj = (typeof ing.phytos === 'object' && !Array.isArray(ing.phytos))
@@ -922,11 +851,8 @@ function calculatePDI(meals) {
     categoryMap[k].ingredients = [...new Set(categoryMap[k].ingredients)];
   }
 
-  // ── PDI 점수 (McCarty 2004 공식) ──
-  const pdiScore = totalCalories > 0 ? (prfCalories / totalCalories) * 100 : 0;
-
   return {
-    pdiScore, prfCalories, totalCalories,
+    totalCalories,
     categoryMap, phytoMap, allIngredients,
   };
 }
@@ -960,8 +886,7 @@ function calculateAndShow(silent) {
   // 설문 응답도 저장 — 다시 방문하면 결과 화면부터 열어주기 위해
   tracker.survey = isSurveyComplete() ? { ...surveyAnswers } : null;
   if (!tracker.weights.length) tracker.weights.push({ date: isoToday(), kg: profile.weight });
-  tracker.targetKcalOverride = null;
-  tracker.customMacros = null;
+  if (!silent) tracker.targetKcalOverride = null;   // 다시 진단하면 직접 고친 목표 칼로리는 지웁니다
   trackerSave();
   pdiResult.targets = currentTargets();
 
@@ -978,7 +903,7 @@ function buildMealPlan(force) {
   const el = document.getElementById('mealplan-section');
   const cart = subCartToQuoteInput();
   // 체중은 키에 넣지 않음 — 매번 체중을 기록할 때마다 식단이 낡은 것으로 표시되지 않게
-  const cartKey = JSON.stringify(cart) + '|' + r.targets.targetKcal;
+  const cartKey = planKeyNow();
   // 버튼을 누르지 않았으면 최적화를 돌리지 않는다 — 저장된 식단이 맞으면 보여주고, 아니면 안내 화면
   if (!force) { renderMealPlan(); renderMonitor(); return; }
 
@@ -988,9 +913,12 @@ function buildMealPlan(force) {
 
   // 렌더 프레임을 양보한 뒤 최적화 (버튼 클릭이 멈춘 것처럼 보이지 않게)
   setTimeout(() => {
+    // 관리 목표·질환 등급 → 식단 지수 가중치와 PFS 기준치
+    const scored = scoreDietPatterns(r.meals, r.servings, r.profile.gender, r.profile);
     const plan = generateMealPlan({
       profile: tracker.profile, targets: r.targets, cart,
       days: 30, allergies: r.profile.allergies,
+      goals: tracker.goals, grades: scored.insufficient ? [] : diseaseGrades(scored),
     });
     if (plan.error) {
       if (el) el.innerHTML = '<p class="text-sm text-red-600">식단 생성 실패: ' + plan.error + '</p>';
@@ -1025,6 +953,7 @@ function requestMealPlan() {
 }
 
 // 명시적 재생성만 이행 기록을 초기화한다
+// (목표 칼로리만 고치면 지금까지의 기록·체중 추이는 유지)
 function regenerateMealPlan() {
   tracker.startDate = isoToday();
   tracker.log = {};
@@ -1039,8 +968,23 @@ function planFresh() {
 // 구독 구성·목표가 바뀌어 저장된 식단이 최신이 아닌지
 function planStale() {
   if (!tracker.plan || !pdiResult || !subCart) return false;
-  const key = JSON.stringify(subCartToQuoteInput()) + '|' + pdiResult.targets.targetKcal;
-  return tracker.planKey !== key;
+  return tracker.planKey !== planKeyNow();
+}
+
+// 식단을 만든 조건 — 구독 구성·목표 열량·관리 목표. 하나라도 바뀌면 다시 추천받게 합니다
+function planKeyNow() {
+  return JSON.stringify(subCartToQuoteInput()) + '|' + pdiResult.targets.targetKcal + '|' + (tracker.goals || []).join();
+}
+
+// 목표 칼로리를 적용하고 결과 화면을 새 목표로 다시 그립니다
+//   rebuild: 체중 추세 제안을 적용할 때 — 받아 둔 30일 식단도 새 목표로 다시 최적화 (실천 기록은 유지)
+function applyRetarget(newTargetKcal, rebuild) {
+  tracker.targetKcalOverride = newTargetKcal;   // null 이면 자동 계산으로 되돌립니다
+  trackerSave();
+  if (!pdiResult) return;
+  pdiResult.targets = currentTargets();
+  displayResults();
+  if (rebuild && planMode() === 'plan' && tracker.plan) buildMealPlan(true);
 }
 
 // 통곡물 kcal 비율, 채소·과일 섭취량(g) — 주의사항 판단용
@@ -1070,8 +1014,8 @@ function foodGroupIntake(meals) {
 function displayResults() {
   const r = pdiResult;
 
-  renderDietScore(r.meals, r.servings, r.profile.gender, r.profile); // ① 식단 점수 · 개선 제안
-  renderTargets(r);        // ② 일일 영양섭취 목표 (수정 가능)
+  renderTargets(r);        // ① 목표 칼로리 · 영양소 목표치
+  renderDietScore(r.meals, r.servings, r.profile.gender, r.profile); // ② 개선 제안 · 식단 점수
 
   renderSubscription(r);
   renderSidePick(r);
@@ -1081,197 +1025,76 @@ function displayResults() {
   renderMonitor();
 }
 
-// ── ② 일일 영양섭취 목표 ─────────────────────
-//  목표 칼로리와 탄단지는 사용자가 고칠 수 있습니다. 권장 범위를 벗어나면 경고를 보여주되
-//  저장은 막지 않습니다 (의사·영양사가 정해 준 값이 따로 있는 사람도 있습니다).
-let targetEditing = false;
+// ── ① 일일 영양섭취 목표 ─────────────────────
+const GOAL_LABEL = { loss: '체중 감량', maintain: '체중 유지', gain: '증량·근육량 증가' };
 
-const MACRO_DEFS = [
-  ['carb',    '탄수화물', '열량의 55–65%', 4],
-  ['protein', '단백질',   '열량의 7–20%',  4],
-  ['fat',     '지방',     '열량의 15–30%', 9],
-];
-
-// 권장 범위 — 사용자가 고치기 전의 값
-function recommendedTargets() {
-  const p = tracker.profile;
-  const base = nutritionTargets(p);
-  const kcal = tracker.targetKcalOverride || base.targetKcal;
-  const ranges = nutrientRangesFor(kcal, p, base.goalType);
-  return { base, kcal, ranges, floor: Math.max(1200, Math.round(base.eer * 0.7)), ceil: Math.round(base.eer * 1.3) };
+// 직접 고칠 수 있는 목표 칼로리 범위 — 기준 칼로리의 70–120 %, 아래로는 1,200 kcal 까지
+// (tracker.js retargetSuggestion 의 하한·상한과 같은 선입니다)
+function targetKcalBounds(eer) {
+  return [Math.min(eer, Math.max(1200, Math.round(eer * 0.7))), Math.round(eer * 1.2)];
 }
 
-// 입력값 → 경고 목록 (빈 배열이면 문제 없음)
-function targetWarnings(v) {
-  const rec = recommendedTargets();
-  const w = [];
-  const kcalNow = v.kcal;
-  if (kcalNow < rec.floor) w.push('목표 칼로리가 너무 낮아요. 하루 ' + rec.floor.toLocaleString() + ' kcal 아래로 내리면 근육이 빠지고 영양이 모자랄 수 있어요.');
-  if (kcalNow > rec.ceil) w.push('목표 칼로리가 기준(' + rec.base.eer.toLocaleString() + ' kcal)보다 많이 높아요. 체중이 늘 수 있어요.');
-  const ranges = calculateNutrientStandards(kcalNow);
-  const pr = nutrientRangesFor(kcalNow, tracker.profile, rec.base.goalType);
-  const bounds = { carb: ranges.carb, protein: pr.protein, fat: ranges.fat };
-  for (const [k, name] of MACRO_DEFS) {
-    const val = v[k], [lo, hi] = bounds[k];
-    if (val < lo * 0.95) w.push(name + ' ' + val + ' g 은 권장(' + Math.round(lo) + '–' + Math.round(hi) + ' g)보다 적어요.');
-    if (val > hi * 1.05) w.push(name + ' ' + val + ' g 은 권장(' + Math.round(lo) + '–' + Math.round(hi) + ' g)보다 많아요.');
+function setTargetKcal() {
+  const v = Math.round(Number(document.getElementById('target-kcal-input').value));
+  const [lo, hi] = targetKcalBounds(pdiResult.targets.eer);
+  if (!(v >= lo && v <= hi)) {
+    document.getElementById('target-kcal-msg').textContent =
+      lo.toLocaleString() + '–' + hi.toLocaleString() + ' kcal 사이로 입력해주세요. '
+      + '기준 칼로리(' + pdiResult.targets.eer.toLocaleString() + ' kcal)에서 너무 멀면 건강에 무리가 갈 수 있어요.';
+    return;
   }
-  const sum = v.carb * 4 + v.protein * 4 + v.fat * 9;
-  if (Math.abs(sum - kcalNow) > kcalNow * 0.1) {
-    w.push('탄수화물·단백질·지방을 합하면 ' + Math.round(sum).toLocaleString() + ' kcal 예요. 목표 칼로리(' + kcalNow.toLocaleString() + ' kcal)와 10% 넘게 차이 나요.');
-  }
-  return w;
-}
-
-// 화면에 보여줄 값 — 고친 값이 있으면 그 값, 없으면 권장 범위의 가운데
-function shownTargets(t) {
-  const out = { kcal: t.targetKcal };
-  for (const [k] of MACRO_DEFS) {
-    out[k] = t.custom && t.custom[k] > 0 ? t.custom[k] : Math.round((t.ranges[k][0] + t.ranges[k][1]) / 2);
-  }
-  return out;
+  applyRetarget(v);
 }
 
 function renderTargets(r) {
   const el = document.getElementById('target-section');
   if (!el) return;
-  const t = r.targets, rg = t.ranges, rec = t.recommended || t.ranges;
-  const goalName = (GOAL_TYPES[t.goalType] || GOAL_TYPES.maintain).name;
-  const v = shownTargets(t);
-  const edited = !!(tracker.targetKcalOverride || tracker.customMacros);
-  const warns = edited ? targetWarnings(v) : [];
+  const t = r.targets, rg = t.ranges;
+  const diff = t.targetKcal - t.eer;
+  const edited = !!tracker.targetKcalOverride;
+  const [lo, hi] = targetKcalBounds(t.eer);
+
+  const macro = (name, value, note) =>
+    '<div class="bg-gray-50 rounded-2xl p-4"><div class="text-xs font-bold text-gray-500 mb-1">' + name + '</div>'
+    + '<div class="text-lg font-bold text-gray-900">' + value + '</div>'
+    + '<div class="text-xs text-gray-400 mt-0.5">' + note + '</div></div>';
   const limit = (name, value) =>
     '<div class="bg-gray-50 rounded-xl px-3 py-2"><div class="text-xs text-gray-500">' + name + '</div>'
     + '<div class="text-sm font-bold text-gray-800">' + value + '</div></div>';
-  const goalLine = goalName + ' · 목표 체중 ' + t.targetWeight + ' kg'
-    + (t.weeksToGoal ? ' · 약 ' + t.weeksToGoal + '주' : '');
 
-  const head = '<div class="flex items-start justify-between gap-3 mb-5">'
-    + '<div><h3 class="text-xl font-bold text-gray-900">일일 영양섭취 목표</h3>'
-    + '<p class="text-sm text-gray-500 mt-1">' + goalLine + '</p></div>'
-    + (targetEditing ? '' : '<button type="button" onclick="startTargetEdit()" class="flex-shrink-0 text-sm font-semibold px-4 py-2 border-2 border-emerald-700 text-emerald-700">목표치 수정</button>')
-    + '</div>';
+  el.innerHTML =
+    '<h3 class="text-xl font-bold text-gray-900 mb-5">일일 영양섭취 목표</h3>'
 
-  if (targetEditing) {
-    const field = (id, label, val, unit, note) =>
-      '<label class="block"><span class="block text-sm font-bold text-gray-700 mb-1">' + label + '</span>'
-      + '<div class="flex items-center gap-2"><input id="tgt-' + id + '" type="number" inputmode="numeric" value="' + val + '"'
-      + ' oninput="' + (id === 'kcal' ? 'onTargetKcalInput()' : 'this.dataset.touched=1;previewTargetEdit()') + '"'
-      + ' class="w-full py-2.5 px-3 rounded-xl border-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-900 font-bold">'
-      + '<span class="text-sm text-gray-500 flex-shrink-0">' + unit + '</span></div>'
-      + '<span class="block text-xs text-gray-400 mt-1">' + note + '</span></label>';
-    el.innerHTML = head
-      + '<div class="grid sm:grid-cols-2 gap-4">'
-      + field('kcal', '목표 칼로리', v.kcal, 'kcal', '기준 ' + t.eer.toLocaleString() + ' kcal')
-      + MACRO_DEFS.map(([k, name, note]) => field(k, name, v[k], 'g',
-          '권장 ' + Math.round(rec[k][0]) + '–' + Math.round(rec[k][1]) + ' g · ' + note)).join('')
-      + '</div>'
-      + '<div id="tgt-warn" class="mt-4"></div>'
-      + '<div class="flex flex-wrap gap-2 justify-end mt-5">'
-      + '<button type="button" onclick="resetTargetEdit()" class="text-sm text-gray-500 underline px-2">권장값으로 되돌리기</button>'
-      + '<button type="button" onclick="cancelTargetEdit()" class="text-sm font-semibold px-5 py-2.5 border-2 border-gray-300 text-gray-700">취소</button>'
-      + '<button type="button" onclick="saveTargetEdit()" class="text-sm font-bold px-6 py-2.5 bg-emerald-700 text-white">저장</button>'
-      + '</div>';
-    previewTargetEdit();
-    return;
-  }
+    + '<div class="bg-emerald-50 rounded-2xl p-4 mb-6">'
+    + '<div class="flex flex-wrap items-end justify-between gap-3">'
+    + '<div class="min-w-0"><div class="text-xs font-bold text-emerald-700 mb-1">목표 칼로리 · '
+    + (edited ? '직접 입력' : (GOAL_LABEL[t.goal] || '체중 유형(' + t.bodyType.name + ')에 맞춤')) + '</div>'
+    + '<div class="text-2xl font-black text-emerald-900 leading-tight">' + t.targetKcal.toLocaleString()
+    + '<span class="text-sm font-medium"> kcal/일</span></div>'
+    + '<div class="text-xs text-emerald-700 mt-1">체중이 유지되는 기준 칼로리 ' + t.eer.toLocaleString() + ' kcal'
+    + (diff ? '에서 ' + (diff > 0 ? '+' : '−') + Math.abs(diff).toLocaleString() : '와 같아요') + '</div></div>'
+    + '<div class="flex items-center gap-2">'
+    + '<input id="target-kcal-input" type="number" inputmode="numeric" step="10" min="' + lo + '" max="' + hi + '" value="' + t.targetKcal + '" '
+    + 'aria-label="목표 칼로리 직접 입력" class="w-24 py-2 px-3 rounded-xl border-2 border-emerald-200 bg-white text-sm text-gray-800 outline-none focus:border-emerald-500">'
+    + '<button type="button" onclick="setTargetKcal()" class="px-4 py-2 rounded-xl bg-emerald-700 text-white text-sm font-bold">수정</button>'
+    + (edited ? '<button type="button" onclick="applyRetarget(null)" class="text-xs underline text-emerald-800">자동 계산으로</button>' : '')
+    + '</div></div>'
+    + '<div id="target-kcal-msg" class="text-xs text-red-600 mt-2" role="alert"></div>'
+    + '</div>'
 
-  el.innerHTML = head
-    + '<div class="bg-emerald-50 rounded-2xl p-5 mb-4 flex flex-wrap items-baseline justify-between gap-2">'
-    + '<div><div class="text-xs font-bold text-emerald-700 mb-1">목표 칼로리' + (tracker.targetKcalOverride ? ' · 직접 정함' : '') + '</div>'
-    + '<div class="text-3xl font-black text-emerald-900 leading-tight">' + v.kcal.toLocaleString()
-    + '<span class="text-base font-medium"> kcal/일</span></div></div>'
-    + '<div class="text-xs text-emerald-700">기준 ' + t.eer.toLocaleString() + ' kcal에서 '
-    + (v.kcal - t.eer >= 0 ? '+' : '') + (v.kcal - t.eer).toLocaleString() + '</div></div>'
-
-    + '<div class="text-sm font-bold text-gray-800 mb-2">영양소 목표치' + (tracker.customMacros ? ' <span class="text-xs font-normal text-gray-400">· 직접 정함</span>' : '') + '</div>'
+    + '<div class="text-sm font-bold text-gray-800 mb-2">영양소 목표치</div>'
     + '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">'
-    + MACRO_DEFS.map(([k, name, note]) =>
-        '<div class="bg-gray-50 rounded-2xl p-4"><div class="text-xs font-bold text-gray-500 mb-1">' + name + '</div>'
-        + '<div class="text-lg font-bold text-gray-900">' + v[k] + ' g</div>'
-        + '<div class="text-xs text-gray-400 mt-0.5">권장 ' + Math.round(rec[k][0]) + '–' + Math.round(rec[k][1]) + ' g · ' + note + '</div></div>').join('')
+    + macro('탄수화물', Math.round(rg.carb[0]) + '–' + Math.round(rg.carb[1]) + ' g', '열량의 50–65%')
+    + macro('단백질',   Math.round(rg.protein[0]) + '–' + Math.round(rg.protein[1]) + ' g',
+            t.goal === 'gain' ? '체중 1 kg당 1.2 g 이상 · 열량의 20%까지' : '열량의 10–20%')
+    + macro('지방',     Math.round(rg.fat[0]) + '–' + Math.round(rg.fat[1]) + ' g', '열량의 15–30%')
     + '</div>'
     + '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">'
     + limit('식이섬유', Math.round(rg.fiber) + ' g 이상')
     + limit('당류', Math.round(rg.sugar) + ' g 미만')
     + limit('포화지방', Math.round(rg.satfat) + ' g 미만')
     + limit('나트륨', rg.sodium.toLocaleString() + ' mg 미만')
-    + '</div>'
-    + (warns.length ? '<div class="mt-4">' + targetWarnHtml(warns) + '</div>' : '');
-}
-
-function targetWarnHtml(warns) {
-  return '<div class="rounded-xl p-4 text-sm" style="background:#FEF3E2;color:#8A4B08">'
-    + '<div class="font-bold mb-1">⚠ 확인해 주세요</div>'
-    + '<ul class="space-y-1">' + warns.map(x => '<li>· ' + x + '</li>').join('') + '</ul></div>';
-}
-
-function readTargetEdit() {
-  const n = id => Math.round(Number((document.getElementById('tgt-' + id) || {}).value));
-  return { kcal: n('kcal'), carb: n('carb'), protein: n('protein'), fat: n('fat') };
-}
-
-function previewTargetEdit() {
-  const box = document.getElementById('tgt-warn');
-  if (!box) return;
-  const v = readTargetEdit();
-  if (![v.kcal, v.carb, v.protein, v.fat].every(x => x > 0)) {
-    box.innerHTML = targetWarnHtml(['모든 칸에 0보다 큰 숫자를 넣어주세요.']);
-    return;
-  }
-  const w = targetWarnings(v);
-  box.innerHTML = w.length ? targetWarnHtml(w)
-    : '<div class="rounded-xl p-3 text-sm" style="background:var(--tint);color:var(--deep)">권장 범위 안이에요.</div>';
-}
-
-// 칼로리를 바꾸면, 아직 손대지 않은 탄단지 칸을 새 칼로리의 권장 가운데 값으로 맞춥니다
-function onTargetKcalInput() {
-  const kcal = Number((document.getElementById('tgt-kcal') || {}).value);
-  if (kcal >= 800 && kcal <= 5000) {
-    const r = nutrientRangesFor(kcal, tracker.profile, goalTypeOf(tracker.profile));
-    for (const [k] of MACRO_DEFS) {
-      const inp = document.getElementById('tgt-' + k);
-      if (inp && !inp.dataset.touched) inp.value = Math.round((r[k][0] + r[k][1]) / 2);
-    }
-  }
-  previewTargetEdit();
-}
-
-function startTargetEdit() { targetEditing = true; renderTargets(pdiResult); }
-function cancelTargetEdit() { targetEditing = false; renderTargets(pdiResult); }
-
-function resetTargetEdit() {
-  tracker.targetKcalOverride = null;
-  tracker.customMacros = null;
-  trackerSave();
-  targetEditing = false;
-  onTargetsChanged();
-}
-
-function saveTargetEdit() {
-  const v = readTargetEdit();
-  if (!(v.kcal >= 800 && v.kcal <= 5000) || ![v.carb, v.protein, v.fat].every(x => x > 0 && x < 1000)) {
-    previewTargetEdit();
-    const box = document.getElementById('tgt-warn');
-    if (box) box.innerHTML = targetWarnHtml(['목표 칼로리는 800–5,000 kcal, 영양소는 1–999 g 사이로 넣어주세요.']);
-    return;
-  }
-  const base = nutritionTargets(tracker.profile);
-  tracker.targetKcalOverride = v.kcal === base.targetKcal ? null : v.kcal;
-  tracker.customMacros = { carb: v.carb, protein: v.protein, fat: v.fat };
-  trackerSave();
-  targetEditing = false;
-  onTargetsChanged();
-}
-
-// 목표가 바뀌면 목표를 쓰는 화면을 모두 다시 그립니다
-function onTargetsChanged() {
-  if (!pdiResult) return;
-  pdiResult.targets = currentTargets();
-  renderTargets(pdiResult);
-  renderMealPlan();
-  renderDiary();
-  renderMonitor();
+    + '</div>';
 }
 
 // ── 사이드의 「제품 추천 받기」 요약 ───────────
@@ -1337,7 +1160,11 @@ function initSubCart(r) {
     bmi: r.body.bmi, age: r.profile.age,
     lacks, goals: selectedGoals, allergies: r.profile.allergies,
   });
-  const c = subRecommendation.cart;
+  // deficit_based 모드면 부족분 기반 선정 결과로 구성을 바꾼다 (legacy 는 null → 기존 그대로)
+  // ponytail: 화면 장바구니는 두유 1종만 담는 구조라 두유가 2종 선정되면 첫 번째로 합쳐짐
+  const wl = typeof wellnessRecommend === 'function' ? wellnessRecommend(r, scored) : null;
+  if (wl) subRecommendation.wellness = wl;
+  const c = wl ? wl.cart : subRecommendation.cart;
   subCart = {
     soymilkCode: c.soymilk.length ? c.soymilk[0] : 'A',
     soymilk: c.soymilk.length,
@@ -1475,6 +1302,8 @@ function renderProductDetail(r) {
     : '';
 }
 
+
+
 // ── 구독 구성 한 줄 ──────────────────────────
 // 제품명 · 수량 · 그 줄의 금액을 한 줄에 둡니다.
 // 종전에는 왼쪽 카드에 제품, 오른쪽 카드에 같은 제품의 금액을 또 적어 두 번 읽어야 했습니다.
@@ -1502,6 +1331,7 @@ function renderSubscription(r) {
   if (!el) return;
   if (!subCart) initSubCart(r);
 
+  const rec = subRecommendation;
   const allergySet = r.profile.allergies;
   const blocked = p => catalogAllergyHits(p || {}, allergySet).length > 0;
   const soymilks = BOBSNU_CATALOG.filter(p => p.kind === 'soymilk' && !blocked(p));
@@ -1567,7 +1397,11 @@ function renderSubscription(r) {
 
   const dd = deliveryDay();
   el.innerHTML =
-    '<div class="grid lg:grid-cols-2 gap-5 lg:gap-8 items-start">'
+    ''
+    // 부족분 기반 모드: 목표 성분·부족분·제품이 채우는 양 (legacy 는 빈 문자열)
+    + (rec.wellness && typeof wellnessWhyHtml === 'function' ? wellnessWhyHtml(rec.wellness) : '')
+
+    + '<div class="grid lg:grid-cols-2 gap-5 lg:gap-8 items-start">'
 
     // 왼쪽: 언제·무엇을 받는지
     + '<div class="min-w-0">'
@@ -1581,9 +1415,11 @@ function renderSubscription(r) {
     + '<div class="text-sm font-bold text-gray-900">구독 구성</div>'
     + '<div class="text-xs text-gray-500 mt-0.5 mb-1">한 달에 받을 수량이에요</div>'
     + rows
-    + '<div class="text-sm font-bold text-gray-900 mt-6">더 담고 싶은 제품</div>'
-    + '<div class="text-xs text-gray-500 mt-0.5 mb-1">함께 받으면 5% 더 할인돼요</div>'
+    + '<div class="text-sm font-bold text-gray-900 mt-6 mb-1">더 담고 싶은 제품</div>'
     + addonRows
+    + (rec.excluded.length
+      ? '<p class="text-xs text-gray-500 mt-4">알레르기로 뺀 제품: ' + rec.excluded.map(p => p.name).join(', ') + '</p>'
+      : '')
     + '<div class="flex flex-wrap gap-1.5 mt-5">' + presetBtns
     + '<button type="button" onclick="resetSubCart()" class="pick-chip">처음 추천으로</button></div>'
     + '</div>'

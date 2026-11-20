@@ -299,55 +299,7 @@ const PATTERN_DEFS = [
     ],
     missing: ['불포화지방 대 포화지방 비율', '혈당지수'],
   },
-  {
-    key: 'WCRF/AICR', name: '암 예방 권고 점수', full: '2018 WCRF/AICR Score',
-    comps: [
-      { c: 'bmi',       label: '체질량지수',        unit: '',    range: [30, 22],  w: 0.5, score: ptWcrfBmi },
-      { c: 'waistCm',   label: '허리둘레',          unit: 'cm',  range: [102, 80], w: 0.5, score: ptWcrfWaist },
-      { c: 'mvpaMin',   label: '주당 운동',         unit: '분',  range: [0, 150],  score: ptWcrfPa },
-      { c: 'fvG',       label: '채소·과일',         unit: 'g',   range: [0, 400],  w: 0.5, score: ptWcrfFv },
-      { c: 'fiber',     label: '식이섬유',          unit: 'g',   range: [0, 30],   w: 0.5, score: ptWcrfFiber },
-      { c: 'upfPctE',   label: '초가공식품 비율',    unit: '%',   range: [39.1, 12.5], score: ptWcrfUpf },
-      { c: 'redMeatWk', label: '붉은 고기·가공육',   unit: 'g/주', range: [500, 0], score: ptWcrfMeat },
-      { c: 'ssbG',      label: '가당음료',          unit: 'g',   range: [250, 0],  score: ptWcrfSsb },
-      { c: 'ethanolG',  label: '음주(순알코올)',     unit: 'g',   range: [28, 0],   score: ptWcrfAlcohol },
-    ],
-    missing: [],
-  },
 ];
-
-// ── 암 예방 권고 점수 채점 ────────────────────
-// 기준은 UK Biobank 적용 논문(Front Nutr 2023) 표 1 의 「원 채점 체계」 칸 그대로입니다.
-// 7개 권고를 1 / 0.5 / 0 으로 매겨 7점 만점입니다. 체중과 식물성 식품은 두 갈래로
-// 나뉘어 각 0.5 점씩이라, 여기서는 따로 적고 가중치를 0.5 로 둡니다.
-const pt3 = (v, best, mid) => (v <= best ? 1 : v <= mid ? 0.5 : 0);   // 적을수록 좋은 것
-function ptWcrfBmi(v)   { return (v >= 18.5 && v < 25) ? 1 : (v >= 25 && v < 30) ? 0.5 : 0; }
-function ptWcrfWaist(v, gender) {
-  const [ok, mid] = gender === 'male' ? [94, 102] : [80, 88];
-  return v < ok ? 1 : v < mid ? 0.5 : 0;
-}
-function ptWcrfPa(v)    { return v >= 150 ? 1 : v >= 75 ? 0.5 : 0; }
-function ptWcrfFv(v)    { return v >= 400 ? 1 : v >= 200 ? 0.5 : 0; }
-function ptWcrfFiber(v) { return v >= 30 ? 1 : v >= 15 ? 0.5 : 0; }
-function ptWcrfSsb(v)   { return v <= 0 ? 1 : v <= 250 ? 0.5 : 0; }
-function ptWcrfAlcohol(v, gender) {
-  const hi = gender === 'male' ? 28 : 14;            // 순알코올 g/일
-  return v <= 0 ? 1 : v <= hi ? 0.5 : 0;
-}
-// 붉은 고기와 가공육을 함께 봅니다 — 둘 중 하나만 넘어도 0 점입니다.
-// 값은 붉은 고기 g/주 이고, 가공육은 serv 에서 따로 가져옵니다.
-function ptWcrfMeat(redWk, gender, serv) {
-  const proc = (serv && serv.procMeatWk) || 0;
-  if (redWk > 500 || proc >= 100) return 0;
-  return proc < 21 ? 1 : 0.5;
-}
-// 초가공식품 열량 비율 — 경계는 Sung 2021(국민건강영양조사 2016~2018, 19~64세
-// 7,364명)의 성별 4분위입니다. 남 12.5 / 24.1 / 39.1, 여 9.6 / 19.7 / 33.5 (%).
-// 원문은 3분위로 끊지만 한국인 3분위 경계가 어느 논문에도 실려 있지 않아,
-// 실린 숫자 가운데 바깥 두 개를 써서 1 / 0.5 / 0 으로 매깁니다.
-function ptWcrfUpf(v, gender) {
-  return gender === 'male' ? pt3(v, 12.5, 39.1) : pt3(v, 9.6, 33.5);
-}
 
 // 계산에 필요한 자료가 없어 점수를 내지 않는 종류
 const PATTERN_PENDING = {
@@ -514,11 +466,11 @@ let ptScored = null;        // 마지막 계산 결과
 // 점수 상위 10%와 하위 10%를 비교한 위험비입니다. 사람마다 다시 계산하는 값이
 // 아니고, 「이 점수가 그 질환과 얼마나 강하게 묶이는지」의 세기로만 씁니다.
 const PT_DISEASE_HR = {
-  'AHEI-2010': { cvd: 0.77, diabetes: 0.62, cancer: 0.94 },
-  'DASH':      { cvd: 0.81, diabetes: 0.66, cancer: 0.94 },
-  'hPDI':      { cvd: 0.84, diabetes: 0.70, cancer: 0.94 },
-  'AMED':      { cvd: 0.80, diabetes: 0.71, cancer: 0.92 },
-  'DRRD':      { cvd: 0.73, diabetes: 0.56, cancer: 0.92 },
+  'AHEI-2010': { cvd: 0.77, diabetes: 0.62 },
+  'DASH':      { cvd: 0.81, diabetes: 0.66 },
+  'hPDI':      { cvd: 0.84, diabetes: 0.70 },
+  'AMED':      { cvd: 0.80, diabetes: 0.71 },
+  'DRRD':      { cvd: 0.73, diabetes: 0.56 },
 };
 
 // ── 논문 집단의 점수 분포 (같은 논문 Table 1) ──────
@@ -549,7 +501,6 @@ function ptPaperPos(key, position) {
 const PT_DISEASE_LABELS = [
   { key: 'cvd',      name: '심혈관질환',    note: '심근경색·뇌졸중 등' },
   { key: 'diabetes', name: '2형당뇨',       note: '' },
-  { key: 'cancer',   name: '암 전체',       note: '' },
 ];
 
 // ── 질환별 등급과 내 위험비 ───────────────────
@@ -631,6 +582,13 @@ function ptScoreBar(score, color) {
     + '</div>';
 }
 
+// 화면에는 건강·혈압·당뇨 세 점수만 보여줍니다 (나머지 둘은 개선 제안·식단 설계 계산에만 씁니다)
+const PT_SHOWN = {
+  'AHEI-2010': '채소·과일·통곡물·생선은 넉넉히, 가당음료·가공육·짠 음식은 적게 먹는지 보는 종합 점수예요',
+  'DASH':      '싱겁게 먹고 채소·과일·저지방 유제품·통곡물을 챙기는지 봐요. 혈압 관리와 관련이 깊어요',
+  'DRRD':      '식이섬유·견과·과일은 넉넉히, 가당음료·붉은 고기는 적게 먹는지 봐요. 혈당 관리와 관련이 깊어요',
+};
+
 // ── 결과 화면의 「식단 점수」 영역 ────────────
 function renderDietScore(meals, servings, gender, profile) {
   const el = document.getElementById('diet-score-section');
@@ -647,43 +605,32 @@ function renderDietScore(meals, servings, gender, profile) {
     return;
   }
 
-  // 화면에는 건강·혈압·당뇨 세 점수만 보여줍니다 (1차 보완사항 — 지수가 많으면 뜻을 알기 어렵다).
-  // 나머지 점수는 계산은 그대로 하고 제품 추천의 등급 축(ptOverall)에만 씁니다.
-  const s = { ...ptScored, patterns: ptScored.patterns.filter(p => PT_DISPLAY_KEYS.includes(p.key)) };
+  const s = ptScored;
   const tips = dietAdvice(s, 3);
 
-  // ① 점수 카드 — 점수마다 무엇을 보는지와 내 점수에서 아쉬운 항목을 함께 적습니다
-  const cards = s.patterns.map(p => {
-    const info = PT_SCORE_INFO[p.key] || {};
-    const weak = p.comps.filter(c => c.sub < 0.5).sort((x, y) => x.sub - y.sub).slice(0, 3)
-      .map(c => c.label.replace(/\(.*\)/, ''));
-    return '<div class="rounded-2xl border p-5 sm:grid sm:grid-cols-5 sm:gap-6" style="border-color:var(--line)">'
-      + '<div class="sm:col-span-2">'
-      + '<div class="flex items-baseline justify-between gap-2 mb-1">'
-      + '<span class="text-base font-bold text-gray-800">' + p.name + '</span>'
-      + '<span class="text-3xl font-black flex-shrink-0" style="color:' + p.tier.color + '">' + p.score + '</span></div>'
-      + '<div class="text-xs font-bold mb-3" style="color:' + p.tier.color + '">' + p.tier.label + '</div>'
-      + ptScoreBar(p.score, p.tier.color)
-      + '</div>'
-      + '<div class="sm:col-span-3 mt-4 sm:mt-0">'
-      + '<p class="text-sm text-gray-600 leading-relaxed">' + (info.what || '') + '</p>'
-      + (weak.length
-          ? '<div class="text-xs mt-3"><span class="text-gray-400">내 점수에서 아쉬운 항목 </span>'
-            + '<b class="text-gray-800">' + weak.join(' · ') + '</b></div>'
-          : '<div class="text-xs mt-3 text-gray-500">크게 아쉬운 항목이 없어요</div>')
-      + '</div></div>';
-  }).join('');
+  // ① 점수 카드
+  const cards = s.patterns.filter(p => PT_SHOWN[p.key]).map(p =>
+    '<div class="rounded-2xl border p-4" style="border-color:var(--line)">'
+    + '<div class="flex items-baseline justify-between mb-1">'
+    + '<span class="text-sm font-bold text-gray-800">' + p.name + '</span>'
+    + '<span class="text-2xl font-black" style="color:' + p.tier.color + '">' + p.score + '</span></div>'
+    + '<div class="text-xs text-gray-400 mb-2">' + p.tier.label + '</div>'
+    + ptScoreBar(p.score, p.tier.color)
+    + '<div class="text-xs text-gray-500 mt-2">' + PT_SHOWN[p.key] + '</div>'
+    + '</div>').join('');
 
-  // ② 개선 제안
+  // ② 개선 제안 — 제안 제품(약콩 두유·프로틴바·약콩차)은 모두 대두라, 대두 알레르기면 제품은 권하지 않습니다
+  const soyAllergy = !!(profile && profile.allergies && new Set(profile.allergies).has('soy'));
   const tipCards = tips.map(t =>
     '<div class="rounded-2xl p-4" style="background:var(--tint)">'
     + '<div class="flex items-center justify-between gap-2 mb-1">'
     + '<span class="text-sm font-bold" style="color:var(--deep)">' + t.label + '</span>'
     + '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-white" style="color:var(--deep)">최대 +' + t.gain + '점</span></div>'
     + '<div class="text-lg font-black text-gray-900">' + t.now + t.unit + ' <span class="text-sm font-bold text-gray-400">→ '
-    + t.target + t.unit + ' ' + (t.direction === 'up' ? '늘리기' : '줄이기') + '</span></div>'
+    + (t.direction === 'up' ? t.target + t.unit + '로 늘리기'
+        : t.target > 0 ? t.target + t.unit + ' 아래로 줄이기' : '되도록 안 먹기') + '</span></div>'
     + '<div class="text-xs text-gray-600 mt-1">' + t.hint + '</div>'
-    + (t.product
+    + (t.product && !soyAllergy
         ? '<div class="text-xs font-bold mt-2 px-2 py-1 rounded-lg bg-white">'
           + '<span style="color:var(--deep)">밥스누 ' + t.product[0] + '</span>'
           + ' <span class="font-normal text-gray-500">' + t.product[1] + '</span></div>'
@@ -691,25 +638,19 @@ function renderDietScore(meals, servings, gender, profile) {
     + '</div>').join('');
 
   el.innerHTML =
-    '<h3 class="text-xl font-bold text-gray-900 mb-1">식단 점수</h3>'
-    + '<p class="text-gray-500 text-sm mb-5">여러 연구에서 쓰는 식단 평가 방법으로 채점했어요. 띠에서 내 위치가 왼쪽이면 위험, 오른쪽이면 안전이에요</p>'
-    + '<div class="grid grid-cols-1 gap-3">' + cards + '</div>'
-    + '<p class="text-xs text-gray-500 mt-4 px-4 py-3 rounded-xl" style="background:var(--cream)">'
-    + '본 서비스의 분석 결과는 의학적 진단이나 질병의 치료를 목적으로 하지 않으며, 맞춤 영양 섭취 참고용입니다.</p>'
+    // ① 먼저 할 일 — 사용자가 결과에서 가장 알고 싶은 것입니다
+    '<h3 class="text-xl font-bold text-gray-900 mb-1">먼저 이것부터 바꿔보세요</h3>'
+    + '<p class="text-gray-500 text-sm mb-4">지금 식습관에서 가장 아쉬운 세 가지예요. '
+    + '이렇게 바꾸면 아래 점수가 올라가요</p>'
+    + '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">' + tipCards + '</div>'
+    + '<button type="button" onclick="goPage(\'plan\')" class="w-full mt-4 py-3.5 bg-emerald-700 '
+    + 'text-white text-sm font-bold">이걸 채우는 제품 구성 보기</button>'
 
-    + (tipCards
-        ? '<h3 class="text-xl font-bold text-gray-900 mt-10 mb-1">먼저 이것부터 바꿔보세요</h3>'
-          + '<p class="text-gray-500 text-sm mb-4">위 점수를 가장 많이 깎은 세 가지예요. 이렇게 바꾸면 점수가 올라가요</p>'
-          + '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">' + tipCards + '</div>'
-          + '<button type="button" onclick="goPage(\'plan\')" class="w-full mt-4 py-3.5 bg-emerald-700 '
-          + 'text-white text-sm font-bold">이걸 채우는 제품 구성 보기</button>'
-        : '');
+    // ② 점수
+    + '<h3 class="text-xl font-bold text-gray-900 mt-10 mb-1">식단 점수</h3>'
+    + '<p class="text-gray-500 text-sm mb-5">여러 연구에서 쓰이는 식단 평가 방법으로 채점했어요. 띠에서 내 위치가 왼쪽이면 위험, 오른쪽이면 안전이에요</p>'
+    + '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">' + cards + '</div>'
+
+    + '<p class="text-xs text-gray-500">본 서비스의 분석 결과는 의학적 진단이나 질병의 치료를 목적으로 '
+    + '하지 않으며, 맞춤 영양 섭취 참고용입니다.</p>';
 }
-
-// 화면에 보여주는 점수 — 건강·혈압·당뇨
-const PT_DISPLAY_KEYS = ['AHEI-2010', 'DASH', 'DRRD'];
-const PT_SCORE_INFO = {
-  'AHEI-2010': { what: '전반적인 식사의 질을 봐요. 채소·과일·통곡물·견과·생선을 충분히 먹고, 단 음료·붉은 고기·짠 음식을 줄였는지로 채점해요.' },
-  'DASH':      { what: '혈압 관리를 위해 만든 식사법(DASH) 기준이에요. 과일·채소·저지방 유제품·통곡물을 늘리고 나트륨·붉은 고기·단 음료를 줄였는지 봐요.' },
-  'DRRD':      { what: '2형 당뇨 위험을 낮추는 식사 습관 기준이에요. 식이섬유·커피·견과·과일을 챙기고 단 음료·붉은 고기·트랜스지방을 줄였는지 봐요.' },
-};

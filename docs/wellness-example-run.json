@@ -1,0 +1,3451 @@
+{
+  "notice": "로직 확인용 가상 실행 예. 질환→성분 대응행·필요 섭취량·상한·조정 규칙은 TEST FIXTURE(가상값)이고, 제품 성분 함량은 원재료 기반 추정값입니다. 임상·실측 수치가 아닙니다.",
+  "generated_at": "2026-11-17T15:39:52.550Z",
+  "versions": {
+    "functional_targets": "0.2.0",
+    "product_specs": "0.2.0",
+    "risk_adjust_rules": "0.2.0"
+  },
+  "config": {
+    "PIPELINE_MODE": "legacy",
+    "maxTargets": 5,
+    "riskAmountFactor": {
+      "low": 1,
+      "mid": 1
+    },
+    "maxProducts": 3,
+    "defaultServingsPerDay": 1,
+    "scoreWeights": {
+      "excess": 1,
+      "cost": 0.1,
+      "overlap": 0.05
+    },
+    "costScale": 100000,
+    "monthlyBudget": null,
+    "refitMaxIter": 2,
+    "cycleDays": 30,
+    "refreshDays": 7,
+    "intakeWindowDays": 14,
+    "gradeMinLogDays": 3,
+    "fillRateMin": 0.8,
+    "fillRateLowDays": 3,
+    "phaseKgPerWeek": 0.2,
+    "imageConfidenceMin": 0.6,
+    "portionRatios": {
+      "all": 1,
+      "half": 0.5,
+      "little": 0.25
+    },
+    "logMax": 200
+  },
+  "fixture_table_rows": [
+    {
+      "target_id": "cvd",
+      "component_id": "anthocyanins",
+      "component_name": "안토시아닌",
+      "daily_amount": 50,
+      "unit": "mg",
+      "upper_limit": 200,
+      "priority": 1,
+      "source": "TEST FIXTURE (가상값 · 근거 없음)",
+      "needs_review": true
+    },
+    {
+      "target_id": "diabetes",
+      "component_id": "isoflavones",
+      "component_name": "이소플라본",
+      "daily_amount": 0.04,
+      "unit": "g",
+      "upper_limit": 0.15,
+      "priority": 1,
+      "source": "TEST FIXTURE (가상값 · 근거 없음)",
+      "needs_review": true
+    },
+    {
+      "target_id": "cancer",
+      "component_id": "glucosinolates",
+      "component_name": "글루코시놀레이트",
+      "daily_amount": null,
+      "unit": "mg",
+      "upper_limit": null,
+      "priority": 1,
+      "source": "TEST FIXTURE (가상값 · 근거 없음)",
+      "needs_review": true
+    }
+  ],
+  "fixture_rules": [
+    {
+      "disease": "cvd",
+      "risk": "위험",
+      "nutrient": "sodium",
+      "mode": "upper_reduce",
+      "value": 2000,
+      "source": "TEST FIXTURE (가상값 · 근거 없음)",
+      "needs_review": true
+    },
+    {
+      "disease": "cvd",
+      "risk": "위험",
+      "nutrient": "sodium",
+      "mode": "upper_reduce",
+      "value": 1800,
+      "source": "TEST FIXTURE (가상값 · 근거 없음)",
+      "needs_review": true
+    },
+    {
+      "disease": "diabetes",
+      "risk": "위험",
+      "nutrient": "fiber",
+      "mode": "lower_raise",
+      "value": 30,
+      "source": "TEST FIXTURE (가상값 · 근거 없음)",
+      "needs_review": true
+    },
+    {
+      "disease": "cancer",
+      "risk": "위험",
+      "nutrient": "sugar",
+      "mode": "upper_reduce",
+      "value": null,
+      "source": "TEST FIXTURE (가상값 · 근거 없음)",
+      "needs_review": true
+    }
+  ],
+  "users": [
+    {
+      "user": {
+        "id": "U1",
+        "survey": "bad",
+        "goals": [
+          "weight"
+        ],
+        "allergies": [],
+        "useMealPlan": true,
+        "profile": {
+          "gender": "female",
+          "age": 35,
+          "height": 162,
+          "weight": 68,
+          "prevWeight": 69,
+          "activity": "low"
+        },
+        "survey_answers": {
+          "refinedGrain": 0,
+          "wholeGrain": 3,
+          "veg": 2,
+          "fruit": 3,
+          "redMeat": 1,
+          "processedMeat": 1,
+          "fish": 3,
+          "egg": 2,
+          "legumes": 3,
+          "nuts": 3,
+          "dairy": 3,
+          "dairyLow": 2,
+          "sweets": 1,
+          "coffeeTea": 1,
+          "ssb": 1,
+          "alcohol": 2,
+          "salty": 2
+        }
+      },
+      "grades": [
+        {
+          "key": "cvd",
+          "name": "심혈관질환",
+          "tier": {
+            "max": 0.4,
+            "key": "low",
+            "label": "위험",
+            "color": "#C0392B",
+            "tint": "#F4D7D2"
+          },
+          "position": 0.2195915815007879
+        },
+        {
+          "key": "diabetes",
+          "name": "2형당뇨",
+          "tier": {
+            "max": 0.4,
+            "key": "low",
+            "label": "위험",
+            "color": "#C0392B",
+            "tint": "#F4D7D2"
+          },
+          "position": 0.22105276762032028
+        },
+        {
+          "key": "cancer",
+          "name": "암 전체",
+          "tier": {
+            "max": 0.4,
+            "key": "low",
+            "label": "위험",
+            "color": "#C0392B",
+            "tint": "#F4D7D2"
+          },
+          "position": 0.21823528606120293
+        }
+      ],
+      "legacy": {
+        "cart": {
+          "soymilk": [
+            "C",
+            "C"
+          ],
+          "phyto": [
+            "가"
+          ],
+          "bar": [
+            "나",
+            "나"
+          ],
+          "addon": []
+        },
+        "plan_days": 30,
+        "plan_error": null
+      },
+      "deficit_based": {
+        "F6_nutrition_standard": {
+          "carb": [
+            225.775,
+            266.825
+          ],
+          "protein": [
+            28.735000000000003,
+            82.10000000000001
+          ],
+          "fat": [
+            27.366666666666664,
+            54.73333333333333
+          ],
+          "fiber": 25,
+          "chol": 300,
+          "sugar": 41.050000000000004,
+          "satfat": 12.771111111111113,
+          "trans": 1.8244444444444445,
+          "sodium": 2000
+        },
+        "F1_functional_targets": {
+          "user_id": "U1",
+          "targets": [
+            {
+              "component_id": "anthocyanins",
+              "name": "안토시아닌",
+              "daily_amount": 50,
+              "unit": "mg",
+              "upper_limit": 200,
+              "reason": [
+                "심혈관질환 위험"
+              ],
+              "priority": 1,
+              "source": "TEST FIXTURE (가상값 · 근거 없음)",
+              "needs_review": true
+            },
+            {
+              "component_id": "glucosinolates",
+              "name": "글루코시놀레이트",
+              "daily_amount": null,
+              "unit": "mg",
+              "upper_limit": null,
+              "reason": [
+                "관리목표: 체중 관리",
+                "암 전체 위험"
+              ],
+              "priority": 2,
+              "source": "체중 용량 근거 없음 (Axelsson 2017: 설포라판 150 µmol 은 2형당뇨 혈당 시험) · 레시피 DB 값 없음 / TEST FIXTURE (가상값 · 근거 없음)",
+              "needs_review": true
+            },
+            {
+              "component_id": "isoflavones",
+              "name": "이소플라본",
+              "daily_amount": 0.04,
+              "unit": "g",
+              "upper_limit": 0.15,
+              "reason": [
+                "2형당뇨 위험"
+              ],
+              "priority": 3,
+              "source": "TEST FIXTURE (가상값 · 근거 없음)",
+              "needs_review": true
+            },
+            {
+              "component_id": "catechins",
+              "name": "카테킨",
+              "daily_amount": 300,
+              "unit": "mg",
+              "upper_limit": 1000,
+              "reason": [
+                "관리목표: 체중 관리"
+              ],
+              "priority": 4,
+              "source": "식약처 건강기능식품 녹차추출물 체지방 감소: 카테킨 0.3–1 g/일 (하한 적용) / 상한: 식약처 녹차추출물 일일섭취량 범위 상단 1 g · EFSA 2018(EGCG ≥800 mg/일 간 효소 상승)",
+              "needs_review": true
+            },
+            {
+              "component_id": "phenolicAcids",
+              "name": "페놀산",
+              "daily_amount": 500,
+              "unit": "mg",
+              "upper_limit": null,
+              "reason": [
+                "관리목표: 체중 관리"
+              ],
+              "priority": 5,
+              "source": "2023 메타분석(PMID 37710316): 클로로겐산 ≥500 mg/일, 체중 −1.30 kg (RCT 3건 · 103명 · 근거 약함)",
+              "needs_review": true
+            }
+          ],
+          "excluded": [],
+          "rule_version": "0.2.0"
+        },
+        "F2_deficit_before_products": {
+          "basis": "meal_plan",
+          "days": 30,
+          "nutrients": [
+            {
+              "id": "energy",
+              "need": 1478,
+              "upper": 1806,
+              "supply": 1717.9,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "kcal"
+            },
+            {
+              "id": "carb",
+              "need": 225.775,
+              "upper": 266.825,
+              "supply": 250.089,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "protein",
+              "need": 28.735,
+              "upper": 82.1,
+              "supply": 80.1802,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "fat",
+              "need": 27.3667,
+              "upper": 54.7333,
+              "supply": 48.1324,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "fiber",
+              "need": 25,
+              "upper": null,
+              "supply": 24.4688,
+              "deficit": 0.531161,
+              "excess": null,
+              "unit": "g"
+            },
+            {
+              "id": "sugar",
+              "need": null,
+              "upper": 41.05,
+              "supply": 41.1337,
+              "deficit": 0,
+              "excess": 0.0836502,
+              "unit": "g"
+            },
+            {
+              "id": "satfat",
+              "need": null,
+              "upper": 12.7711,
+              "supply": 11.1482,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "trans",
+              "need": null,
+              "upper": 1.82444,
+              "supply": 0.251695,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "chol",
+              "need": null,
+              "upper": 300,
+              "supply": 282.017,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "mg"
+            },
+            {
+              "id": "sodium",
+              "need": null,
+              "upper": 2000,
+              "supply": 1789.26,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "mg"
+            }
+          ],
+          "components": [
+            {
+              "id": "anthocyanins",
+              "need": 50,
+              "supply": 31.7236,
+              "deficit": 18.2764,
+              "fill_rate": 0.634471,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "glucosinolates",
+              "need": null,
+              "supply": 0,
+              "deficit": null,
+              "fill_rate": null,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "isoflavones",
+              "need": 0.04,
+              "supply": 0.0448,
+              "deficit": 0,
+              "fill_rate": 1,
+              "excess": 0,
+              "unit": "g",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "catechins",
+              "need": 300,
+              "supply": 52.598,
+              "deficit": 247.402,
+              "fill_rate": 0.175327,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "phenolicAcids",
+              "need": 500,
+              "supply": 139.745,
+              "deficit": 360.255,
+              "fill_rate": 0.279489,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            }
+          ],
+          "daily_fill_rate": [
+            0.461265,
+            0.716608,
+            0.678256,
+            0.272282,
+            0.261506,
+            0.477487,
+            0.385703,
+            0.629464,
+            0.291257,
+            0.471467,
+            0.530492,
+            0.547418,
+            0.524558,
+            0.327386,
+            0.293267,
+            0.281638,
+            0.577731,
+            0.455793,
+            0.484601,
+            0.551285,
+            0.6307,
+            0.426597,
+            0.35771,
+            0.427773,
+            0.437601,
+            0.352569,
+            0.553886,
+            0.334238,
+            0.675066,
+            0.370057
+          ]
+        },
+        "F3_selection": {
+          "selected": [
+            {
+              "product_id": "I",
+              "name": "더 건강한 약콩100 슈퍼그린",
+              "servings_per_day": 1,
+              "packs_per_cycle": 2,
+              "covers": [
+                {
+                  "component_id": "anthocyanins",
+                  "amount": 19.4967
+                },
+                {
+                  "component_id": "phenolicAcids",
+                  "amount": 35.8868
+                },
+                {
+                  "component_id": "isoflavones",
+                  "amount": 3.42e-7
+                },
+                {
+                  "component_id": "catechins",
+                  "amount": 16.335
+                }
+              ]
+            }
+          ],
+          "monthly_cost": 75000,
+          "score": {
+            "fill": 0.714779,
+            "excess_penalty": 0.0716224,
+            "cost_penalty": 0.075,
+            "overlap_penalty": 0,
+            "total": 0.568157
+          },
+          "remaining_deficit": [
+            {
+              "component_id": "anthocyanins",
+              "unit": "mg",
+              "deficit": 0
+            },
+            {
+              "component_id": "glucosinolates",
+              "unit": "mg",
+              "deficit": null
+            },
+            {
+              "component_id": "isoflavones",
+              "unit": "g",
+              "deficit": 0
+            },
+            {
+              "component_id": "catechins",
+              "unit": "mg",
+              "deficit": 231.067
+            },
+            {
+              "component_id": "phenolicAcids",
+              "unit": "mg",
+              "deficit": 324.368
+            }
+          ],
+          "alternatives": [
+            {
+              "selected": [
+                {
+                  "product_id": "I",
+                  "name": "더 건강한 약콩100 슈퍼그린",
+                  "servings_per_day": 1,
+                  "packs_per_cycle": 2,
+                  "covers": [
+                    {
+                      "component_id": "anthocyanins",
+                      "amount": 19.4967
+                    },
+                    {
+                      "component_id": "phenolicAcids",
+                      "amount": 35.8868
+                    },
+                    {
+                      "component_id": "isoflavones",
+                      "amount": 3.42e-7
+                    },
+                    {
+                      "component_id": "catechins",
+                      "amount": 16.335
+                    }
+                  ]
+                },
+                {
+                  "product_id": "3",
+                  "name": "혈압혈당 바나바Q10",
+                  "servings_per_day": 1,
+                  "packs_per_cycle": 1,
+                  "covers": []
+                }
+              ],
+              "score": {
+                "fill": 0.714779,
+                "excess_penalty": 0.0716224,
+                "cost_penalty": 0.115,
+                "overlap_penalty": 0,
+                "total": 0.528157
+              },
+              "monthly_cost": 115000
+            },
+            {
+              "selected": [
+                {
+                  "product_id": "I",
+                  "name": "더 건강한 약콩100 슈퍼그린",
+                  "servings_per_day": 1,
+                  "packs_per_cycle": 2,
+                  "covers": [
+                    {
+                      "component_id": "anthocyanins",
+                      "amount": 19.4967
+                    },
+                    {
+                      "component_id": "phenolicAcids",
+                      "amount": 35.8868
+                    },
+                    {
+                      "component_id": "isoflavones",
+                      "amount": 3.42e-7
+                    },
+                    {
+                      "component_id": "catechins",
+                      "amount": 16.335
+                    }
+                  ]
+                },
+                {
+                  "product_id": "3",
+                  "name": "혈압혈당 바나바Q10",
+                  "servings_per_day": 2,
+                  "packs_per_cycle": 1,
+                  "covers": []
+                }
+              ],
+              "score": {
+                "fill": 0.714779,
+                "excess_penalty": 0.0726745,
+                "cost_penalty": 0.115,
+                "overlap_penalty": 0,
+                "total": 0.527105
+              },
+              "monthly_cost": 115000
+            }
+          ],
+          "excluded": [
+            {
+              "product_id": "2",
+              "reason": "성분 함량 없음 (needs_review)"
+            },
+            {
+              "product_id": "4",
+              "reason": "성분 함량 없음 (needs_review)"
+            }
+          ],
+          "product_version": "0.2.0"
+        },
+        "cart": {
+          "soymilk": [
+            "I",
+            "I"
+          ],
+          "phyto": [],
+          "bar": [],
+          "addon": []
+        },
+        "F2_deficit_final": {
+          "basis": "meal_plan",
+          "days": 30,
+          "nutrients": [
+            {
+              "id": "energy",
+              "need": 1478,
+              "upper": 1806,
+              "supply": 1787.9,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "kcal"
+            },
+            {
+              "id": "carb",
+              "need": 225.775,
+              "upper": 266.825,
+              "supply": 255.089,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "protein",
+              "need": 28.735,
+              "upper": 82.1,
+              "supply": 86.1802,
+              "deficit": 0,
+              "excess": 4.08024,
+              "unit": "g"
+            },
+            {
+              "id": "fat",
+              "need": 27.3667,
+              "upper": 54.7333,
+              "supply": 51.4324,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "fiber",
+              "need": 25,
+              "upper": null,
+              "supply": 28.4688,
+              "deficit": 0,
+              "excess": null,
+              "unit": "g"
+            },
+            {
+              "id": "sugar",
+              "need": null,
+              "upper": 41.05,
+              "supply": 42.0337,
+              "deficit": 0,
+              "excess": 0.98365,
+              "unit": "g"
+            },
+            {
+              "id": "satfat",
+              "need": null,
+              "upper": 12.7711,
+              "supply": 11.3482,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "trans",
+              "need": null,
+              "upper": 1.82444,
+              "supply": 0.251695,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "chol",
+              "need": null,
+              "upper": 300,
+              "supply": 282.017,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "mg"
+            },
+            {
+              "id": "sodium",
+              "need": null,
+              "upper": 2000,
+              "supply": 1844.26,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "mg"
+            }
+          ],
+          "components": [
+            {
+              "id": "anthocyanins",
+              "need": 50,
+              "supply": 51.2203,
+              "deficit": 0,
+              "fill_rate": 1,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "glucosinolates",
+              "need": null,
+              "supply": 0,
+              "deficit": null,
+              "fill_rate": null,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "isoflavones",
+              "need": 0.04,
+              "supply": 0.0448004,
+              "deficit": 0,
+              "fill_rate": 1,
+              "excess": 0,
+              "unit": "g",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "catechins",
+              "need": 300,
+              "supply": 68.9331,
+              "deficit": 231.067,
+              "fill_rate": 0.229777,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "phenolicAcids",
+              "need": 500,
+              "supply": 175.631,
+              "deficit": 324.369,
+              "fill_rate": 0.351263,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            }
+          ],
+          "daily_fill_rate": [
+            0.590306,
+            0.773453,
+            0.709812,
+            0.401324,
+            0.390548,
+            0.571553,
+            0.514745,
+            0.66102,
+            0.420299,
+            0.600506,
+            0.562048,
+            0.620959,
+            0.653597,
+            0.456428,
+            0.422309,
+            0.410679,
+            0.609287,
+            0.584833,
+            0.613642,
+            0.582841,
+            0.700378,
+            0.458155,
+            0.486749,
+            0.508556,
+            0.566641,
+            0.384127,
+            0.585441,
+            0.463279,
+            0.706622,
+            0.499096
+          ]
+        },
+        "meal_plan_first_3_days": [
+          {
+            "day": 1,
+            "meals": [
+              {
+                "type": "breakfast",
+                "kind": "food",
+                "items": [
+                  "고구마밥",
+                  "아욱된장국",
+                  "홍새우볶음",
+                  "더 건강한 약콩100 슈퍼그린"
+                ]
+              },
+              {
+                "type": "lunch",
+                "kind": "food",
+                "items": [
+                  "돼지감자밥",
+                  "부추다슬기국",
+                  "애호박바지락전",
+                  "오디배추물김치",
+                  "파프리카베이컨볶음"
+                ]
+              },
+              {
+                "type": "dinner",
+                "kind": "food",
+                "items": [
+                  "팥찰밥",
+                  "채소스프",
+                  "단호박양파치즈구이",
+                  "오미자저염나박김치",
+                  "고등어소금구이"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "meals": [
+              {
+                "type": "breakfast",
+                "kind": "food",
+                "items": [
+                  "수수밥",
+                  "아욱된장국",
+                  "돈육채볶음",
+                  "더 건강한 약콩100 슈퍼그린"
+                ]
+              },
+              {
+                "type": "lunch",
+                "kind": "food",
+                "items": [
+                  "무밥",
+                  "백숙",
+                  "단호박견과류찜",
+                  "청경채김치",
+                  "가지꽈리고추볶음"
+                ]
+              },
+              {
+                "type": "dinner",
+                "kind": "food",
+                "items": [
+                  "감자밥",
+                  "콩가루냉이국",
+                  "김치볶음",
+                  "방울토마토소박이",
+                  "머위대찹쌀볶음"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 3,
+            "meals": [
+              {
+                "type": "breakfast",
+                "kind": "food",
+                "items": [
+                  "표고무밥",
+                  "근대표고된장국",
+                  "닭고기부추전",
+                  "더 건강한 약콩100 슈퍼그린"
+                ]
+              },
+              {
+                "type": "lunch",
+                "kind": "food",
+                "items": [
+                  "감자양파버섯밥",
+                  "낙지무국",
+                  "오리불고기달래볶음",
+                  "배깍두기",
+                  "풀치포고추장볶음"
+                ]
+              },
+              {
+                "type": "dinner",
+                "kind": "food",
+                "items": [
+                  "고구마밥",
+                  "콩가루냉이국",
+                  "돼지고기빈대떡",
+                  "오이말이물김치",
+                  "꽈리고추가지들기름볶음"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "user": {
+        "id": "U2",
+        "survey": "mid",
+        "goals": [
+          "weight",
+          "blood_sugar"
+        ],
+        "allergies": [
+          "soy"
+        ],
+        "useMealPlan": true,
+        "profile": {
+          "gender": "male",
+          "age": 52,
+          "height": 174,
+          "weight": 82,
+          "prevWeight": 82,
+          "activity": "low"
+        },
+        "survey_answers": {
+          "refinedGrain": 1,
+          "wholeGrain": 2,
+          "veg": 2,
+          "fruit": 2,
+          "redMeat": 2,
+          "processedMeat": 2,
+          "fish": 2,
+          "egg": 2,
+          "legumes": 2,
+          "nuts": 3,
+          "dairy": 2,
+          "dairyLow": 1,
+          "sweets": 2,
+          "coffeeTea": 1,
+          "ssb": 2,
+          "alcohol": 2,
+          "salty": 1
+        }
+      },
+      "grades": [
+        {
+          "key": "cvd",
+          "name": "심혈관질환",
+          "tier": {
+            "max": 0.6,
+            "key": "mid",
+            "label": "보통",
+            "color": "#B7950B",
+            "tint": "#F8EBC8"
+          },
+          "position": 0.43882628566995485
+        },
+        {
+          "key": "diabetes",
+          "name": "2형당뇨",
+          "tier": {
+            "max": 0.6,
+            "key": "mid",
+            "label": "보통",
+            "color": "#B7950B",
+            "tint": "#F8EBC8"
+          },
+          "position": 0.44290553215294276
+        },
+        {
+          "key": "cancer",
+          "name": "암 전체",
+          "tier": {
+            "max": 0.6,
+            "key": "mid",
+            "label": "보통",
+            "color": "#B7950B",
+            "tint": "#F8EBC8"
+          },
+          "position": 0.43130435797934136
+        }
+      ],
+      "legacy": {
+        "cart": {
+          "soymilk": [],
+          "phyto": [
+            "가",
+            "가"
+          ],
+          "bar": [],
+          "addon": [
+            "3"
+          ]
+        },
+        "plan_days": 28,
+        "plan_error": null
+      },
+      "deficit_based": {
+        "F6_nutrition_standard": {
+          "carb": [
+            296.58750000000003,
+            350.5125
+          ],
+          "protein": [
+            37.7475,
+            107.85000000000001
+          ],
+          "fat": [
+            35.95,
+            71.9
+          ],
+          "fiber": 25.884,
+          "chol": 300,
+          "sugar": 53.925000000000004,
+          "satfat": 16.776666666666667,
+          "trans": 2.3966666666666665,
+          "sodium": 2300
+        },
+        "F1_functional_targets": {
+          "user_id": "U2",
+          "targets": [
+            {
+              "component_id": "anthocyanins",
+              "name": "안토시아닌",
+              "daily_amount": 50,
+              "unit": "mg",
+              "upper_limit": 200,
+              "reason": [
+                "심혈관질환 보통"
+              ],
+              "priority": 1,
+              "source": "TEST FIXTURE (가상값 · 근거 없음)",
+              "needs_review": true
+            },
+            {
+              "component_id": "glucosinolates",
+              "name": "글루코시놀레이트",
+              "daily_amount": null,
+              "unit": "mg",
+              "upper_limit": null,
+              "reason": [
+                "관리목표: 체중 관리",
+                "암 전체 보통"
+              ],
+              "priority": 2,
+              "source": "체중 용량 근거 없음 (Axelsson 2017: 설포라판 150 µmol 은 2형당뇨 혈당 시험) · 레시피 DB 값 없음 / TEST FIXTURE (가상값 · 근거 없음)",
+              "needs_review": true
+            },
+            {
+              "component_id": "phenolicAcids",
+              "name": "페놀산",
+              "daily_amount": 500,
+              "unit": "mg",
+              "upper_limit": null,
+              "reason": [
+                "관리목표: 체중 관리",
+                "관리목표: 혈당 관리"
+              ],
+              "priority": 3,
+              "source": "2023 메타분석(PMID 37710316): 클로로겐산 ≥500 mg/일, 체중 −1.30 kg (RCT 3건 · 103명 · 근거 약함) / app.js PHYTO_DRV (레시피 DB 시뮬레이션 p75 · 임상 근거 아님)",
+              "needs_review": true
+            },
+            {
+              "component_id": "catechins",
+              "name": "카테킨",
+              "daily_amount": 300,
+              "unit": "mg",
+              "upper_limit": 1000,
+              "reason": [
+                "관리목표: 체중 관리"
+              ],
+              "priority": 4,
+              "source": "식약처 건강기능식품 녹차추출물 체지방 감소: 카테킨 0.3–1 g/일 (하한 적용) / 상한: 식약처 녹차추출물 일일섭취량 범위 상단 1 g · EFSA 2018(EGCG ≥800 mg/일 간 효소 상승)",
+              "needs_review": true
+            },
+            {
+              "component_id": "lignans",
+              "name": "리그난",
+              "daily_amount": 15,
+              "unit": "mg",
+              "upper_limit": null,
+              "reason": [
+                "관리목표: 혈당 관리"
+              ],
+              "priority": 5,
+              "source": "app.js PHYTO_DRV (레시피 DB 시뮬레이션 p75 · 임상 근거 아님) · 단일 RCT: Pan 2007 PLoS ONE, SDG 360 mg/일 12주 HbA1c 소폭 개선(2형당뇨 환자)",
+              "needs_review": true
+            }
+          ],
+          "excluded": [
+            {
+              "component_id": "isoflavones",
+              "name": "이소플라본",
+              "reason": "알레르기 연관: soy"
+            }
+          ],
+          "rule_version": "0.2.0"
+        },
+        "F2_deficit_before_products": {
+          "basis": "meal_plan",
+          "days": 30,
+          "nutrients": [
+            {
+              "id": "energy",
+              "need": 1941,
+              "upper": 2373,
+              "supply": 1916.43,
+              "deficit": 24.5667,
+              "excess": 0,
+              "unit": "kcal"
+            },
+            {
+              "id": "carb",
+              "need": 296.588,
+              "upper": 350.512,
+              "supply": 278.242,
+              "deficit": 18.346,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "protein",
+              "need": 37.7475,
+              "upper": 107.85,
+              "supply": 80.6014,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "fat",
+              "need": 35.95,
+              "upper": 71.9,
+              "supply": 56.5802,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "fiber",
+              "need": 25.884,
+              "upper": null,
+              "supply": 27.5466,
+              "deficit": 0,
+              "excess": null,
+              "unit": "g"
+            },
+            {
+              "id": "sugar",
+              "need": null,
+              "upper": 53.925,
+              "supply": 42.3912,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "satfat",
+              "need": null,
+              "upper": 16.7767,
+              "supply": 14.8118,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "trans",
+              "need": null,
+              "upper": 2.39667,
+              "supply": 0.435554,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "chol",
+              "need": null,
+              "upper": 300,
+              "supply": 244.295,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "mg"
+            },
+            {
+              "id": "sodium",
+              "need": null,
+              "upper": 2300,
+              "supply": 2058.65,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "mg"
+            }
+          ],
+          "components": [
+            {
+              "id": "anthocyanins",
+              "need": 50,
+              "supply": 20.9334,
+              "deficit": 29.0666,
+              "fill_rate": 0.418668,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "glucosinolates",
+              "need": null,
+              "supply": 0,
+              "deficit": null,
+              "fill_rate": null,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "phenolicAcids",
+              "need": 500,
+              "supply": 173.036,
+              "deficit": 326.964,
+              "fill_rate": 0.346071,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "catechins",
+              "need": 300,
+              "supply": 68.9338,
+              "deficit": 231.066,
+              "fill_rate": 0.229779,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "lignans",
+              "need": 15,
+              "supply": 51.7097,
+              "deficit": 0,
+              "fill_rate": 1,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            }
+          ],
+          "daily_fill_rate": [
+            0.449878,
+            0.410045,
+            0.641505,
+            0.307035,
+            0.362664,
+            0.327683,
+            0.412321,
+            0.409658,
+            0.448019,
+            0.417337,
+            0.361315,
+            0.557532,
+            0.478202,
+            0.321417,
+            0.827111,
+            0.686801,
+            0.84111,
+            0.423106,
+            0.391077,
+            0.467234,
+            0.637074,
+            0.501264,
+            0.330955,
+            0.392452,
+            0.414274,
+            0.419627,
+            0.473152,
+            0.399706,
+            0.559113,
+            0.535232
+          ]
+        },
+        "F3_selection": {
+          "selected": [],
+          "monthly_cost": 0,
+          "score": {
+            "fill": 0,
+            "excess_penalty": 0,
+            "cost_penalty": 0,
+            "overlap_penalty": 0,
+            "total": 0
+          },
+          "remaining_deficit": [
+            {
+              "component_id": "anthocyanins",
+              "unit": "mg",
+              "deficit": 29.0666
+            },
+            {
+              "component_id": "glucosinolates",
+              "unit": "mg",
+              "deficit": null
+            },
+            {
+              "component_id": "phenolicAcids",
+              "unit": "mg",
+              "deficit": 326.964
+            },
+            {
+              "component_id": "catechins",
+              "unit": "mg",
+              "deficit": 231.066
+            },
+            {
+              "component_id": "lignans",
+              "unit": "mg",
+              "deficit": 0
+            }
+          ],
+          "alternatives": [
+            {
+              "selected": [
+                {
+                  "product_id": "3",
+                  "name": "혈압혈당 바나바Q10",
+                  "servings_per_day": 1,
+                  "packs_per_cycle": 1,
+                  "covers": []
+                }
+              ],
+              "score": {
+                "fill": 0,
+                "excess_penalty": 0,
+                "cost_penalty": 0.04,
+                "overlap_penalty": 0,
+                "total": -0.04
+              },
+              "monthly_cost": 40000
+            },
+            {
+              "selected": [
+                {
+                  "product_id": "3",
+                  "name": "혈압혈당 바나바Q10",
+                  "servings_per_day": 2,
+                  "packs_per_cycle": 1,
+                  "covers": []
+                }
+              ],
+              "score": {
+                "fill": 0,
+                "excess_penalty": 0,
+                "cost_penalty": 0.04,
+                "overlap_penalty": 0,
+                "total": -0.04
+              },
+              "monthly_cost": 40000
+            }
+          ],
+          "excluded": [
+            {
+              "product_id": "A",
+              "reason": "알레르기: soy"
+            },
+            {
+              "product_id": "B",
+              "reason": "알레르기: soy"
+            },
+            {
+              "product_id": "C",
+              "reason": "알레르기: soy"
+            },
+            {
+              "product_id": "D",
+              "reason": "알레르기: soy"
+            },
+            {
+              "product_id": "E",
+              "reason": "알레르기: soy"
+            },
+            {
+              "product_id": "F",
+              "reason": "알레르기: soy"
+            },
+            {
+              "product_id": "G",
+              "reason": "알레르기: soy"
+            },
+            {
+              "product_id": "H",
+              "reason": "알레르기: soy"
+            },
+            {
+              "product_id": "I",
+              "reason": "알레르기: soy"
+            },
+            {
+              "product_id": "가",
+              "reason": "알레르기: soy"
+            },
+            {
+              "product_id": "나",
+              "reason": "알레르기: soy"
+            },
+            {
+              "product_id": "1",
+              "reason": "알레르기: soy"
+            },
+            {
+              "product_id": "2",
+              "reason": "성분 함량 없음 (needs_review)"
+            },
+            {
+              "product_id": "4",
+              "reason": "성분 함량 없음 (needs_review)"
+            }
+          ],
+          "product_version": "0.2.0"
+        },
+        "cart": {
+          "soymilk": [],
+          "phyto": [],
+          "bar": [],
+          "addon": []
+        },
+        "F2_deficit_final": {
+          "basis": "meal_plan",
+          "days": 30,
+          "nutrients": [
+            {
+              "id": "energy",
+              "need": 1941,
+              "upper": 2373,
+              "supply": 1916.43,
+              "deficit": 24.5667,
+              "excess": 0,
+              "unit": "kcal"
+            },
+            {
+              "id": "carb",
+              "need": 296.588,
+              "upper": 350.512,
+              "supply": 278.242,
+              "deficit": 18.346,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "protein",
+              "need": 37.7475,
+              "upper": 107.85,
+              "supply": 80.6014,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "fat",
+              "need": 35.95,
+              "upper": 71.9,
+              "supply": 56.5802,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "fiber",
+              "need": 25.884,
+              "upper": null,
+              "supply": 27.5466,
+              "deficit": 0,
+              "excess": null,
+              "unit": "g"
+            },
+            {
+              "id": "sugar",
+              "need": null,
+              "upper": 53.925,
+              "supply": 42.3912,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "satfat",
+              "need": null,
+              "upper": 16.7767,
+              "supply": 14.8118,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "trans",
+              "need": null,
+              "upper": 2.39667,
+              "supply": 0.435554,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "chol",
+              "need": null,
+              "upper": 300,
+              "supply": 244.295,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "mg"
+            },
+            {
+              "id": "sodium",
+              "need": null,
+              "upper": 2300,
+              "supply": 2058.65,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "mg"
+            }
+          ],
+          "components": [
+            {
+              "id": "anthocyanins",
+              "need": 50,
+              "supply": 20.9334,
+              "deficit": 29.0666,
+              "fill_rate": 0.418668,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "glucosinolates",
+              "need": null,
+              "supply": 0,
+              "deficit": null,
+              "fill_rate": null,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "phenolicAcids",
+              "need": 500,
+              "supply": 173.036,
+              "deficit": 326.964,
+              "fill_rate": 0.346071,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "catechins",
+              "need": 300,
+              "supply": 68.9338,
+              "deficit": 231.066,
+              "fill_rate": 0.229779,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "lignans",
+              "need": 15,
+              "supply": 51.7097,
+              "deficit": 0,
+              "fill_rate": 1,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            }
+          ],
+          "daily_fill_rate": [
+            0.449878,
+            0.410045,
+            0.641505,
+            0.307035,
+            0.362664,
+            0.327683,
+            0.412321,
+            0.409658,
+            0.448019,
+            0.417337,
+            0.361315,
+            0.557532,
+            0.478202,
+            0.321417,
+            0.827111,
+            0.686801,
+            0.84111,
+            0.423106,
+            0.391077,
+            0.467234,
+            0.637074,
+            0.501264,
+            0.330955,
+            0.392452,
+            0.414274,
+            0.419627,
+            0.473152,
+            0.399706,
+            0.559113,
+            0.535232
+          ]
+        },
+        "meal_plan_first_3_days": [
+          {
+            "day": 1,
+            "meals": [
+              {
+                "type": "breakfast",
+                "kind": "food",
+                "items": [
+                  "서리태콩밥",
+                  "들깨야채우엉탕",
+                  "신열무김치볶음"
+                ]
+              },
+              {
+                "type": "lunch",
+                "kind": "food",
+                "items": [
+                  "찹쌀기장밥_산업체",
+                  "채소스프",
+                  "고구마그라탕",
+                  "배추밤김치",
+                  "부추콩가루간장찜"
+                ]
+              },
+              {
+                "type": "dinner",
+                "kind": "food",
+                "items": [
+                  "도라지무밥",
+                  "참외오이냉국",
+                  "고구마베이컨프리타타",
+                  "배물김치",
+                  "부추버섯토마토볶음"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "meals": [
+              {
+                "type": "breakfast",
+                "kind": "food",
+                "items": [
+                  "꼬시래기밥",
+                  "가리비맑은국",
+                  "콩나물불고기"
+                ]
+              },
+              {
+                "type": "lunch",
+                "kind": "food",
+                "items": [
+                  "찹쌀현미밥,쌀_산업체",
+                  "닭백숙_음식업소",
+                  "단호박치즈찜",
+                  "고구마깍두기",
+                  "꽈리고추오이볶음"
+                ]
+              },
+              {
+                "type": "dinner",
+                "kind": "food",
+                "items": [
+                  "마영양밥",
+                  "건새우닭개장",
+                  "기장감자채전",
+                  "참외깍두기",
+                  "밥새우깻잎찜"
+                ]
+              }
+            ]
+          },
+          {
+            "day": 3,
+            "meals": [
+              {
+                "type": "breakfast",
+                "kind": "food",
+                "items": [
+                  "단호박영양찰밥",
+                  "감자콩나물카레국",
+                  "안심스테이크"
+                ]
+              },
+              {
+                "type": "lunch",
+                "kind": "food",
+                "items": [
+                  "당근밥",
+                  "팽이버섯미역된장국",
+                  "소고기풋고추볶음",
+                  "청경채김치",
+                  "양파구이"
+                ]
+              },
+              {
+                "type": "dinner",
+                "kind": "food",
+                "items": [
+                  "귀리수수잡곡밥",
+                  "베이컨감자우유스프",
+                  "감자채참치볶음",
+                  "방울토마토소박이",
+                  "방울토마토가지볶음"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "user": {
+        "id": "U3",
+        "survey": "good",
+        "goals": [
+          "weight",
+          "bone"
+        ],
+        "allergies": [],
+        "useMealPlan": false,
+        "profile": {
+          "gender": "female",
+          "age": 28,
+          "height": 165,
+          "weight": 55,
+          "prevWeight": 55,
+          "activity": "low"
+        },
+        "survey_answers": {
+          "refinedGrain": 2,
+          "wholeGrain": 0,
+          "veg": 0,
+          "fruit": 1,
+          "redMeat": 3,
+          "processedMeat": 3,
+          "fish": 1,
+          "egg": 2,
+          "legumes": 0,
+          "nuts": 0,
+          "dairy": 1,
+          "dairyLow": 0,
+          "sweets": 3,
+          "coffeeTea": 1,
+          "ssb": 3,
+          "alcohol": 3,
+          "salty": 0
+        }
+      },
+      "grades": [
+        {
+          "key": "cvd",
+          "name": "심혈관질환",
+          "tier": {
+            "max": null,
+            "key": "high",
+            "label": "안전",
+            "color": "#1E8449",
+            "tint": "#D5E9DA"
+          },
+          "position": 0.793596680564054
+        },
+        {
+          "key": "diabetes",
+          "name": "2형당뇨",
+          "tier": {
+            "max": null,
+            "key": "high",
+            "label": "안전",
+            "color": "#1E8449",
+            "tint": "#D5E9DA"
+          },
+          "position": 0.7922000081932855
+        },
+        {
+          "key": "cancer",
+          "name": "암 전체",
+          "tier": {
+            "max": null,
+            "key": "high",
+            "label": "안전",
+            "color": "#1E8449",
+            "tint": "#D5E9DA"
+          },
+          "position": 0.7921797081086306
+        }
+      ],
+      "legacy": {
+        "cart": {
+          "soymilk": [
+            "C",
+            "C"
+          ],
+          "phyto": [],
+          "bar": [],
+          "addon": [
+            "2"
+          ]
+        },
+        "plan_days": 30,
+        "plan_error": null
+      },
+      "deficit_based": {
+        "F6_nutrition_standard": {
+          "carb": [
+            285.8625,
+            337.83750000000003
+          ],
+          "protein": [
+            36.3825,
+            103.95
+          ],
+          "fat": [
+            34.65,
+            69.3
+          ],
+          "fiber": 24.948,
+          "chol": 300,
+          "sugar": 51.975,
+          "satfat": 16.17,
+          "trans": 2.31,
+          "sodium": 2300
+        },
+        "F1_functional_targets": {
+          "user_id": "U3",
+          "targets": [
+            {
+              "component_id": "glucosinolates",
+              "name": "글루코시놀레이트",
+              "daily_amount": null,
+              "unit": "mg",
+              "upper_limit": null,
+              "reason": [
+                "관리목표: 체중 관리"
+              ],
+              "priority": 1,
+              "source": "체중 용량 근거 없음 (Axelsson 2017: 설포라판 150 µmol 은 2형당뇨 혈당 시험) · 레시피 DB 값 없음",
+              "needs_review": true
+            },
+            {
+              "component_id": "isoflavones",
+              "name": "이소플라본",
+              "daily_amount": 37,
+              "unit": "mg",
+              "upper_limit": 75,
+              "reason": [
+                "관리목표: 뼈 건강"
+              ],
+              "priority": 2,
+              "source": "식약처 고시 제2026-43호(2027-01-01 시행) 대두이소플라본 비배당체 37–45 mg/일 (하한 적용) · 2022 메타분석(PMC9409780 · RCT 18건, 평균 106 mg/일, 요추 골밀도 +1.63%) / 상한: 일본 식품안전위원회 2006 비배당체 70–75 mg/일",
+              "needs_review": true
+            },
+            {
+              "component_id": "catechins",
+              "name": "카테킨",
+              "daily_amount": 300,
+              "unit": "mg",
+              "upper_limit": 1000,
+              "reason": [
+                "관리목표: 체중 관리"
+              ],
+              "priority": 3,
+              "source": "식약처 건강기능식품 녹차추출물 체지방 감소: 카테킨 0.3–1 g/일 (하한 적용) / 상한: 식약처 녹차추출물 일일섭취량 범위 상단 1 g · EFSA 2018(EGCG ≥800 mg/일 간 효소 상승)",
+              "needs_review": true
+            },
+            {
+              "component_id": "lignans",
+              "name": "리그난",
+              "daily_amount": 15,
+              "unit": "mg",
+              "upper_limit": null,
+              "reason": [
+                "관리목표: 뼈 건강"
+              ],
+              "priority": 4,
+              "source": "app.js PHYTO_DRV (레시피 DB 시뮬레이션 p75 · 임상 근거 아님) · 아마씨 리그난 543 mg/일 6개월 RCT 에서 골밀도 효과 없음",
+              "needs_review": true
+            },
+            {
+              "component_id": "flavonols",
+              "name": "플라보놀",
+              "daily_amount": 89,
+              "unit": "mg",
+              "upper_limit": null,
+              "reason": [
+                "관리목표: 뼈 건강"
+              ],
+              "priority": 5,
+              "source": "app.js PHYTO_DRV (레시피 DB 시뮬레이션 p75 · 임상 근거 아님)",
+              "needs_review": true
+            }
+          ],
+          "excluded": [],
+          "rule_version": "0.2.0"
+        },
+        "F2_deficit_before_products": {
+          "basis": "no_meal_plan",
+          "days": 0,
+          "nutrients": [],
+          "components": [
+            {
+              "id": "glucosinolates",
+              "need": null,
+              "supply": 0,
+              "deficit": null,
+              "fill_rate": null,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "isoflavones",
+              "need": 37,
+              "supply": 0,
+              "deficit": 37,
+              "fill_rate": 0,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "catechins",
+              "need": 300,
+              "supply": 0,
+              "deficit": 300,
+              "fill_rate": 0,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "lignans",
+              "need": 15,
+              "supply": 0,
+              "deficit": 15,
+              "fill_rate": 0,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "flavonols",
+              "need": 89,
+              "supply": 0,
+              "deficit": 89,
+              "fill_rate": 0,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            }
+          ],
+          "daily_fill_rate": []
+        },
+        "F3_selection": {
+          "selected": [
+            {
+              "product_id": "F",
+              "name": "껍질째 약콩100",
+              "servings_per_day": 1,
+              "packs_per_cycle": 2,
+              "covers": [
+                {
+                  "component_id": "isoflavones",
+                  "amount": 35
+                }
+              ]
+            },
+            {
+              "product_id": "가",
+              "name": "밥스누 파이토100",
+              "servings_per_day": 1,
+              "packs_per_cycle": 3,
+              "covers": [
+                {
+                  "component_id": "isoflavones",
+                  "amount": 0.00615347
+                },
+                {
+                  "component_id": "lignans",
+                  "amount": 68.865
+                },
+                {
+                  "component_id": "flavonols",
+                  "amount": 20.0508
+                },
+                {
+                  "component_id": "catechins",
+                  "amount": 21.3436
+                }
+              ]
+            }
+          ],
+          "monthly_cost": 180000,
+          "score": {
+            "fill": 0.61701,
+            "excess_penalty": 0,
+            "cost_penalty": 0.18,
+            "overlap_penalty": 0.05,
+            "total": 0.38701
+          },
+          "remaining_deficit": [
+            {
+              "component_id": "glucosinolates",
+              "unit": "mg",
+              "deficit": null
+            },
+            {
+              "component_id": "isoflavones",
+              "unit": "mg",
+              "deficit": 1.99385
+            },
+            {
+              "component_id": "catechins",
+              "unit": "mg",
+              "deficit": 278.656
+            },
+            {
+              "component_id": "lignans",
+              "unit": "mg",
+              "deficit": 0
+            },
+            {
+              "component_id": "flavonols",
+              "unit": "mg",
+              "deficit": 68.9492
+            }
+          ],
+          "alternatives": [
+            {
+              "selected": [
+                {
+                  "product_id": "F",
+                  "name": "껍질째 약콩100",
+                  "servings_per_day": 1,
+                  "packs_per_cycle": 2,
+                  "covers": [
+                    {
+                      "component_id": "isoflavones",
+                      "amount": 35
+                    }
+                  ]
+                },
+                {
+                  "product_id": "I",
+                  "name": "더 건강한 약콩100 슈퍼그린",
+                  "servings_per_day": 1,
+                  "packs_per_cycle": 2,
+                  "covers": [
+                    {
+                      "component_id": "lignans",
+                      "amount": 11.4931
+                    },
+                    {
+                      "component_id": "flavonols",
+                      "amount": 8.08267
+                    },
+                    {
+                      "component_id": "isoflavones",
+                      "amount": 0.000342
+                    },
+                    {
+                      "component_id": "catechins",
+                      "amount": 16.335
+                    }
+                  ]
+                }
+              ],
+              "score": {
+                "fill": 0.546111,
+                "excess_penalty": 0,
+                "cost_penalty": 0.129,
+                "overlap_penalty": 0.05,
+                "total": 0.367111
+              },
+              "monthly_cost": 129000
+            },
+            {
+              "selected": [
+                {
+                  "product_id": "F",
+                  "name": "껍질째 약콩100",
+                  "servings_per_day": 1,
+                  "packs_per_cycle": 2,
+                  "covers": [
+                    {
+                      "component_id": "isoflavones",
+                      "amount": 35
+                    }
+                  ]
+                },
+                {
+                  "product_id": "가",
+                  "name": "밥스누 파이토100",
+                  "servings_per_day": 1,
+                  "packs_per_cycle": 3,
+                  "covers": [
+                    {
+                      "component_id": "isoflavones",
+                      "amount": 0.00615347
+                    },
+                    {
+                      "component_id": "lignans",
+                      "amount": 68.865
+                    },
+                    {
+                      "component_id": "flavonols",
+                      "amount": 20.0508
+                    },
+                    {
+                      "component_id": "catechins",
+                      "amount": 21.3436
+                    }
+                  ]
+                },
+                {
+                  "product_id": "3",
+                  "name": "혈압혈당 바나바Q10",
+                  "servings_per_day": 2,
+                  "packs_per_cycle": 1,
+                  "covers": [
+                    {
+                      "component_id": "flavonols",
+                      "amount": 36
+                    }
+                  ]
+                }
+              ],
+              "score": {
+                "fill": 0.680048,
+                "excess_penalty": 0,
+                "cost_penalty": 0.22,
+                "overlap_penalty": 0.1,
+                "total": 0.360048
+              },
+              "monthly_cost": 220000
+            }
+          ],
+          "excluded": [
+            {
+              "product_id": "2",
+              "reason": "성분 함량 없음 (needs_review)"
+            },
+            {
+              "product_id": "4",
+              "reason": "성분 함량 없음 (needs_review)"
+            }
+          ],
+          "product_version": "0.2.0"
+        },
+        "cart": {
+          "soymilk": [
+            "F",
+            "F"
+          ],
+          "phyto": [
+            "가",
+            "가",
+            "가"
+          ],
+          "bar": [],
+          "addon": []
+        },
+        "F2_deficit_final": null,
+        "meal_plan_first_3_days": null
+      }
+    },
+    {
+      "user": {
+        "id": "U4",
+        "survey": "bad",
+        "goals": [
+          "weight",
+          "fatigue",
+          "gut"
+        ],
+        "allergies": [
+          "milk"
+        ],
+        "useMealPlan": false,
+        "profile": {
+          "gender": "male",
+          "age": 61,
+          "height": 168,
+          "weight": 74,
+          "prevWeight": 75,
+          "activity": "low"
+        },
+        "survey_answers": {
+          "refinedGrain": 0,
+          "wholeGrain": 3,
+          "veg": 2,
+          "fruit": 3,
+          "redMeat": 1,
+          "processedMeat": 1,
+          "fish": 3,
+          "egg": 2,
+          "legumes": 3,
+          "nuts": 3,
+          "dairy": 3,
+          "dairyLow": 2,
+          "sweets": 1,
+          "coffeeTea": 1,
+          "ssb": 1,
+          "alcohol": 2,
+          "salty": 2
+        }
+      },
+      "grades": [
+        {
+          "key": "cvd",
+          "name": "심혈관질환",
+          "tier": {
+            "max": 0.4,
+            "key": "low",
+            "label": "위험",
+            "color": "#C0392B",
+            "tint": "#F4D7D2"
+          },
+          "position": 0.19603918978809673
+        },
+        {
+          "key": "diabetes",
+          "name": "2형당뇨",
+          "tier": {
+            "max": 0.4,
+            "key": "low",
+            "label": "위험",
+            "color": "#C0392B",
+            "tint": "#F4D7D2"
+          },
+          "position": 0.2013470833595663
+        },
+        {
+          "key": "cancer",
+          "name": "암 전체",
+          "tier": {
+            "max": 0.4,
+            "key": "low",
+            "label": "위험",
+            "color": "#C0392B",
+            "tint": "#F4D7D2"
+          },
+          "position": 0.18865806194865975
+        }
+      ],
+      "legacy": {
+        "cart": {
+          "soymilk": [
+            "D",
+            "D"
+          ],
+          "phyto": [
+            "가"
+          ],
+          "bar": [
+            "나",
+            "나"
+          ],
+          "addon": []
+        },
+        "plan_days": 30,
+        "plan_error": null
+      },
+      "deficit_based": {
+        "F6_nutrition_standard": {
+          "carb": [
+            260.425,
+            307.77500000000003
+          ],
+          "protein": [
+            33.145,
+            94.7
+          ],
+          "fat": [
+            31.566666666666663,
+            63.133333333333326
+          ],
+          "fiber": 25,
+          "chol": 300,
+          "sugar": 47.35,
+          "satfat": 14.731111111111112,
+          "trans": 2.104444444444445,
+          "sodium": 2000
+        },
+        "F1_functional_targets": {
+          "user_id": "U4",
+          "targets": [
+            {
+              "component_id": "anthocyanins",
+              "name": "안토시아닌",
+              "daily_amount": 50,
+              "unit": "mg",
+              "upper_limit": 200,
+              "reason": [
+                "관리목표: 피로 회복",
+                "심혈관질환 위험"
+              ],
+              "priority": 1,
+              "source": "app.js PHYTO_DRV (레시피 DB 시뮬레이션 p75 · 임상 근거 아님) · 운동 수행·회복 시험(블랙커런트 105–315 mg)은 결과가 엇갈리고 적정 용량 미확립 / TEST FIXTURE (가상값 · 근거 없음)",
+              "needs_review": true
+            },
+            {
+              "component_id": "glucosinolates",
+              "name": "글루코시놀레이트",
+              "daily_amount": null,
+              "unit": "mg",
+              "upper_limit": null,
+              "reason": [
+                "관리목표: 체중 관리",
+                "암 전체 위험"
+              ],
+              "priority": 2,
+              "source": "체중 용량 근거 없음 (Axelsson 2017: 설포라판 150 µmol 은 2형당뇨 혈당 시험) · 레시피 DB 값 없음 / TEST FIXTURE (가상값 · 근거 없음)",
+              "needs_review": true
+            },
+            {
+              "component_id": "isoflavones",
+              "name": "이소플라본",
+              "daily_amount": 0.04,
+              "unit": "g",
+              "upper_limit": 0.15,
+              "reason": [
+                "2형당뇨 위험"
+              ],
+              "priority": 3,
+              "source": "TEST FIXTURE (가상값 · 근거 없음)",
+              "needs_review": true
+            },
+            {
+              "component_id": "phenolicAcids",
+              "name": "페놀산",
+              "daily_amount": 500,
+              "unit": "mg",
+              "upper_limit": null,
+              "reason": [
+                "관리목표: 체중 관리",
+                "관리목표: 장 건강"
+              ],
+              "priority": 4,
+              "source": "2023 메타분석(PMID 37710316): 클로로겐산 ≥500 mg/일, 체중 −1.30 kg (RCT 3건 · 103명 · 근거 약함) / app.js PHYTO_DRV (레시피 DB 시뮬레이션 p75 · 임상 근거 아님)",
+              "needs_review": true
+            },
+            {
+              "component_id": "saponins",
+              "name": "사포닌",
+              "daily_amount": 75,
+              "unit": "mg",
+              "upper_limit": null,
+              "reason": [
+                "관리목표: 장 건강",
+                "관리목표: 피로 회복"
+              ],
+              "priority": 5,
+              "source": "app.js PHYTO_DRV (레시피 DB 시뮬레이션 p75 · 임상 근거 아님) / app.js PHYTO_DRV (레시피 DB 시뮬레이션 p75 · 임상 근거 아님) · 식약처 인삼·홍삼 피로개선 기준(진세노사이드 3–80 mg)은 인삼 성분이라 이 계열에 적용하지 않음",
+              "needs_review": true
+            }
+          ],
+          "excluded": [],
+          "rule_version": "0.2.0"
+        },
+        "F2_deficit_before_products": {
+          "basis": "no_meal_plan",
+          "days": 0,
+          "nutrients": [],
+          "components": [
+            {
+              "id": "anthocyanins",
+              "need": 50,
+              "supply": 0,
+              "deficit": 50,
+              "fill_rate": 0,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "glucosinolates",
+              "need": null,
+              "supply": 0,
+              "deficit": null,
+              "fill_rate": null,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "isoflavones",
+              "need": 0.04,
+              "supply": 0,
+              "deficit": 0.04,
+              "fill_rate": 0,
+              "excess": 0,
+              "unit": "g",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "phenolicAcids",
+              "need": 500,
+              "supply": 0,
+              "deficit": 500,
+              "fill_rate": 0,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "saponins",
+              "need": 75,
+              "supply": 0,
+              "deficit": 75,
+              "fill_rate": 0,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            }
+          ],
+          "daily_fill_rate": []
+        },
+        "F3_selection": {
+          "selected": [
+            {
+              "product_id": "F",
+              "name": "껍질째 약콩100",
+              "servings_per_day": 1,
+              "packs_per_cycle": 2,
+              "covers": [
+                {
+                  "component_id": "isoflavones",
+                  "amount": 0.035
+                },
+                {
+                  "component_id": "anthocyanins",
+                  "amount": 12
+                },
+                {
+                  "component_id": "saponins",
+                  "amount": 60
+                }
+              ]
+            },
+            {
+              "product_id": "I",
+              "name": "더 건강한 약콩100 슈퍼그린",
+              "servings_per_day": 1,
+              "packs_per_cycle": 2,
+              "covers": [
+                {
+                  "component_id": "anthocyanins",
+                  "amount": 19.4967
+                },
+                {
+                  "component_id": "phenolicAcids",
+                  "amount": 35.8868
+                },
+                {
+                  "component_id": "isoflavones",
+                  "amount": 3.42e-7
+                }
+              ]
+            }
+          ],
+          "monthly_cost": 129000,
+          "score": {
+            "fill": 0.616568,
+            "excess_penalty": 0,
+            "cost_penalty": 0.129,
+            "overlap_penalty": 0.1,
+            "total": 0.387568
+          },
+          "remaining_deficit": [
+            {
+              "component_id": "anthocyanins",
+              "unit": "mg",
+              "deficit": 18.5033
+            },
+            {
+              "component_id": "glucosinolates",
+              "unit": "mg",
+              "deficit": null
+            },
+            {
+              "component_id": "isoflavones",
+              "unit": "g",
+              "deficit": 0.00499966
+            },
+            {
+              "component_id": "phenolicAcids",
+              "unit": "mg",
+              "deficit": 464.113
+            },
+            {
+              "component_id": "saponins",
+              "unit": "mg",
+              "deficit": 15
+            }
+          ],
+          "alternatives": [
+            {
+              "selected": [
+                {
+                  "product_id": "F",
+                  "name": "껍질째 약콩100",
+                  "servings_per_day": 1,
+                  "packs_per_cycle": 2,
+                  "covers": [
+                    {
+                      "component_id": "isoflavones",
+                      "amount": 0.035
+                    },
+                    {
+                      "component_id": "anthocyanins",
+                      "amount": 12
+                    },
+                    {
+                      "component_id": "saponins",
+                      "amount": 60
+                    }
+                  ]
+                },
+                {
+                  "product_id": "I",
+                  "name": "더 건강한 약콩100 슈퍼그린",
+                  "servings_per_day": 1,
+                  "packs_per_cycle": 2,
+                  "covers": [
+                    {
+                      "component_id": "anthocyanins",
+                      "amount": 19.4967
+                    },
+                    {
+                      "component_id": "phenolicAcids",
+                      "amount": 35.8868
+                    },
+                    {
+                      "component_id": "isoflavones",
+                      "amount": 3.42e-7
+                    }
+                  ]
+                },
+                {
+                  "product_id": "3",
+                  "name": "혈압혈당 바나바Q10",
+                  "servings_per_day": 1,
+                  "packs_per_cycle": 1,
+                  "covers": []
+                }
+              ],
+              "score": {
+                "fill": 0.616568,
+                "excess_penalty": 0,
+                "cost_penalty": 0.169,
+                "overlap_penalty": 0.1,
+                "total": 0.347568
+              },
+              "monthly_cost": 169000
+            },
+            {
+              "selected": [
+                {
+                  "product_id": "F",
+                  "name": "껍질째 약콩100",
+                  "servings_per_day": 1,
+                  "packs_per_cycle": 2,
+                  "covers": [
+                    {
+                      "component_id": "isoflavones",
+                      "amount": 0.035
+                    },
+                    {
+                      "component_id": "anthocyanins",
+                      "amount": 12
+                    },
+                    {
+                      "component_id": "saponins",
+                      "amount": 60
+                    }
+                  ]
+                },
+                {
+                  "product_id": "I",
+                  "name": "더 건강한 약콩100 슈퍼그린",
+                  "servings_per_day": 1,
+                  "packs_per_cycle": 2,
+                  "covers": [
+                    {
+                      "component_id": "anthocyanins",
+                      "amount": 19.4967
+                    },
+                    {
+                      "component_id": "phenolicAcids",
+                      "amount": 35.8868
+                    },
+                    {
+                      "component_id": "isoflavones",
+                      "amount": 3.42e-7
+                    }
+                  ]
+                },
+                {
+                  "product_id": "3",
+                  "name": "혈압혈당 바나바Q10",
+                  "servings_per_day": 2,
+                  "packs_per_cycle": 1,
+                  "covers": []
+                }
+              ],
+              "score": {
+                "fill": 0.616568,
+                "excess_penalty": 0,
+                "cost_penalty": 0.169,
+                "overlap_penalty": 0.1,
+                "total": 0.347568
+              },
+              "monthly_cost": 169000
+            }
+          ],
+          "excluded": [
+            {
+              "product_id": "2",
+              "reason": "알레르기: milk"
+            },
+            {
+              "product_id": "4",
+              "reason": "알레르기: milk"
+            }
+          ],
+          "product_version": "0.2.0"
+        },
+        "cart": {
+          "soymilk": [
+            "F",
+            "F",
+            "I",
+            "I"
+          ],
+          "phyto": [],
+          "bar": [],
+          "addon": []
+        },
+        "F2_deficit_final": null,
+        "meal_plan_first_3_days": null
+      }
+    }
+  ],
+  "F6_example_with_rules": {
+    "before": {
+      "carb": [
+        225.775,
+        266.825
+      ],
+      "protein": [
+        28.735000000000003,
+        82.10000000000001
+      ],
+      "fat": [
+        27.366666666666664,
+        54.73333333333333
+      ],
+      "fiber": 19.704,
+      "chol": 300,
+      "sugar": 41.050000000000004,
+      "satfat": 12.771111111111113,
+      "trans": 1.8244444444444445,
+      "sodium": 2300
+    },
+    "after": {
+      "carb": [
+        225.775,
+        266.825
+      ],
+      "protein": [
+        28.735000000000003,
+        82.10000000000001
+      ],
+      "fat": [
+        27.366666666666664,
+        54.73333333333333
+      ],
+      "fiber": 30,
+      "chol": 300,
+      "sugar": 41.050000000000004,
+      "satfat": 12.771111111111113,
+      "trans": 1.8244444444444445,
+      "sodium": 1800
+    },
+    "applied": [
+      {
+        "disease": "cvd",
+        "risk": "위험",
+        "nutrient": "sodium",
+        "mode": "upper_reduce",
+        "from": 2300,
+        "to": 2000,
+        "source": "TEST FIXTURE (가상값 · 근거 없음)"
+      },
+      {
+        "disease": "cvd",
+        "risk": "위험",
+        "nutrient": "sodium",
+        "mode": "upper_reduce",
+        "from": 2000,
+        "to": 1800,
+        "source": "TEST FIXTURE (가상값 · 근거 없음)"
+      },
+      {
+        "disease": "diabetes",
+        "risk": "위험",
+        "nutrient": "fiber",
+        "mode": "lower_raise",
+        "from": 19.704,
+        "to": 30,
+        "source": "TEST FIXTURE (가상값 · 근거 없음)"
+      }
+    ],
+    "rule_version": "0.2.0"
+  },
+  "F5_example": {
+    "items": [
+      {
+        "input_name": "쌀밥",
+        "matched_name": "쌀밥",
+        "match": "exact",
+        "grams": 45,
+        "confidence": 0.92,
+        "candidates": [],
+        "portion": 0.5
+      },
+      {
+        "input_name": "매콤 제육볶음 한접시",
+        "matched_name": "제육볶음",
+        "match": "similar",
+        "grams": 200,
+        "confidence": 0.81,
+        "candidates": [],
+        "portion": 1.12
+      }
+    ],
+    "nutrients": {
+      "energy": 511,
+      "carb": 52.3029,
+      "protein": 17.0959,
+      "fat": 26.687,
+      "fiber": 3.81592,
+      "chol": 70.56,
+      "sugar": 9.68111,
+      "satfat": 8.86273,
+      "trans": 0.210224,
+      "sodium": 1025.41,
+      "weight": 244.36
+    },
+    "components": [
+      {
+        "id": "flavones",
+        "amount": 6.21302,
+        "unit": "mg"
+      },
+      {
+        "id": "phenolicAcids",
+        "amount": 11.8962,
+        "unit": "mg"
+      },
+      {
+        "id": "tocopherols",
+        "amount": 1.98213,
+        "unit": "mg"
+      },
+      {
+        "id": "isoflavones",
+        "amount": 2.94123,
+        "unit": "mg"
+      },
+      {
+        "id": "saponins",
+        "amount": 53.4026,
+        "unit": "mg"
+      },
+      {
+        "id": "carotenoids",
+        "amount": 1.07183,
+        "unit": "mg"
+      },
+      {
+        "id": "flavonols",
+        "amount": 48.055,
+        "unit": "mg"
+      },
+      {
+        "id": "lignans",
+        "amount": 15.1525,
+        "unit": "mg"
+      },
+      {
+        "id": "catechins",
+        "amount": 0.001512,
+        "unit": "mg"
+      },
+      {
+        "id": "anthocyanins",
+        "amount": 2.016,
+        "unit": "mg"
+      }
+    ],
+    "saved": true,
+    "needs_confirmation": false,
+    "reason": null
+  },
+  "F4_example": {
+    "trigger": "meal_log",
+    "reasons": [
+      "위험등급 변화: 심혈관질환 안전→위험",
+      "위험등급 변화: 2형당뇨 안전→보통",
+      "위험등급 변화: 암 전체 안전→위험",
+      "목표 성분 목록 변화",
+      "충족률 0.8 미만 5일 연속"
+    ],
+    "proposal": {
+      "created_at": "2026-11-17",
+      "status": "pending",
+      "cart": {
+        "soymilk": [
+          "I",
+          "I"
+        ],
+        "phyto": [],
+        "bar": [],
+        "addon": []
+      },
+      "products": [
+        {
+          "product_id": "I",
+          "name": "더 건강한 약콩100 슈퍼그린",
+          "servings_per_day": 1,
+          "packs_per_cycle": 2,
+          "covers": [
+            {
+              "component_id": "anthocyanins",
+              "amount": 19.4967
+            },
+            {
+              "component_id": "phenolicAcids",
+              "amount": 35.8868
+            },
+            {
+              "component_id": "isoflavones",
+              "amount": 3.42e-7
+            },
+            {
+              "component_id": "catechins",
+              "amount": 16.335
+            }
+          ]
+        }
+      ],
+      "effective_from": "2026-12-10",
+      "reasons": [
+        "위험등급 변화: 심혈관질환 안전→위험",
+        "위험등급 변화: 2형당뇨 안전→보통",
+        "위험등급 변화: 암 전체 안전→위험",
+        "목표 성분 목록 변화",
+        "충족률 0.8 미만 5일 연속"
+      ]
+    },
+    "history_entry": {
+      "at": "2026-11-17T15:39:46.111Z",
+      "trigger": "meal_log",
+      "reasons": [
+        "위험등급 변화: 심혈관질환 안전→위험",
+        "위험등급 변화: 2형당뇨 안전→보통",
+        "위험등급 변화: 암 전체 안전→위험",
+        "목표 성분 목록 변화",
+        "충족률 0.8 미만 5일 연속"
+      ],
+      "before": {
+        "grades": [
+          {
+            "key": "cvd",
+            "name": "심혈관질환",
+            "note": "심근경색·뇌졸중 등",
+            "position": 0.793596680564054,
+            "paperPos": 1,
+            "score": 79,
+            "tier": {
+              "max": null,
+              "key": "high",
+              "label": "안전",
+              "color": "#1E8449",
+              "tint": "#D5E9DA"
+            },
+            "groupHr": 0.7815171395533617,
+            "myHr": 0.7815171395533617,
+            "pct": 22,
+            "strongest": {
+              "hr": 0.73,
+              "name": "당뇨 위험 감소 식단",
+              "key": "DRRD"
+            }
+          },
+          {
+            "key": "diabetes",
+            "name": "2형당뇨",
+            "note": "",
+            "position": 0.7922000081932855,
+            "paperPos": 1,
+            "score": 79,
+            "tier": {
+              "max": null,
+              "key": "high",
+              "label": "안전",
+              "color": "#1E8449",
+              "tint": "#D5E9DA"
+            },
+            "groupHr": 0.6363859191455531,
+            "myHr": 0.6363859191455531,
+            "pct": 36,
+            "strongest": {
+              "hr": 0.56,
+              "name": "당뇨 위험 감소 식단",
+              "key": "DRRD"
+            }
+          },
+          {
+            "key": "cancer",
+            "name": "암 전체",
+            "note": "",
+            "position": 0.7921797081086306,
+            "paperPos": 1,
+            "score": 79,
+            "tier": {
+              "max": null,
+              "key": "high",
+              "label": "안전",
+              "color": "#1E8449",
+              "tint": "#D5E9DA"
+            },
+            "groupHr": 0.9304816670561362,
+            "myHr": 0.9304816670561362,
+            "pct": 7,
+            "strongest": {
+              "hr": 0.92,
+              "name": "지중해식 식단 점수",
+              "key": "AMED"
+            }
+          }
+        ],
+        "deficit": {
+          "basis": "meal_plan",
+          "days": 30,
+          "nutrients": [
+            {
+              "id": "energy",
+              "need": 1478,
+              "upper": 1806,
+              "supply": 1787.9,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "kcal"
+            },
+            {
+              "id": "carb",
+              "need": 225.775,
+              "upper": 266.825,
+              "supply": 255.089,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "protein",
+              "need": 28.735,
+              "upper": 82.1,
+              "supply": 86.1802,
+              "deficit": 0,
+              "excess": 4.08024,
+              "unit": "g"
+            },
+            {
+              "id": "fat",
+              "need": 27.3667,
+              "upper": 54.7333,
+              "supply": 51.4324,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "fiber",
+              "need": 25,
+              "upper": null,
+              "supply": 28.4688,
+              "deficit": 0,
+              "excess": null,
+              "unit": "g"
+            },
+            {
+              "id": "sugar",
+              "need": null,
+              "upper": 41.05,
+              "supply": 42.0337,
+              "deficit": 0,
+              "excess": 0.98365,
+              "unit": "g"
+            },
+            {
+              "id": "satfat",
+              "need": null,
+              "upper": 12.7711,
+              "supply": 11.3482,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "trans",
+              "need": null,
+              "upper": 1.82444,
+              "supply": 0.251695,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "chol",
+              "need": null,
+              "upper": 300,
+              "supply": 282.017,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "mg"
+            },
+            {
+              "id": "sodium",
+              "need": null,
+              "upper": 2000,
+              "supply": 1844.26,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "mg"
+            }
+          ],
+          "components": [
+            {
+              "id": "anthocyanins",
+              "need": 50,
+              "supply": 51.2203,
+              "deficit": 0,
+              "fill_rate": 1,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "glucosinolates",
+              "need": null,
+              "supply": 0,
+              "deficit": null,
+              "fill_rate": null,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "isoflavones",
+              "need": 0.04,
+              "supply": 0.0448004,
+              "deficit": 0,
+              "fill_rate": 1,
+              "excess": 0,
+              "unit": "g",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "catechins",
+              "need": 300,
+              "supply": 68.9331,
+              "deficit": 231.067,
+              "fill_rate": 0.229777,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "phenolicAcids",
+              "need": 500,
+              "supply": 175.631,
+              "deficit": 324.369,
+              "fill_rate": 0.351263,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            }
+          ],
+          "daily_fill_rate": [
+            0.590306,
+            0.773453,
+            0.709812,
+            0.401324,
+            0.390548,
+            0.571553,
+            0.514745,
+            0.66102,
+            0.420299,
+            0.600506,
+            0.562048,
+            0.620959,
+            0.653597,
+            0.456428,
+            0.422309,
+            0.410679,
+            0.609287,
+            0.584833,
+            0.613642,
+            0.582841,
+            0.700378,
+            0.458155,
+            0.486749,
+            0.508556,
+            0.566641,
+            0.384127,
+            0.585441,
+            0.463279,
+            0.706622,
+            0.499096
+          ]
+        },
+        "plan": "(30일 식단 요약 생략)",
+        "products": {
+          "soymilk": [],
+          "phyto": [],
+          "bar": [],
+          "addon": []
+        }
+      },
+      "after": {
+        "grades": [
+          {
+            "key": "cvd",
+            "name": "심혈관질환",
+            "tier": {
+              "max": 0.4,
+              "key": "low",
+              "label": "위험",
+              "color": "#C0392B",
+              "tint": "#F4D7D2"
+            },
+            "position": 0.39372081704108963
+          },
+          {
+            "key": "diabetes",
+            "name": "2형당뇨",
+            "tier": {
+              "max": 0.6,
+              "key": "mid",
+              "label": "보통",
+              "color": "#B7950B",
+              "tint": "#F8EBC8"
+            },
+            "position": 0.4023693475440704
+          },
+          {
+            "key": "cancer",
+            "name": "암 전체",
+            "tier": {
+              "max": 0.4,
+              "key": "low",
+              "label": "위험",
+              "color": "#C0392B",
+              "tint": "#F4D7D2"
+            },
+            "position": 0.3891859259471106
+          }
+        ],
+        "deficit": {
+          "basis": "meal_plan",
+          "days": 30,
+          "nutrients": [
+            {
+              "id": "energy",
+              "need": 1478,
+              "upper": 1806,
+              "supply": 1753.07,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "kcal"
+            },
+            {
+              "id": "carb",
+              "need": 225.775,
+              "upper": 266.825,
+              "supply": 259.116,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "protein",
+              "need": 28.735,
+              "upper": 82.1,
+              "supply": 77.7114,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "fat",
+              "need": 27.3667,
+              "upper": 54.7333,
+              "supply": 48.6924,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "fiber",
+              "need": 19.704,
+              "upper": null,
+              "supply": 25.427,
+              "deficit": 0,
+              "excess": null,
+              "unit": "g"
+            },
+            {
+              "id": "sugar",
+              "need": null,
+              "upper": 41.05,
+              "supply": 38.6664,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "satfat",
+              "need": null,
+              "upper": 12.7711,
+              "supply": 12.2191,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "trans",
+              "need": null,
+              "upper": 1.82444,
+              "supply": 0.308418,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "g"
+            },
+            {
+              "id": "chol",
+              "need": null,
+              "upper": 300,
+              "supply": 221.856,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "mg"
+            },
+            {
+              "id": "sodium",
+              "need": null,
+              "upper": 2300,
+              "supply": 2007.26,
+              "deficit": 0,
+              "excess": 0,
+              "unit": "mg"
+            }
+          ],
+          "components": [
+            {
+              "id": "anthocyanins",
+              "need": 50,
+              "supply": 21.4202,
+              "deficit": 28.5798,
+              "fill_rate": 0.428405,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "glucosinolates",
+              "need": null,
+              "supply": 0,
+              "deficit": null,
+              "fill_rate": null,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "isoflavones",
+              "need": 0.04,
+              "supply": 0.0406251,
+              "deficit": 0,
+              "fill_rate": 1,
+              "excess": 0,
+              "unit": "g",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "catechins",
+              "need": 300,
+              "supply": 72.2482,
+              "deficit": 227.752,
+              "fill_rate": 0.240827,
+              "excess": 0,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            },
+            {
+              "id": "phenolicAcids",
+              "need": 500,
+              "supply": 173.831,
+              "deficit": 326.169,
+              "fill_rate": 0.347663,
+              "excess": null,
+              "unit": "mg",
+              "data_missing": false,
+              "needs_review": true
+            }
+          ],
+          "daily_fill_rate": [
+            0.460417,
+            0.191267,
+            0.65093,
+            0.3987,
+            0.420727,
+            0.419657,
+            0.306108,
+            0.206486,
+            0.220527,
+            0.456067,
+            0.216069,
+            0.430739,
+            0.431772,
+            0.194375,
+            0.549884,
+            0.868692,
+            0.515185,
+            0.708291,
+            0.487805,
+            0.383134,
+            0.215176,
+            0.571325,
+            0.306648,
+            0.268026,
+            0.327155,
+            0.3185,
+            0.630439,
+            0.2793,
+            0.35348,
+            0.557885
+          ]
+        },
+        "plan": "(30일 식단 요약 생략)",
+        "products": {
+          "soymilk": [
+            "I",
+            "I"
+          ],
+          "phyto": [],
+          "bar": [],
+          "addon": []
+        }
+      },
+      "proposal_status": "pending"
+    }
+  }
+}

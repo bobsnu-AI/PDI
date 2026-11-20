@@ -54,21 +54,27 @@ function calculateEER(profile) {
 }
 
 // ──────────────────────────────────────────────
-// calculateNutrientStandards(eer)
+// calculateNutrientStandards(eer, profile)
 //   diet_food_scoring.py 의 nutrient_ranges 에 대응 (1일 기준)
-//   탄수화물·단백질·지방: [하한, 상한] (KDRI 에너지적정비율)
+//   2025 한국인 영양소 섭취기준(보건복지부, 2025-12-31) 요약표 — 3세 이상
+//   탄수화물·단백질·지방: [하한, 상한] (에너지적정비율)
+//   profile { gender, age } 이 없으면 19~49세 여성 값
 // ──────────────────────────────────────────────
-function calculateNutrientStandards(eer) {
+function calculateNutrientStandards(eer, profile) {
+  const age = (profile && profile.age) || 30, male = !!profile && profile.gender === 'male';
   return {
-    carb:    [eer * 0.55 / 4, eer * 0.65 / 4],  // 탄수화물 55–65 %E
-    protein: [eer * 0.07 / 4, eer * 0.20 / 4],  // 단백질 7–20 %E
+    carb:    [eer * 0.50 / 4, eer * 0.65 / 4],  // 탄수화물 50–65 %E
+    protein: [eer * 0.10 / 4, eer * 0.20 / 4],  // 단백질 10–20 %E
     fat:     [eer * 0.15 / 9, eer * 0.30 / 9],  // 지방 15–30 %E
-    fiber:   eer / 1000 * 12,                   // 식이섬유 12 g/1,000kcal
+    // 식이섬유 충분섭취량 (g/일)
+    fiber:   male ? (age >= 19 ? 30 : age >= 12 ? 25 : age >= 6 ? 20 : 15)
+                  : (age >= 50 ? 25 : age >= 9 ? 20 : 15),
     chol:    300,                               // 콜레스테롤 300 mg 미만
-    sugar:   eer * 0.10 / 4,                    // 당류 10 %E 미만
-    satfat:  eer * 0.07 / 9,                    // 포화지방 7 %E 미만
+    sugar:   eer * 0.10 / 4,                    // 당류 10 %E 미만 (첨가당 기준. 총당류는 20 %E)
+    satfat:  eer * (age >= 19 ? 0.07 : 0.08) / 9,  // 포화지방 7 %E 미만 (18세 이하 8 %E)
     trans:   eer * 0.01 / 9,                    // 트랜스지방 1 %E 미만
-    sodium:  2300,                              // 나트륨 만성질환위험감소섭취량
+    // 나트륨 만성질환위험감소섭취량 (mg/일)
+    sodium:  age >= 75 ? 1800 : age >= 65 ? 1900 : age >= 12 ? 2300 : age >= 9 ? 2000 : age >= 6 ? 1700 : 1500,
   };
 }
 
@@ -208,18 +214,27 @@ function estimateIngredientNutrients(name, grams, servings) {
   const g = Number(grams) || 0;
   const energy = (ing.kcal || 0) * g / 100;
 
-  // 실측 영양성분(100g 기준)이 DB에 있으면 우선 사용
+  // 실측 영양성분(100g 기준)이 DB에 있으면 우선 사용. 값이 없는 칸은 적혀 있지
+  // 않으므로, 그 칸만 이름 추정으로 메웁니다 — 0 으로 두면 간장의 나트륨이
+  // 0 이 되어 버립니다.
   if (ing.nut) {
+    const est = nutrientsByName(name, ing, g, energy);
     const out = emptyNutrients();
     for (const k of PFS_NUTRIENT_KEYS) {
       if (k === 'energy' || k === 'weight') continue;
-      out[k] = (ing.nut[k] || 0) * g / 100;
+      out[k] = ing.nut[k] == null ? (est[k] || 0) : ing.nut[k] * g / 100;
     }
     out.energy = energy;
     out.weight = g;
     return out;
   }
 
+  return nutrientsByName(name, ing, g, energy);
+}
+
+// 이름 규칙으로 영양성분을 추정합니다. 실측값이 없는 식재료 전체에 쓰고,
+// 실측값에 빈 칸이 있을 때는 그 칸만 가져다 씁니다.
+function nutrientsByName(name, ing, g, energy) {
   const pr = findNutrientProfile(name, ing.cat);
   const carb = energy * (pr.c || 0) / 4;
   const fat  = energy * (pr.f || 0) / 9;
@@ -250,3 +265,117 @@ function estimateDishNutrients(analysis) {
 }
 
 // 음식 분류: 간식(0.1) / 본식(0.3) / 반찬(0.2)
+
+// ══════════════════════════════════════════════
+// PFS 점수 (30일 식단 최적화의 다섯 번째 목적함수가 씁니다)
+// ══════════════════════════════════════════════
+// pfsScore(n, ranges, per, trend) — PFS_function 1행 계산. 수식은 diet_food_scoring.py 와 같습니다
+function pfsRange(v) {
+  return Array.isArray(v) ? v : [v * 0.5, v * 1.5];
+}
+
+function pfsScore(n, ranges, per, trend) {
+  per = per == null ? 1.0 : per;
+  const num = k => { const v = Number(n[k]); return Number.isFinite(v) ? v : 0; };
+  const sub = {};
+
+  // 탄수화물·단백질·지방: 범위 [A, B] 안이면 1, 벗어나면 이차 감점
+  const band = (x, key) => {
+    let [A, B] = pfsRange(ranges[key]);
+    A *= per; B *= per;
+    if (x < A) return 1 - ((x - A) / A) ** 2;
+    if (x > B) return 1 - ((x - B) / A) ** 2;
+    return 1.0;
+  };
+  sub.carb    = band(num('carb'),    'carb');
+  sub.protein = band(num('protein'), 'protein');
+  sub.fat     = band(num('fat'),     'fat');
+
+  // 식이섬유: 기준 미만이면 이차 감점
+  const FiberA = ranges.fiber * per;
+  const fiber  = num('fiber');
+  sub.fiber = fiber < FiberA ? 1 - ((fiber - FiberA) / FiberA) ** 2 : 1.0;
+
+  // 콜레스테롤: 0 → 0점, 기준 이상 → −1
+  const CholeA = ranges.chol * per;
+  const chol   = num('chol');
+  sub.chol = chol < CholeA ? -1 + ((chol - CholeA) / CholeA) ** 2 : -1.0;
+
+  // 당류·포화지방·트랜스지방·나트륨: 기준 대비 비율만큼 선형 감점
+  sub.sugar  = -num('sugar')  / Math.max(0.1, ranges.sugar  * per);
+  sub.satfat = -num('satfat') / Math.max(0.1, ranges.satfat * per);
+  sub.trans  = -num('trans')  / Math.max(0.1, ranges.trans  * per);
+  sub.sodium = -num('sodium') / Math.max(0.1, ranges.sodium * per);
+
+  const basic = Object.values(sub).reduce((s, v) => s + v, 0);
+
+  const weight = num('weight');
+  const energy = num('energy');
+  const ed = energy * 100 / (weight === 0 ? 1 : weight);
+  const si = (41.6 * num('fat')) + (23.3 * num('protein')) + (18.9 * num('carb'))
+           + (6.42 * num('fiber')) + (0.449 * weight) - (405 * energy / 239);
+
+  let total;
+  if (trend === 'loss')      total = basic + ed;
+  else if (trend === 'gain') total = basic + ed + si;
+  else                       total = basic;
+
+  return { sub, basic, ed, si, total };
+}
+
+// ── 주요 건강 목표 → PFS 기준치 조정 ──────────
+// 질환별 기준은 「식이설계 KG」(Kùzu 그래프)에 들어 있고, 아래 표시 구간은 거기서 뽑아 낸 것입니다.
+//   경로: 건강주제 -[CONCERNS_DISEASE]-> 질환 -[HAS_GUIDELINE | HAS_STANDARD]-> 영양소
+//   고칠 때: KG(kg/build_guideline.py)를 고치고 `npm run build:kg-standards` — 이 구간을 손으로 고치지 마세요.
+// ponytail: 생성 구간을 pfs.js 안에 둡니다 (새 스크립트 파일이면 index.html·index.tsx·빌드·테스트 5곳을 고쳐야 함).
+//           KG 에서 뽑는 표가 둘 이상이 되면 별도 파일로 빼세요.
+// <<KG:goal-standards
+const KG_GOAL_STANDARDS = {
+  cvd: [
+    {"key": "carb", "op": "<=", "value": 65.0, "basis": "pct_energy", "disease": "이상지질혈증", "source": "이상지질혈증 진료지침 (제5판) 식사요법 권고안, p.55", "raw": "총탄수화물 섭취량을 에너지 섭취량의 65% 이내로"},
+    {"key": "fat", "op": ">=", "value": 15.0, "basis": "pct_energy", "disease": "고혈압환자용 식단", "source": "식약처 식단형 식사관리식품 기준 (식품공전 제5. 11. 11-3)", "raw": "총 열량 15~30%"},
+    {"key": "fat", "op": "<=", "value": 30.0, "basis": "pct_energy", "disease": "고혈압환자용 식단", "source": "식약처 식단형 식사관리식품 기준 (식품공전 제5. 11. 11-3)", "raw": "총 열량 15~30%"},
+    {"key": "fat", "op": "<=", "value": 30.0, "basis": "pct_energy", "disease": "이상지질혈증", "source": "이상지질혈증 진료지침 (제5판) 식사요법 권고안, p.55", "raw": "총지방 섭취량을 에너지 섭취량의 30% 이내로"},
+    {"key": "fiber", "op": ">=", "value": 7.0, "basis": "per_meal", "disease": "고혈압환자용 식단", "source": "식약처 식단형 식사관리식품 기준 (식품공전 제5. 11. 11-3)", "raw": "≥ 7g"},
+    {"key": "fiber", "op": ">=", "value": 25.0, "basis": "per_day", "disease": "이상지질혈증", "source": "이상지질혈증 진료지침 (제5판) 식사요법 권고안, p.55", "raw": "식이섬유 섭취량이 1일 25 g 이상"},
+    {"key": "satfat", "op": "<=", "value": 7.0, "basis": "pct_energy", "disease": "고혈압환자용 식단", "source": "식약처 식단형 식사관리식품 기준 (식품공전 제5. 11. 11-3)", "raw": "≤ 총 열량 7%"},
+    {"key": "satfat", "op": "<=", "value": 7.0, "basis": "pct_energy", "disease": "이상지질혈증", "source": "이상지질혈증 진료지침 (제5판) 식사요법 권고안, p.55", "raw": "포화지방산 섭취량을 에너지 섭취량의 7% 이내로"},
+    {"key": "sodium", "op": "<=", "value": 2000.0, "basis": "per_day", "disease": "고혈압", "source": "2026 고혈압 진료지침 (제6판) 권고 21, p.74", "raw": "하루 소금 섭취량을 5 g(나트륨 2,000 mg) 이하로 제한"},
+    {"key": "sodium", "op": "<", "value": 800.0, "basis": "per_meal", "disease": "고혈압환자용 식단", "source": "식약처 식단형 식사관리식품 기준 (식품공전 제5. 11. 11-3)", "raw": "< 800mg"},
+    {"key": "sugar", "op": "<=", "value": 20.0, "basis": "pct_energy", "disease": "이상지질혈증", "source": "이상지질혈증 진료지침 (제5판) 식사요법 권고안, p.55", "raw": "총당류 섭취량을 10–20% 이내로 제한"},
+  ],
+  blood_sugar: [
+    {"key": "protein", "op": ">=", "value": 18.0, "basis": "per_meal", "disease": "당뇨환자용 식단", "source": "식약처 식단형 식사관리식품 기준 (식품공전 제5. 11. 11-3)", "raw": "≥18g"},
+    {"key": "satfat", "op": "<", "value": 10.0, "basis": "pct_energy", "disease": "당뇨환자용 식단", "source": "식약처 식단형 식사관리식품 기준 (식품공전 제5. 11. 11-3)", "raw": "< 총 열량 10%"},
+    {"key": "sodium", "op": "<=", "value": 2300.0, "basis": "per_day", "disease": "2형당뇨병", "source": "2025 당뇨병 진료지침 (제9판) 의학영양요법 권고 9, p.98", "raw": "나트륨 섭취는 하루 2,300 mg 이내로 권고한다"},
+    {"key": "sodium", "op": "<=", "value": 1350.0, "basis": "per_meal", "disease": "당뇨환자용 식단", "source": "식약처 식단형 식사관리식품 기준 (식품공전 제5. 11. 11-3)", "raw": "≤ 1,350mg"},
+    {"key": "sugar", "op": "<", "value": 10.0, "basis": "pct_energy", "disease": "당뇨환자용 식단", "source": "식약처 식단형 식사관리식품 기준 (식품공전 제5. 11. 11-3)", "raw": "< 총 열량 10%"},
+  ],
+};
+// KG>>
+// 질환이 아닌 목표는 KG 질환 축에 없어 여기 둡니다 (연구자 검토 전 초안)
+//   gut : 식이섬유 25 g 이상 (WHO 2023 Carbohydrate intake for adults and children)
+//   bone·fatigue·weight : PFS 9개 영양소에 해당 항목(칼슘·비타민 B 등)이 없어 조정하지 않습니다
+const PFS_GOAL_EXTRA = { gut: [{ key: 'fiber', op: '>=', value: 25, basis: 'per_day' }] };
+const PFS_KCAL_PER_G = { carb: 4, protein: 4, sugar: 4, fat: 9, satfat: 9, trans: 9 };
+
+// 기준 한 줄 → 하루 양(PFS 단위). per_meal(식단형 식사관리식품, 한 끼 기준)은 하루 3끼로 환산
+function pfsDayAmount(s, kcal) {
+  return s.basis === 'pct_energy' ? kcal * s.value / 100 / PFS_KCAL_PER_G[s.key]
+    : s.basis === 'per_meal' ? s.value * 3 : s.value;
+}
+
+// 목표에 걸린 기준을 모두 겹쳐 더 엄격한 쪽으로만 고칩니다 (원본은 그대로)
+function pfsStandards(ranges, focus, kcal) {
+  const r = { ...ranges };
+  for (const g of focus || []) for (const s of [...(KG_GOAL_STANDARDS[g] || []), ...(PFS_GOAL_EXTRA[g] || [])]) {
+    const v = pfsDayAmount(s, kcal), up = s.op[0] === '<';
+    if (!(v > 0)) continue;                       // kcal 없이 %E 기준을 만나면 건너뜀
+    if (Array.isArray(r[s.key])) {                // 탄수화물·단백질·지방 [하한, 상한] — 범위가 뒤집히지 않게 자릅니다
+      const [lo, hi] = r[s.key];
+      r[s.key] = up ? [lo, Math.max(lo, Math.min(hi, v))] : [Math.min(hi, Math.max(lo, v)), hi];
+    } else if (s.key === 'fiber') { if (!up) r.fiber = Math.max(r.fiber, v); }
+    else if (up) r[s.key] = Math.min(r[s.key], v);
+  }
+  return r;
+}
